@@ -44,4 +44,8 @@ export class UsersService {
       //   lessons,
     };
   }
+
+  async findByUsername(username: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ username }).exec();
+  }
 }
