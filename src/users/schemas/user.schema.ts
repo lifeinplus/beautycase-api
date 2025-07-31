@@ -9,11 +9,11 @@ export type UserDocument = User & Document;
   versionKey: false,
 })
 export class User {
+  @Prop({ type: String, required: true, unique: true })
+  username: string;
+
   @Prop({ type: String, required: true })
   password: string;
-
-  @Prop({ type: [String], default: [] })
-  refreshTokens: string[];
 
   @Prop({
     type: String,
@@ -22,8 +22,8 @@ export class User {
   })
   role: Role;
 
-  @Prop({ type: String, required: true, unique: true })
-  username: string;
+  @Prop({ type: [String], default: [] })
+  refreshTokens: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

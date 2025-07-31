@@ -45,7 +45,20 @@ export class UsersService {
     };
   }
 
+  async findByRefreshToken(token: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ refreshTokens: token }).exec();
+  }
+
   async findByUsername(username: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ username }).exec();
+  }
+
+  async updateRefreshTokens(
+    userId: string,
+    refreshTokens: string[],
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { refreshTokens }, { new: true })
+      .exec();
   }
 }
