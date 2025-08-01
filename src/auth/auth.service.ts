@@ -28,7 +28,7 @@ export class AuthService {
     credentials: LoginDto,
     existingRefreshToken?: string,
   ): Promise<LoginResult> {
-    const foundUser = await this.usersService.findByUsername(
+    const foundUser = await this.usersService.getByUsername(
       credentials.username,
     );
 
@@ -64,7 +64,7 @@ export class AuthService {
       // 2. RT is stolen
       // 3. Clear all RTs when user logins
       const foundToken =
-        await this.usersService.findByRefreshToken(existingRefreshToken);
+        await this.usersService.getByRefreshToken(existingRefreshToken);
 
       if (!foundToken) {
         this.logger.warn('Attempted refresh token reuse at /auth/login');

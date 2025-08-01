@@ -2,16 +2,16 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-// import { MakeupBagService } from '../makeup-bags/makeup-bags.service';
 import { LessonsService } from 'src/lessons/lessons.service';
+import { MakeupBagsService } from 'src/makeup-bags/makeup-bags.service';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly lessonService: LessonsService,
-    // private readonly makeupBagService: MakeupBagService,
+    private readonly lessonsService: LessonsService,
+    private readonly makeupBagsService: MakeupBagsService,
   ) {}
 
   async getAllUsers() {
@@ -34,22 +34,21 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const lessons = await this.lessonService.getByClientId(id);
-    // TODO: Create MakeupBag service
-    // const makeupBags = await this.makeupBagService.getByClientId(id);
+    const lessons = await this.lessonsService.getByClientId(id);
+    const makeupBags = await this.makeupBagsService.getByClientId(id);
 
     return {
       user,
       lessons,
-      //   makeupBags,
+      makeupBags,
     };
   }
 
-  async findByRefreshToken(token: string): Promise<UserDocument | null> {
+  async getByRefreshToken(token: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ refreshTokens: token }).exec();
   }
 
-  async findByUsername(username: string): Promise<UserDocument | null> {
+  async getByUsername(username: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ username }).exec();
   }
 
