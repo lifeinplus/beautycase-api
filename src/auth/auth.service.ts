@@ -1,19 +1,15 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { TokenService } from './token.service';
-
-export interface LoginResult {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    role: string;
-    userId: string;
-    username: string;
-  };
-}
+import type {
+  LoginResult,
+  RefreshResult,
+  UserJwtPayload,
+} from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -67,7 +63,7 @@ export class AuthService {
         await this.usersService.getByRefreshToken(existingRefreshToken);
 
       if (!foundToken) {
-        this.logger.warn('Attempted refresh token reuse at /auth/login');
+        this.logger.warn('Attempted refresh token reuse at /api/auth/login');
         refreshTokenArray = [];
       }
     }
@@ -76,6 +72,82 @@ export class AuthService {
       ...refreshTokenArray,
       refreshToken,
     ]);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        role: foundUser.role,
+        userId: foundUser.id,
+        username: foundUser.username,
+      },
+    };
+  }
+
+  async refreshToken(existingRefreshToken: string): Promise<RefreshResult> {
+    if (!existingRefreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
+
+    const foundUser =
+      await this.usersService.getByRefreshToken(existingRefreshToken);
+
+    if (!foundUser) {
+      const decoded =
+        this.tokenService.verifyRefreshToken(existingRefreshToken);
+
+      this.logger.warn('Attempted refresh token reuse at /api/auth/refresh');
+
+      const hackedUser = await this.usersService.getByUsername(
+        decoded.username,
+      );
+
+      if (hackedUser) {
+        hackedUser.refreshTokens = [];
+        await hackedUser.save();
+      }
+
+      throw new UnauthorizedException('Refresh token reuse detected');
+    }
+
+    let decoded: UserJwtPayload;
+    let refreshTokenArray: string[] = [];
+
+    try {
+      decoded = this.tokenService.verifyRefreshToken(existingRefreshToken);
+    } catch (error) {
+      if (foundUser && error instanceof TokenExpiredError) {
+        refreshTokenArray = this.tokenService.filterRefreshTokens(
+          foundUser.refreshTokens,
+          existingRefreshToken,
+        );
+
+        foundUser.refreshTokens = refreshTokenArray;
+        await foundUser.save();
+      }
+
+      throw error;
+    }
+
+    if (foundUser.username !== decoded.username) {
+      throw new UnauthorizedException('Username incorrect');
+    }
+
+    const accessToken = this.tokenService.signAccessToken({
+      role: foundUser.role,
+      userId: foundUser.id,
+      username: foundUser.username,
+    });
+
+    const refreshToken = this.tokenService.signRefreshToken(foundUser.username);
+
+    refreshTokenArray = this.tokenService.filterRefreshTokens(
+      foundUser.refreshTokens,
+      existingRefreshToken,
+    );
+
+    foundUser.refreshTokens = [...refreshTokenArray, refreshToken];
+    await foundUser.save();
 
     return {
       accessToken,

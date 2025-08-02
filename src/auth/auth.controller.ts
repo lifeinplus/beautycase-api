@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -23,7 +24,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(
+  async loginUser(
     @Body() loginDto: LoginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -52,5 +53,31 @@ export class AuthController {
       userId: loginResult.user.userId,
       username: loginResult.user.username,
     };
+  }
+
+  @Get('refresh')
+  async refreshToken(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies.jwt;
+
+    if (refreshToken) {
+      res.clearCookie('jwt');
+    }
+
+    const refreshResult = await this.authService.refreshToken(refreshToken);
+
+    const cookieOptions = this.configService.get<CookieOptions>(
+      'auth.cookieOptions',
+      {},
+    );
+
+    res
+      .status(HttpStatus.OK)
+      .cookie('jwt', refreshResult.refreshToken, cookieOptions)
+      .json({
+        accessToken: refreshResult.accessToken,
+        role: refreshResult.user.role,
+        userId: refreshResult.user.userId,
+        username: refreshResult.user.username,
+      });
   }
 }

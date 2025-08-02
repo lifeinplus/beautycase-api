@@ -2,19 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-import { Role } from 'src/users/schemas/user.schema';
-
-export interface AuthUser {
-  role: string;
-  userId: string;
-  username: string;
-}
-
-export interface UserJwtPayload {
-  role: Role;
-  userId: string;
-  username: string;
-}
+import type { AuthUser, UserJwtPayload } from './types/auth.types';
 
 @Injectable()
 export class TokenService {
