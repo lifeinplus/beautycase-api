@@ -1,19 +1,24 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Post,
   Req,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CookieOptions, Request, Response } from 'express';
 
 import { AuthService } from './auth.service';
+import { RefreshToken } from './decorators/refresh-token.decorator';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginDto } from './dto/login.dto';
+import { ClearCookieInterceptor } from './interceptors/clear-cookie.interceptor';
 
 @Controller('auth')
 export class AuthController {
@@ -53,6 +58,21 @@ export class AuthController {
       userId: loginResult.user.userId,
       username: loginResult.user.username,
     };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseInterceptors(ClearCookieInterceptor)
+  async logoutUser(@RefreshToken() refreshToken?: string) {
+    if (!refreshToken) {
+      throw new BadRequestException('No refresh token provided');
+    }
+
+    const result = await this.authService.logoutUser(refreshToken);
+
+    if (!result) {
+      throw new NotFoundException('Session not found');
+    }
   }
 
   @Get('refresh')

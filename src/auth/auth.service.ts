@@ -84,6 +84,25 @@ export class AuthService {
     };
   }
 
+  async logoutUser(existingRefreshToken: string): Promise<boolean> {
+    const foundUser =
+      await this.usersService.getByRefreshToken(existingRefreshToken);
+
+    if (!foundUser) {
+      return false;
+    }
+
+    const filteredTokens = this.tokenService.filterRefreshTokens(
+      foundUser.refreshTokens,
+      existingRefreshToken,
+    );
+
+    foundUser.refreshTokens = filteredTokens;
+    await foundUser.save();
+
+    return true;
+  }
+
   async refreshToken(existingRefreshToken: string): Promise<RefreshResult> {
     if (!existingRefreshToken) {
       throw new UnauthorizedException('Refresh token not found');
