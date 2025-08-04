@@ -27,8 +27,8 @@ export class BrandsController {
   @Post()
   @Roles('admin')
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createBrandDto: CreateBrandDto) {
-    const brand = await this.brandsService.create(createBrandDto);
+  async create(@Body() dto: CreateBrandDto) {
+    const brand = await this.brandsService.create(dto);
 
     return {
       id: brand.id,
@@ -38,20 +38,17 @@ export class BrandsController {
 
   @Get()
   @Roles('admin', 'mua')
-  async getAll() {
-    return await this.brandsService.getAll();
+  getAll() {
+    return this.brandsService.getAll();
   }
 
   @Put(':id')
   @Roles('admin')
   async updateById(
     @Param() params: BrandParamsDto,
-    @Body() updateBrandDto: UpdateBrandDto,
+    @Body() dto: UpdateBrandDto,
   ) {
-    const brand = await this.brandsService.updateById(
-      params.id,
-      updateBrandDto,
-    );
+    const brand = await this.brandsService.updateById(params.id, dto);
 
     return {
       id: brand.id,

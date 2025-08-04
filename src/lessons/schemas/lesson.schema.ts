@@ -15,16 +15,16 @@ export type LessonDocument = Lesson & Document;
   versionKey: false,
 })
 export class Lesson {
-  @Prop({ type: String, required: true })
+  @Prop({ required: true })
   title: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ required: true })
   shortDescription: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ required: true })
   videoUrl: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ required: true })
   fullDescription: string;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }] })

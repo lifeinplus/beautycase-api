@@ -29,8 +29,8 @@ export class MakeupBagsController {
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createMakeupBagDto: CreateMakeupBagDto) {
-    const makeupBag = await this.makeupBagsService.create(createMakeupBagDto);
+  async create(@Body() dto: CreateMakeupBagDto) {
+    const makeupBag = await this.makeupBagsService.create(dto);
 
     return {
       id: makeupBag.id,
@@ -41,14 +41,14 @@ export class MakeupBagsController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async getAll() {
-    return await this.makeupBagsService.getAll();
+  getAll() {
+    return this.makeupBagsService.getAll();
   }
 
   @Get(':id')
   @UseGuards(MakeupBagAccessGuard)
-  async getById(@Param() params: MakeupBagParamsDto) {
-    return await this.makeupBagsService.getById(params.id);
+  getById(@Param() params: MakeupBagParamsDto) {
+    return this.makeupBagsService.getById(params.id);
   }
 
   @Patch(':id')
@@ -56,12 +56,9 @@ export class MakeupBagsController {
   @Roles('admin', 'mua')
   async updateById(
     @Param() params: MakeupBagParamsDto,
-    @Body() updateMakeupBagDto: UpdateMakeupBagDto,
+    @Body() dto: UpdateMakeupBagDto,
   ) {
-    const makeupBag = await this.makeupBagsService.updateById(
-      params.id,
-      updateMakeupBagDto,
-    );
+    const makeupBag = await this.makeupBagsService.updateById(params.id, dto);
 
     return {
       id: makeupBag.id,

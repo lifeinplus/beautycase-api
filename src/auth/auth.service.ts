@@ -21,21 +21,16 @@ export class AuthService {
   ) {}
 
   async loginUser(
-    credentials: LoginDto,
+    dto: LoginDto,
     existingRefreshToken?: string,
   ): Promise<LoginResult> {
-    const foundUser = await this.usersService.getByUsername(
-      credentials.username,
-    );
+    const foundUser = await this.usersService.getByUsername(dto.username);
 
     if (!foundUser) {
       throw new UnauthorizedException('Username or password is incorrect');
     }
 
-    const isMatch = await bcrypt.compare(
-      credentials.password,
-      foundUser.password,
-    );
+    const isMatch = await bcrypt.compare(dto.password, foundUser.password);
 
     if (!isMatch) {
       throw new UnauthorizedException('Username or password is incorrect');

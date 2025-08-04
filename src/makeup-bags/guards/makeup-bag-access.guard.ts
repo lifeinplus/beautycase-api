@@ -25,8 +25,7 @@ export class MakeupBagAccessGuard implements CanActivate {
     // if (role === 'client') {
     //   const makeupBag = await this.makeupBagModel
     //     .findById(id)
-    //     .select('clientId')
-    //     .exec();
+    //     .select('clientId');
 
     //   if (!makeupBag || !userId || makeupBag.clientId.toString() !== userId) {
     //     throw new NotFoundException('MakeupBag not found');

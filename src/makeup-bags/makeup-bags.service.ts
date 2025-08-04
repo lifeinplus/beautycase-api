@@ -13,10 +13,8 @@ export class MakeupBagsService {
     private makeupBagModel: Model<MakeupBagDocument>,
   ) {}
 
-  async create(
-    createMakeupBagDto: CreateMakeupBagDto,
-  ): Promise<MakeupBagDocument> {
-    return await this.makeupBagModel.create(createMakeupBagDto);
+  create(dto: CreateMakeupBagDto): Promise<MakeupBagDocument> {
+    return this.makeupBagModel.create(dto);
   }
 
   async getAll(): Promise<MakeupBagDocument[]> {
@@ -27,8 +25,7 @@ export class MakeupBagsService {
         { path: 'categoryId', select: 'name' },
         { path: 'clientId', select: 'username' },
         { path: 'stageIds', select: '_id' },
-      ])
-      .exec();
+      ]);
 
     if (!makeupBags.length) {
       throw new NotFoundException('MakeupBags not found');
@@ -38,26 +35,23 @@ export class MakeupBagsService {
   }
 
   async getById(id: string): Promise<MakeupBagDocument> {
-    const makeupBag = await this.makeupBagModel
-      .findById(id)
-      .populate([
-        { path: 'categoryId' },
-        { path: 'clientId', select: 'username' },
-        {
-          path: 'stageIds',
-          populate: {
-            path: 'productIds',
-            populate: { path: 'brandId' },
-            select: 'name imageUrl',
-          },
-        },
-        {
-          path: 'toolIds',
-          select: 'brandId imageUrl name',
+    const makeupBag = await this.makeupBagModel.findById(id).populate([
+      { path: 'categoryId' },
+      { path: 'clientId', select: 'username' },
+      {
+        path: 'stageIds',
+        populate: {
+          path: 'productIds',
           populate: { path: 'brandId' },
+          select: 'name imageUrl',
         },
-      ])
-      .exec();
+      },
+      {
+        path: 'toolIds',
+        select: 'brandId imageUrl name',
+        populate: { path: 'brandId' },
+      },
+    ]);
 
     if (!makeupBag) {
       throw new NotFoundException('MakeupBag not found');
@@ -66,24 +60,21 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  async getByClientId(clientId: string): Promise<MakeupBagDocument[]> {
-    return await this.makeupBagModel
+  getByClientId(clientId: string): Promise<MakeupBagDocument[]> {
+    return this.makeupBagModel
       .find({ clientId })
       .select('categoryId')
-      .populate('categoryId', 'name')
-      .exec();
+      .populate('categoryId', 'name');
   }
 
   async updateById(
     id: string,
-    updateMakeupBagDto: UpdateMakeupBagDto,
+    dto: UpdateMakeupBagDto,
   ): Promise<MakeupBagDocument> {
-    const makeupBag = await this.makeupBagModel
-      .findByIdAndUpdate(id, updateMakeupBagDto, {
-        new: true,
-        runValidators: true,
-      })
-      .exec();
+    const makeupBag = await this.makeupBagModel.findByIdAndUpdate(id, dto, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!makeupBag) {
       throw new NotFoundException('MakeupBag not found');
@@ -93,7 +84,7 @@ export class MakeupBagsService {
   }
 
   async deleteById(id: string): Promise<MakeupBagDocument> {
-    const makeupBag = await this.makeupBagModel.findByIdAndDelete(id).exec();
+    const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {
       throw new NotFoundException('MakeupBag not found');

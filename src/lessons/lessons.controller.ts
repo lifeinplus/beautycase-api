@@ -28,8 +28,8 @@ export class LessonsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async create(@Body() createLessonDto: CreateLessonDto) {
-    const lesson = await this.lessonsService.create(createLessonDto);
+  async create(@Body() dto: CreateLessonDto) {
+    const lesson = await this.lessonsService.create(dto);
 
     return {
       id: lesson.id,
@@ -38,27 +38,21 @@ export class LessonsController {
   }
 
   @Get()
-  async getAll() {
-    return await this.lessonsService.getAll();
+  getAll() {
+    return this.lessonsService.getAll();
   }
 
   @Get(':id')
   @UseGuards(LessonAccessGuard)
-  async getById(@Param() params: LessonParamsDto) {
-    return await this.lessonsService.getById(params.id);
+  getById(@Param() params: LessonParamsDto) {
+    return this.lessonsService.getById(params.id);
   }
 
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async update(
-    @Param() params: LessonParamsDto,
-    @Body() updateLessonDto: UpdateLessonDto,
-  ) {
-    const lesson = await this.lessonsService.updateById(
-      params.id,
-      updateLessonDto,
-    );
+  async update(@Param() params: LessonParamsDto, @Body() dto: UpdateLessonDto) {
+    const lesson = await this.lessonsService.updateById(params.id, dto);
 
     return {
       id: lesson.id,
@@ -71,12 +65,9 @@ export class LessonsController {
   @Roles('admin', 'mua')
   async updateProducts(
     @Param() params: LessonParamsDto,
-    @Body() updateLessonProductsDto: UpdateLessonProductsDto,
+    @Body() dto: UpdateLessonProductsDto,
   ) {
-    const lesson = await this.lessonsService.updateProducts(
-      params.id,
-      updateLessonProductsDto,
-    );
+    const lesson = await this.lessonsService.updateProducts(params.id, dto);
 
     return {
       id: lesson.id,

@@ -14,12 +14,12 @@ export class UsersController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async getAllUsers() {
+  getAllUsers() {
     return this.usersService.getAllUsers();
   }
 
   @Get(':id')
-  async getUserById(@Param() params: GetUserParamsDto) {
+  getUserById(@Param() params: GetUserParamsDto) {
     return this.usersService.getUserById(params.id);
   }
 }

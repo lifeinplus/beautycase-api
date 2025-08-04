@@ -30,16 +30,13 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async loginUser(
-    @Body() loginDto: LoginDto,
+    @Body() dto: LoginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
     const refreshToken = req.cookies?.jwt;
 
-    const loginResult = await this.authService.loginUser(
-      loginDto,
-      refreshToken,
-    );
+    const loginResult = await this.authService.loginUser(dto, refreshToken);
 
     if (refreshToken) {
       res.clearCookie('jwt');

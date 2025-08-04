@@ -13,8 +13,8 @@ export class LessonsService {
     @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
   ) {}
 
-  async create(createLessonDto: CreateLessonDto): Promise<LessonDocument> {
-    return await this.lessonModel.create(createLessonDto);
+  create(dto: CreateLessonDto): Promise<LessonDocument> {
+    return this.lessonModel.create(dto);
   }
 
   async getAll(): Promise<LessonDocument[]> {
@@ -41,22 +41,15 @@ export class LessonsService {
     return lesson;
   }
 
-  async getByClientId(clientId: string): Promise<LessonDocument[]> {
-    return await this.lessonModel.find({ clientIds: clientId }).select('title');
+  getByClientId(clientId: string): Promise<LessonDocument[]> {
+    return this.lessonModel.find({ clientIds: clientId }).select('title');
   }
 
-  async updateById(
-    id: string,
-    updateLessonDto: UpdateLessonDto,
-  ): Promise<LessonDocument> {
-    const lesson = await this.lessonModel.findByIdAndUpdate(
-      id,
-      updateLessonDto,
-      {
-        new: true,
-        runValidators: true,
-      },
-    );
+  async updateById(id: string, dto: UpdateLessonDto): Promise<LessonDocument> {
+    const lesson = await this.lessonModel.findByIdAndUpdate(id, dto, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!lesson) {
       throw new NotFoundException('Lesson not found');
@@ -65,11 +58,11 @@ export class LessonsService {
     return lesson;
   }
 
-  async updateProducts(
+  updateProducts(
     id: string,
-    updateLessonProductsDto: UpdateLessonProductsDto,
+    dto: UpdateLessonProductsDto,
   ): Promise<LessonDocument> {
-    return await this.updateById(id, updateLessonProductsDto);
+    return this.updateById(id, dto);
   }
 
   async deleteById(id: string): Promise<LessonDocument> {

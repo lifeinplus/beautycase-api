@@ -15,7 +15,7 @@ export class UsersService {
   ) {}
 
   async getAllUsers() {
-    const users = await this.userModel.find().select('_id username').exec();
+    const users = await this.userModel.find().select('_id username');
 
     if (!users.length) {
       throw new NotFoundException('Users not found');
@@ -25,10 +25,7 @@ export class UsersService {
   }
 
   async getUserById(id: string) {
-    const user = await this.userModel
-      .findById(id)
-      .select('role username')
-      .exec();
+    const user = await this.userModel.findById(id).select('role username');
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -44,20 +41,22 @@ export class UsersService {
     };
   }
 
-  async getByRefreshToken(token: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ refreshTokens: token }).exec();
+  getByRefreshToken(token: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ refreshTokens: token });
   }
 
-  async getByUsername(username: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ username }).exec();
+  getByUsername(username: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ username });
   }
 
-  async updateRefreshTokens(
+  updateRefreshTokens(
     userId: string,
     refreshTokens: string[],
   ): Promise<UserDocument | null> {
-    return this.userModel
-      .findByIdAndUpdate(userId, { refreshTokens }, { new: true })
-      .exec();
+    return this.userModel.findByIdAndUpdate(
+      userId,
+      { refreshTokens },
+      { new: true },
+    );
   }
 }

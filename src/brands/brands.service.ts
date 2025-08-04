@@ -11,12 +11,12 @@ export class BrandsService {
     @InjectModel(Brand.name) private brandModel: Model<BrandDocument>,
   ) {}
 
-  async create(createBrandDto: CreateBrandDto): Promise<BrandDocument> {
-    return await this.brandModel.create(createBrandDto);
+  create(dto: CreateBrandDto): Promise<BrandDocument> {
+    return this.brandModel.create(dto);
   }
 
   async getAll(): Promise<BrandDocument[]> {
-    const brands = await this.brandModel.find().sort('name').exec();
+    const brands = await this.brandModel.find().sort('name');
 
     if (!brands.length) {
       throw new NotFoundException('Brands not found');
@@ -25,16 +25,11 @@ export class BrandsService {
     return brands;
   }
 
-  async updateById(
-    id: string,
-    updateBrandDto: UpdateBrandDto,
-  ): Promise<BrandDocument> {
-    const brand = await this.brandModel
-      .findByIdAndUpdate(id, updateBrandDto, {
-        new: true,
-        runValidators: true,
-      })
-      .exec();
+  async updateById(id: string, dto: UpdateBrandDto): Promise<BrandDocument> {
+    const brand = await this.brandModel.findByIdAndUpdate(id, dto, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!brand) {
       throw new NotFoundException('Brand not found');
@@ -44,7 +39,7 @@ export class BrandsService {
   }
 
   async deleteById(id: string): Promise<BrandDocument> {
-    const brand = await this.brandModel.findByIdAndDelete(id).exec();
+    const brand = await this.brandModel.findByIdAndDelete(id);
 
     if (!brand) {
       throw new NotFoundException('Brand not found');

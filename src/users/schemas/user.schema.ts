@@ -9,10 +9,10 @@ export type UserDocument = User & Document;
   versionKey: false,
 })
 export class User {
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ required: true, unique: true })
   username: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ required: true })
   password: string;
 
   @Prop({
