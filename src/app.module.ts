@@ -9,6 +9,7 @@ import { BrandsModule } from './brands/brands.module';
 import configuration from './config/configuration';
 import { LessonsModule } from './lessons/lessons.module';
 import { MakeupBagsModule } from './makeup-bags/makeup-bags.module';
+import { StoresModule } from './stores/stores.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -26,10 +27,11 @@ import { UsersModule } from './users/users.module';
       }),
     }),
     AuthModule,
+    BrandsModule,
     LessonsModule,
     MakeupBagsModule,
+    StoresModule,
     UsersModule,
-    BrandsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
