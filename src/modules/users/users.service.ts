@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { LessonsService } from 'src/lessons/lessons.service';
-import { MakeupBagsService } from 'src/makeup-bags/makeup-bags.service';
+import { LessonsService } from '../lessons/lessons.service';
+import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()

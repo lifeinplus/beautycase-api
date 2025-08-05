@@ -4,13 +4,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { BrandsModule } from './brands/brands.module';
 import configuration from './config/configuration';
-import { LessonsModule } from './lessons/lessons.module';
-import { MakeupBagsModule } from './makeup-bags/makeup-bags.module';
-import { StoresModule } from './stores/stores.module';
-import { UsersModule } from './users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { BrandsModule } from './modules/brands/brands.module';
+import { LessonsModule } from './modules/lessons/lessons.module';
+import { MakeupBagsModule } from './modules/makeup-bags/makeup-bags.module';
+import { ProductsModule } from './modules/products/products.module';
+import { StoresModule } from './modules/stores/stores.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     BrandsModule,
     LessonsModule,
     MakeupBagsModule,
+    ProductsModule,
     StoresModule,
     UsersModule,
   ],

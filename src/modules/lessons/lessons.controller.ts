@@ -10,9 +10,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { LessonParamsDto } from './dto/lesson-params.dto';
 import { UpdateLessonProductsDto } from './dto/update-lesson-products.dto';

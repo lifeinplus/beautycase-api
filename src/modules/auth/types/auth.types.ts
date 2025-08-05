@@ -1,4 +1,4 @@
-import type { Role } from 'src/users/schemas/user.schema';
+import type { Role } from 'src/modules/users/schemas/user.schema';
 
 export interface AuthUser {
   role: string;
