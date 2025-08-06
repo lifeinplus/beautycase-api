@@ -5,7 +5,6 @@ import { StoreLink, StoreLinkSchema } from './store-link.schema';
 export type ProductDocument = Product & Document;
 
 @Schema({
-  id: false,
   toJSON: {
     transform: (_, ret: any) => {
       delete ret.brandId;
@@ -40,9 +39,6 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
-ProductSchema.virtual('brand', {
-  ref: 'Brand',
-  localField: 'brandId',
-  foreignField: '_id',
-  justOne: true,
+ProductSchema.virtual('brand').get(function () {
+  return this.brandId;
 });

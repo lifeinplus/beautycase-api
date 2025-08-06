@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type BrandDocument = Brand & Document;
 
-@Schema({ id: false, versionKey: false })
+@Schema({ versionKey: false })
 export class Brand {
   @Prop({ required: true, unique: true })
   name: string;

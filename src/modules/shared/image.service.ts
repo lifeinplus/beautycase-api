@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
-import type { ImageUploadResponse } from '../types/image-upload';
 import { TempUploadsService } from './temp-uploads.service';
 
 export interface ImageDocument {
-  _id: any;
+  _id: unknown;
   imageId?: string;
   imageUrl: string;
 }
@@ -32,7 +31,7 @@ export class ImageService {
     if (!publicId) return;
 
     try {
-      const displayName = filename || doc._id;
+      const displayName = filename || String(doc._id);
 
       await cloudinary.uploader.explicit(publicId, {
         asset_folder: folder,
@@ -41,7 +40,7 @@ export class ImageService {
         type: 'upload',
       });
 
-      const renamed: ImageUploadResponse = await cloudinary.uploader.rename(
+      const renamed: UploadApiResponse = await cloudinary.uploader.rename(
         publicId,
         `${folder}/${displayName}`,
         { invalidate: true },
@@ -65,17 +64,17 @@ export class ImageService {
 
     if (publicId) {
       try {
-        const renamed: ImageUploadResponse = await cloudinary.uploader.rename(
+        const renamed: UploadApiResponse = await cloudinary.uploader.rename(
           publicId,
-          `${folder}/${doc._id}`,
+          `${folder}/${String(doc._id)}`,
           { invalidate: true, overwrite: true },
         );
 
-        const moved: ImageUploadResponse = await cloudinary.uploader.explicit(
+        const moved: UploadApiResponse = await cloudinary.uploader.explicit(
           renamed.public_id,
           {
             asset_folder: folder,
-            display_name: doc._id,
+            display_name: String(doc._id),
             invalidate: true,
             type: 'upload',
           },

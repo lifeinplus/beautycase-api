@@ -35,6 +35,10 @@ export class AppExceptionFilter implements ExceptionFilter {
 
     const isProduction = process.env.NODE_ENV === 'production';
 
+    if (!isProduction) {
+      this.logger.error(exception);
+    }
+
     if (isCloudinaryError(exception)) {
       const name = 'CloudinaryError';
       const message = exception.message;

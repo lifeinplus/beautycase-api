@@ -35,6 +35,7 @@ export class CreateProductDto {
   @MaxLength(500)
   comment: string;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => StoreLinkDto)
