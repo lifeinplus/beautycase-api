@@ -11,10 +11,10 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateToolDto } from './dto/create-tool.dto';
-import { ToolParamsDto } from './dto/tool-params.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
 import { ToolsService } from './tools.service';
@@ -42,12 +42,12 @@ export class ToolsController {
 
   @Get(':id')
   @Roles()
-  findOne(@Param() params: ToolParamsDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.toolsService.findOne(params.id);
   }
 
   @Put(':id')
-  async update(@Param() params: ToolParamsDto, @Body() dto: UpdateToolDto) {
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateToolDto) {
     const tool = await this.toolsService.update(params.id, dto);
 
     return {
@@ -58,7 +58,7 @@ export class ToolsController {
 
   @Patch(':id/store-links')
   async updateStoreLinks(
-    @Param() params: ToolParamsDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const tool = await this.toolsService.updateStoreLinks(params.id, dto);
@@ -70,7 +70,7 @@ export class ToolsController {
   }
 
   @Delete(':id')
-  async remove(@Param() params: ToolParamsDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const tool = await this.toolsService.remove(params.id);
 
     return {

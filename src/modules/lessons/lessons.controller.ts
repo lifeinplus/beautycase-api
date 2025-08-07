@@ -11,10 +11,10 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateLessonDto } from './dto/create-lesson.dto';
-import { LessonParamsDto } from './dto/lesson-params.dto';
 import { UpdateLessonProductsDto } from './dto/update-lesson-products.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { LessonAccessGuard } from './guards/lesson-access.guard';
@@ -44,14 +44,14 @@ export class LessonsController {
 
   @Get(':id')
   @UseGuards(LessonAccessGuard)
-  findOne(@Param() params: LessonParamsDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.lessonsService.findOne(params.id);
   }
 
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async update(@Param() params: LessonParamsDto, @Body() dto: UpdateLessonDto) {
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateLessonDto) {
     const lesson = await this.lessonsService.update(params.id, dto);
 
     return {
@@ -64,7 +64,7 @@ export class LessonsController {
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
   async updateProducts(
-    @Param() params: LessonParamsDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateLessonProductsDto,
   ) {
     const lesson = await this.lessonsService.updateProducts(params.id, dto);
@@ -78,7 +78,7 @@ export class LessonsController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async remove(@Param() params: LessonParamsDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const lesson = await this.lessonsService.remove(params.id);
 
     return {

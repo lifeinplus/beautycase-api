@@ -1,20 +1,19 @@
 import { IsArray, IsMongoId, IsNotEmpty } from 'class-validator';
-import { Types } from 'mongoose';
 
 export class CreateMakeupBagDto {
   @IsNotEmpty()
   @IsMongoId()
-  categoryId: Types.ObjectId;
+  categoryId: string;
 
   @IsNotEmpty()
   @IsMongoId()
-  clientId: Types.ObjectId;
+  clientId: string;
 
   @IsArray()
   @IsMongoId({ each: true })
-  stageIds: Types.ObjectId[];
+  stageIds: string[];
 
   @IsArray()
   @IsMongoId({ each: true })
-  toolIds: Types.ObjectId[];
+  toolIds: string[];
 }
