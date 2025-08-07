@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
 
-import { UploadFolder } from '../enums/upload-folder.enum';
+import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 
 export class UploadFileDto {
   @IsNotEmpty()

@@ -16,7 +16,7 @@ export class StoresService {
     return this.storeModel.create(dto);
   }
 
-  async getAll(): Promise<StoreDocument[]> {
+  async findAll(): Promise<StoreDocument[]> {
     const stores = await this.storeModel.find().sort('name');
 
     if (!stores.length) {
@@ -26,7 +26,7 @@ export class StoresService {
     return stores;
   }
 
-  async updateById(id: string, dto: UpdateStoreDto): Promise<StoreDocument> {
+  async update(id: string, dto: UpdateStoreDto): Promise<StoreDocument> {
     const store = await this.storeModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
@@ -39,7 +39,7 @@ export class StoresService {
     return store;
   }
 
-  async deleteById(id: string): Promise<StoreDocument> {
+  async remove(id: string): Promise<StoreDocument> {
     const store = await this.storeModel.findByIdAndDelete(id);
 
     if (!store) {

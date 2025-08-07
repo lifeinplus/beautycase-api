@@ -38,17 +38,14 @@ export class BrandsController {
 
   @Get()
   @Roles('admin', 'mua')
-  getAll() {
-    return this.brandsService.getAll();
+  findAll() {
+    return this.brandsService.findAll();
   }
 
   @Put(':id')
   @Roles('admin')
-  async updateById(
-    @Param() params: BrandParamsDto,
-    @Body() dto: UpdateBrandDto,
-  ) {
-    const brand = await this.brandsService.updateById(params.id, dto);
+  async update(@Param() params: BrandParamsDto, @Body() dto: UpdateBrandDto) {
+    const brand = await this.brandsService.update(params.id, dto);
 
     return {
       id: brand.id,
@@ -58,8 +55,8 @@ export class BrandsController {
 
   @Delete(':id')
   @Roles('admin')
-  async deleteById(@Param() params: BrandParamsDto) {
-    const brand = await this.brandsService.deleteById(params.id);
+  async remove(@Param() params: BrandParamsDto) {
+    const brand = await this.brandsService.remove(params.id);
 
     return {
       id: brand.id,

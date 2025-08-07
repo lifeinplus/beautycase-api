@@ -41,24 +41,24 @@ export class MakeupBagsController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  getAll() {
-    return this.makeupBagsService.getAll();
+  findAll() {
+    return this.makeupBagsService.findAll();
   }
 
   @Get(':id')
   @UseGuards(MakeupBagAccessGuard)
-  getById(@Param() params: MakeupBagParamsDto) {
-    return this.makeupBagsService.getById(params.id);
+  findOne(@Param() params: MakeupBagParamsDto) {
+    return this.makeupBagsService.findOne(params.id);
   }
 
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async updateById(
+  async update(
     @Param() params: MakeupBagParamsDto,
     @Body() dto: UpdateMakeupBagDto,
   ) {
-    const makeupBag = await this.makeupBagsService.updateById(params.id, dto);
+    const makeupBag = await this.makeupBagsService.update(params.id, dto);
 
     return {
       id: makeupBag.id,
@@ -69,8 +69,8 @@ export class MakeupBagsController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async deleteById(@Param() params: MakeupBagParamsDto) {
-    const makeupBag = await this.makeupBagsService.deleteById(params.id);
+  async remove(@Param() params: MakeupBagParamsDto) {
+    const makeupBag = await this.makeupBagsService.remove(params.id);
 
     return {
       id: makeupBag.id,

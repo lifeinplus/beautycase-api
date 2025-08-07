@@ -15,7 +15,7 @@ export class BrandsService {
     return this.brandModel.create(dto);
   }
 
-  async getAll(): Promise<BrandDocument[]> {
+  async findAll(): Promise<BrandDocument[]> {
     const brands = await this.brandModel.find().sort('name');
 
     if (!brands.length) {
@@ -25,7 +25,7 @@ export class BrandsService {
     return brands;
   }
 
-  async updateById(id: string, dto: UpdateBrandDto): Promise<BrandDocument> {
+  async update(id: string, dto: UpdateBrandDto): Promise<BrandDocument> {
     const brand = await this.brandModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
@@ -38,7 +38,7 @@ export class BrandsService {
     return brand;
   }
 
-  async deleteById(id: string): Promise<BrandDocument> {
+  async remove(id: string): Promise<BrandDocument> {
     const brand = await this.brandModel.findByIdAndDelete(id);
 
     if (!brand) {

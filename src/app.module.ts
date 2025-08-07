@@ -12,6 +12,7 @@ import { MakeupBagsModule } from './modules/makeup-bags/makeup-bags.module';
 import { ProductsModule } from './modules/products/products.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { StoresModule } from './modules/stores/stores.module';
+import { ToolsModule } from './modules/tools/tools.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -36,6 +37,7 @@ import { UsersModule } from './modules/users/users.module';
     ProductsModule,
     SharedModule,
     StoresModule,
+    ToolsModule,
     UploadsModule,
     UsersModule,
   ],

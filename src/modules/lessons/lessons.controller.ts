@@ -38,21 +38,21 @@ export class LessonsController {
   }
 
   @Get()
-  getAll() {
-    return this.lessonsService.getAll();
+  findAll() {
+    return this.lessonsService.findAll();
   }
 
   @Get(':id')
   @UseGuards(LessonAccessGuard)
-  getById(@Param() params: LessonParamsDto) {
-    return this.lessonsService.getById(params.id);
+  findOne(@Param() params: LessonParamsDto) {
+    return this.lessonsService.findOne(params.id);
   }
 
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
   async update(@Param() params: LessonParamsDto, @Body() dto: UpdateLessonDto) {
-    const lesson = await this.lessonsService.updateById(params.id, dto);
+    const lesson = await this.lessonsService.update(params.id, dto);
 
     return {
       id: lesson.id,
@@ -78,8 +78,8 @@ export class LessonsController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async deleteById(@Param() params: LessonParamsDto) {
-    const lesson = await this.lessonsService.deleteById(params.id);
+  async remove(@Param() params: LessonParamsDto) {
+    const lesson = await this.lessonsService.remove(params.id);
 
     return {
       id: lesson.id,

@@ -17,7 +17,7 @@ export class LessonsService {
     return this.lessonModel.create(dto);
   }
 
-  async getAll(): Promise<LessonDocument[]> {
+  async findAll(): Promise<LessonDocument[]> {
     const lessons = await this.lessonModel
       .find()
       .select('-fullDescription -productIds');
@@ -29,7 +29,7 @@ export class LessonsService {
     return lessons;
   }
 
-  async getById(id: string): Promise<LessonDocument> {
+  async findOne(id: string): Promise<LessonDocument> {
     const lesson = await this.lessonModel
       .findById(id)
       .populate('productIds', 'imageUrl');
@@ -45,7 +45,7 @@ export class LessonsService {
     return this.lessonModel.find({ clientIds: clientId }).select('title');
   }
 
-  async updateById(id: string, dto: UpdateLessonDto): Promise<LessonDocument> {
+  async update(id: string, dto: UpdateLessonDto): Promise<LessonDocument> {
     const lesson = await this.lessonModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
@@ -62,10 +62,10 @@ export class LessonsService {
     id: string,
     dto: UpdateLessonProductsDto,
   ): Promise<LessonDocument> {
-    return this.updateById(id, dto);
+    return this.update(id, dto);
   }
 
-  async deleteById(id: string): Promise<LessonDocument> {
+  async remove(id: string): Promise<LessonDocument> {
     const lesson = await this.lessonModel.findByIdAndDelete(id);
 
     if (!lesson) {

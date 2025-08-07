@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from 'src/modules/shared/image.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -21,7 +22,7 @@ export class ProductsService {
     const { imageUrl } = dto;
 
     await this.imageService.handleImageUpload(product, {
-      folder: 'products',
+      folder: UploadFolder.PRODUCTS,
       secureUrl: imageUrl,
     });
 
@@ -29,7 +30,7 @@ export class ProductsService {
     return product;
   }
 
-  async getAll(): Promise<ProductDocument[]> {
+  async findAll(): Promise<ProductDocument[]> {
     const products = await this.productModel.find().select('imageUrl');
 
     if (!products.length) {
@@ -39,7 +40,7 @@ export class ProductsService {
     return products;
   }
 
-  async getById(id: string): Promise<ProductDocument> {
+  async findOne(id: string): Promise<ProductDocument> {
     const product = await this.productModel.findById(id).populate('brandId');
 
     if (!product) {
@@ -49,10 +50,7 @@ export class ProductsService {
     return product;
   }
 
-  async updateById(
-    id: string,
-    dto: UpdateProductDto,
-  ): Promise<ProductDocument> {
+  async update(id: string, dto: UpdateProductDto): Promise<ProductDocument> {
     const { imageUrl } = dto;
 
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
@@ -66,7 +64,7 @@ export class ProductsService {
 
     if (imageUrl) {
       await this.imageService.handleImageUpdate(product, {
-        folder: 'products',
+        folder: UploadFolder.PRODUCTS,
         secureUrl: imageUrl,
       });
 
@@ -92,7 +90,7 @@ export class ProductsService {
     return product;
   }
 
-  async deleteById(id: string): Promise<ProductDocument> {
+  async remove(id: string): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndDelete(id);
 
     if (!product) {

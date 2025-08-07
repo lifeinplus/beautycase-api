@@ -34,7 +34,7 @@ export class MakeupBagAccessGuard implements CanActivate {
     //   return true;
     // }
 
-    const makeupBag = await this.makeupBagsService.getById(id);
+    const makeupBag = await this.makeupBagsService.findOne(id);
     return makeupBag?.clientId?.toString() === user.userId;
   }
 }

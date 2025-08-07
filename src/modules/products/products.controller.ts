@@ -36,22 +36,22 @@ export class ProductsController {
   }
 
   @Get()
-  getAll() {
-    return this.productsService.getAll();
+  findAll() {
+    return this.productsService.findAll();
   }
 
   @Get(':id')
   @Roles()
-  getById(@Param() params: ProductParamsDto) {
-    return this.productsService.getById(params.id);
+  findOne(@Param() params: ProductParamsDto) {
+    return this.productsService.findOne(params.id);
   }
 
   @Put(':id')
-  async updateById(
+  async update(
     @Param() params: ProductParamsDto,
     @Body() dto: UpdateProductDto,
   ) {
-    const product = await this.productsService.updateById(params.id, dto);
+    const product = await this.productsService.update(params.id, dto);
 
     return {
       id: product.id,
@@ -73,8 +73,8 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  async deleteById(@Param() params: ProductParamsDto) {
-    const product = await this.productsService.deleteById(params.id);
+  async remove(@Param() params: ProductParamsDto) {
+    const product = await this.productsService.remove(params.id);
 
     return {
       id: product.id,

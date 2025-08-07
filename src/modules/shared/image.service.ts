@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
+import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TempUploadsService } from './temp-uploads.service';
 
 export interface ImageDocument {
@@ -11,7 +12,7 @@ export interface ImageDocument {
 
 export interface ImageOptions {
   filename?: string;
-  folder: string;
+  folder: UploadFolder;
   secureUrl: string;
   destroyOnReplace?: boolean;
 }

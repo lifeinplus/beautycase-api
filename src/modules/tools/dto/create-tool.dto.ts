@@ -13,7 +13,7 @@ import {
 
 import { StoreLinkDto } from 'src/common/dto/store-link.dto';
 
-export class CreateProductDto {
+export class CreateToolDto {
   @IsMongoId()
   @IsNotEmpty()
   brandId: string;
@@ -30,7 +30,7 @@ export class CreateProductDto {
 
   @IsString()
   @IsOptional()
-  shade?: string;
+  number?: string;
 
   @IsString()
   @IsNotEmpty()

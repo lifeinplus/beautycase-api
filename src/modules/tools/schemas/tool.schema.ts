@@ -1,9 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-import { StoreLink, StoreLinkSchema } from './store-link.schema';
+import {
+  StoreLink,
+  StoreLinkSchema,
+} from 'src/modules/products/schemas/store-link.schema';
 
-export type ProductDocument = Product & Document;
+export type ToolDocument = Tool & Document;
 
 @Schema({
   toJSON: {
@@ -15,7 +18,7 @@ export type ProductDocument = Product & Document;
   },
   versionKey: false,
 })
-export class Product {
+export class Tool {
   @Prop({ type: Types.ObjectId, ref: 'Brand', required: true })
   brandId: Types.ObjectId;
 
@@ -29,7 +32,7 @@ export class Product {
   imageUrl: string;
 
   @Prop()
-  shade?: string;
+  number?: string;
 
   @Prop({ required: true })
   comment: string;
@@ -38,8 +41,8 @@ export class Product {
   storeLinks: StoreLink[];
 }
 
-export const ProductSchema = SchemaFactory.createForClass(Product);
+export const ToolSchema = SchemaFactory.createForClass(Tool);
 
-ProductSchema.virtual('brand').get(function () {
+ToolSchema.virtual('brand').get(function () {
   return this.brandId;
 });

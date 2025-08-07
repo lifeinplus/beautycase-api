@@ -35,17 +35,14 @@ export class StoresController {
 
   @Get()
   @Roles('admin', 'mua')
-  getAll() {
-    return this.storesService.getAll();
+  findAll() {
+    return this.storesService.findAll();
   }
 
   @Put(':id')
   @Roles('admin')
-  async updateById(
-    @Param() params: StoreParamsDto,
-    @Body() dto: UpdateStoreDto,
-  ) {
-    const store = await this.storesService.updateById(params.id, dto);
+  async update(@Param() params: StoreParamsDto, @Body() dto: UpdateStoreDto) {
+    const store = await this.storesService.update(params.id, dto);
 
     return {
       id: store.id,
@@ -55,8 +52,8 @@ export class StoresController {
 
   @Delete(':id')
   @Roles('admin')
-  async deleteById(@Param() params: StoreParamsDto) {
-    const store = await this.storesService.deleteById(params.id);
+  async remove(@Param() params: StoreParamsDto) {
+    const store = await this.storesService.remove(params.id);
 
     return {
       id: store.id,

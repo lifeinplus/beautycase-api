@@ -17,7 +17,7 @@ export class MakeupBagsService {
     return this.makeupBagModel.create(dto);
   }
 
-  async getAll(): Promise<MakeupBagDocument[]> {
+  async findAll(): Promise<MakeupBagDocument[]> {
     const makeupBags = await this.makeupBagModel
       .find()
       .select('categoryId clientId createdAt stageIds')
@@ -34,7 +34,7 @@ export class MakeupBagsService {
     return makeupBags;
   }
 
-  async getById(id: string): Promise<MakeupBagDocument> {
+  async findOne(id: string): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).populate([
       { path: 'categoryId' },
       { path: 'clientId', select: 'username' },
@@ -67,7 +67,7 @@ export class MakeupBagsService {
       .populate('categoryId', 'name');
   }
 
-  async updateById(
+  async update(
     id: string,
     dto: UpdateMakeupBagDto,
   ): Promise<MakeupBagDocument> {
@@ -83,7 +83,7 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  async deleteById(id: string): Promise<MakeupBagDocument> {
+  async remove(id: string): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiOptions } from 'cloudinary';
 
+import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TempUploadsService } from 'src/modules/shared/temp-uploads.service';
 
 @Injectable()
@@ -18,7 +19,7 @@ export class UploadService {
   }
 
   async uploadTempImageByFile(
-    folder: string,
+    folder: UploadFolder,
     file?: Express.Multer.File,
   ): Promise<string> {
     if (!file) {
@@ -51,7 +52,7 @@ export class UploadService {
   }
 
   async uploadTempImageByUrl(
-    folder: string,
+    folder: UploadFolder,
     imageUrl: string,
   ): Promise<string> {
     const options: UploadApiOptions = {

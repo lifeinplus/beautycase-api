@@ -1,0 +1,81 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { CreateToolDto } from './dto/create-tool.dto';
+import { ToolParamsDto } from './dto/tool-params.dto';
+import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
+import { UpdateToolDto } from './dto/update-tool.dto';
+import { ToolsService } from './tools.service';
+
+@Controller('tools')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'mua')
+export class ToolsController {
+  constructor(private readonly toolsService: ToolsService) {}
+
+  @Post()
+  async create(@Body() dto: CreateToolDto) {
+    const tool = await this.toolsService.create(dto);
+
+    return {
+      id: tool.id,
+      message: 'Tool created successfully',
+    };
+  }
+
+  @Get()
+  findAll() {
+    return this.toolsService.findAll();
+  }
+
+  @Get(':id')
+  @Roles()
+  findOne(@Param() params: ToolParamsDto) {
+    return this.toolsService.findOne(params.id);
+  }
+
+  @Put(':id')
+  async update(@Param() params: ToolParamsDto, @Body() dto: UpdateToolDto) {
+    const tool = await this.toolsService.update(params.id, dto);
+
+    return {
+      id: tool.id,
+      message: 'Tool updated successfully',
+    };
+  }
+
+  @Patch(':id/store-links')
+  async updateStoreLinks(
+    @Param() params: ToolParamsDto,
+    @Body() dto: UpdateStoreLinksDto,
+  ) {
+    const tool = await this.toolsService.updateStoreLinks(params.id, dto);
+
+    return {
+      id: tool.id,
+      message: 'Tool store links updated successfully',
+    };
+  }
+
+  @Delete(':id')
+  async remove(@Param() params: ToolParamsDto) {
+    const tool = await this.toolsService.remove(params.id);
+
+    return {
+      id: tool.id,
+      message: 'Tool deleted successfully',
+    };
+  }
+}
