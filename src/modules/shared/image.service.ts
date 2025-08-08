@@ -12,7 +12,7 @@ export interface ImageDocument {
 
 export interface ImageOptions {
   filename?: string;
-  folder: UploadFolder;
+  folder: UploadFolder | string;
   secureUrl: string;
   destroyOnReplace?: boolean;
 }

@@ -11,6 +11,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { LessonsModule } from './modules/lessons/lessons.module';
 import { MakeupBagsModule } from './modules/makeup-bags/makeup-bags.module';
 import { ProductsModule } from './modules/products/products.module';
+import { QuestionnairesModule } from './modules/questionnaires/questionnaires.module';
 import { SharedModule } from './modules/shared/shared.module';
 import { StagesModule } from './modules/stages/stages.module';
 import { StoresModule } from './modules/stores/stores.module';
@@ -38,6 +39,7 @@ import { UsersModule } from './modules/users/users.module';
     LessonsModule,
     MakeupBagsModule,
     ProductsModule,
+    QuestionnairesModule,
     SharedModule,
     StagesModule,
     StoresModule,
