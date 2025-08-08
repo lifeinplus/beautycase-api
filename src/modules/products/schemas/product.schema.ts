@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 import { StoreLink, StoreLinkSchema } from './store-link.schema';
 
-export type ProductDocument = Product & Document;
+export type ProductDocument = HydratedDocument<Product>;
 
 @Schema({
   toJSON: {

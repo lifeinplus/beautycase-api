@@ -1,0 +1,91 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { CreateStageDto } from './dto/create-stage.dto';
+import { UpdateStageProductsDto } from './dto/update-stage-products.dto';
+import { UpdateStageDto } from './dto/update-stage.dto';
+import { StagesService } from './stages.service';
+
+@Controller('stages')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'mua')
+export class StagesController {
+  constructor(private readonly stagesService: StagesService) {}
+
+  @Post()
+  async create(@Body() dto: CreateStageDto) {
+    const stage = await this.stagesService.create(dto);
+
+    return {
+      id: stage.id,
+      message: 'Stage created successfully',
+    };
+  }
+
+  @Post('duplicate/:id')
+  async duplicate(@Param() params: MongoIdParamDto) {
+    const stage = await this.stagesService.duplicate(params.id);
+
+    return {
+      id: stage.id,
+      message: 'Stage duplicated successfully',
+    };
+  }
+
+  @Get()
+  findAll() {
+    return this.stagesService.findAll();
+  }
+
+  @Get(':id')
+  @Roles()
+  findOne(@Param() params: MongoIdParamDto) {
+    return this.stagesService.findOne(params.id);
+  }
+
+  @Put(':id')
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateStageDto) {
+    const stage = await this.stagesService.update(params.id, dto);
+
+    return {
+      id: stage.id,
+      message: 'Stage updated successfully',
+    };
+  }
+
+  @Patch(':id/products')
+  async updateProducts(
+    @Param() params: MongoIdParamDto,
+    @Body() dto: UpdateStageProductsDto,
+  ) {
+    const stage = await this.stagesService.updateProducts(params.id, dto);
+
+    return {
+      id: stage.id,
+      message: 'Stage products updated successfully',
+    };
+  }
+
+  @Delete(':id')
+  async remove(@Param() params: MongoIdParamDto) {
+    const stage = await this.stagesService.remove(params.id);
+
+    return {
+      id: stage.id,
+      message: 'Stage deleted successfully',
+    };
+  }
+}

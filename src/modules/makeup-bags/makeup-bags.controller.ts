@@ -6,8 +6,8 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 
@@ -51,7 +51,7 @@ export class MakeupBagsController {
     return this.makeupBagsService.findOne(params.id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
   async update(

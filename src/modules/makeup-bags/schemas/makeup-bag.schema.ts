@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Transform } from 'class-transformer';
-import { Document, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
-export type MakeupBagDocument = MakeupBag & Document;
+export type MakeupBagDocument = HydratedDocument<MakeupBag>;
 
 @Schema({
   timestamps: true,
