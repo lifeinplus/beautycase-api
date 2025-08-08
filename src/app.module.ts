@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import configuration from './config/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import { BrandsModule } from './modules/brands/brands.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { LessonsModule } from './modules/lessons/lessons.module';
 import { MakeupBagsModule } from './modules/makeup-bags/makeup-bags.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -32,6 +33,7 @@ import { UsersModule } from './modules/users/users.module';
     }),
     AuthModule,
     BrandsModule,
+    CategoriesModule,
     LessonsModule,
     MakeupBagsModule,
     ProductsModule,
