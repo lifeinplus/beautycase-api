@@ -7,17 +7,8 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import type { UserRequest } from 'src/common/types/user-request.interface';
 import { Lesson, LessonDocument } from '../schemas/lesson.schema';
-
-interface UserRequest {
-  user?: {
-    role?: string;
-    userId?: string;
-  };
-  params: {
-    id: string;
-  };
-}
 
 @Injectable()
 export class LessonAccessGuard implements CanActivate {

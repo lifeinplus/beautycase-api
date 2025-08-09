@@ -1,40 +1,42 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
-import { MakeupBagsService } from '../makeup-bags.service';
+import type { UserRequest } from 'src/common/types/user-request.interface';
+import { MakeupBag, MakeupBagDocument } from '../schemas/makeup-bag.schema';
 
 @Injectable()
 export class MakeupBagAccessGuard implements CanActivate {
-  constructor(private readonly makeupBagsService: MakeupBagsService) {}
+  constructor(
+    @InjectModel(MakeupBag.name)
+    private makeupBagModel: Model<MakeupBagDocument>,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const { id } = request.params;
-    const user = request.user;
+    const request: UserRequest = context.switchToHttp().getRequest();
+    const { user, params } = request;
+    const { id } = params;
+    const { role, userId } = user || {};
 
-    if (!user) {
-      return false;
-    }
-
-    const { role, userId } = user;
-
-    if (['admin', 'mua'].includes(role)) {
+    if (['admin', 'mua'].includes(role || '')) {
       return true;
     }
 
-    // Client can only access their own makeup bags
-    // if (role === 'client') {
-    //   const makeupBag = await this.makeupBagModel
-    //     .findById(id)
-    //     .select('clientId');
+    if (role === 'client') {
+      const makeupBag = await this.makeupBagModel
+        .findById(id)
+        .select('clientId');
 
-    //   if (!makeupBag || !userId || makeupBag.clientId.toString() !== userId) {
-    //     throw new NotFoundException('MakeupBag not found');
-    //   }
+      if (!makeupBag || !userId || makeupBag.clientId.toString() !== userId) {
+        throw new NotFoundException('MakeupBag not found');
+      }
+    }
 
-    //   return true;
-    // }
-
-    const makeupBag = await this.makeupBagsService.findOne(id);
-    return makeupBag?.clientId?.toString() === user.userId;
+    return true;
   }
 }
