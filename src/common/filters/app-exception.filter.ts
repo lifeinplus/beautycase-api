@@ -8,13 +8,13 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-interface CloudinaryError {
+interface CloudinaryException {
   http_code: number;
   message: string;
   name: string;
 }
 
-function isCloudinaryError(error: unknown): error is CloudinaryError {
+function isCloudinaryException(error: unknown): error is CloudinaryException {
   return (
     typeof error === 'object' &&
     error !== null &&
@@ -39,49 +39,43 @@ export class AppExceptionFilter implements ExceptionFilter {
       this.logger.error(exception);
     }
 
-    if (isCloudinaryError(exception)) {
-      const name = 'CloudinaryError';
-      const message = exception.message;
+    if (isCloudinaryException(exception)) {
       const status = exception.http_code;
+      const name = 'CloudinaryException';
+      const message = exception.message;
 
       this.logger.error(`${method} ${url} - ${status} - ${name}: ${message}`);
 
-      response.status(status).json({
-        name,
-        message,
-        success: false,
-      });
-
+      response.status(status).json({ status, name, message });
       return;
     }
 
     if (exception instanceof HttpException) {
-      const name = exception.name;
-      const message = exception.message;
       const status = exception.getStatus();
+      const res = exception.getResponse();
+      const name = exception.name;
+
+      let message: string | string[] = 'An unexpected error occurred';
+
+      if (typeof res === 'string') {
+        message = res;
+      } else if (typeof res === 'object' && res !== null && 'message' in res) {
+        message = res.message as string | string[];
+      }
 
       this.logger.error(`${method} ${url} - ${status} - ${name}: ${message}`);
 
-      response.status(status).json({
-        message: message,
-        stack: isProduction ? undefined : exception.stack,
-        success: false,
-      });
-
+      response.status(status).json({ status, name, message });
       return;
     }
 
     const error = exception as Error;
+    const status = HttpStatus.INTERNAL_SERVER_ERROR;
     const name = error.name;
     const message = error.message || 'Internal server error';
-    const status = HttpStatus.INTERNAL_SERVER_ERROR;
 
     this.logger.error(`${method} ${url} - ${status} - ${name}: ${message}`);
 
-    response.status(status).json({
-      message: message,
-      stack: isProduction ? undefined : error.stack,
-      success: false,
-    });
+    response.status(status).json({ status, name, message });
   }
 }

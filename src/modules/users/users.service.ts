@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 
 import { LessonsService } from '../lessons/lessons.service';
 import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
+import { CreateUserDto } from './dto/create-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
@@ -14,7 +15,11 @@ export class UsersService {
     private readonly makeupBagsService: MakeupBagsService,
   ) {}
 
-  async getAllUsers() {
+  create(dto: CreateUserDto): Promise<UserDocument> {
+    return this.userModel.create(dto);
+  }
+
+  async findAll() {
     const users = await this.userModel.find().select('_id username');
 
     if (!users.length) {
@@ -24,7 +29,7 @@ export class UsersService {
     return users;
   }
 
-  async getUserById(id: string) {
+  async findOne(id: string) {
     const user = await this.userModel.findById(id).select('role username');
 
     if (!user) {
@@ -41,11 +46,11 @@ export class UsersService {
     };
   }
 
-  getByRefreshToken(token: string): Promise<UserDocument | null> {
+  findByRefreshToken(token: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ refreshTokens: token });
   }
 
-  getByUsername(username: string): Promise<UserDocument | null> {
+  findByUsername(username: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ username });
   }
 

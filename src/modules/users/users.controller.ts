@@ -14,12 +14,12 @@ export class UsersController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  getAllUsers() {
-    return this.usersService.getAllUsers();
+  findAll() {
+    return this.usersService.findAll();
   }
 
   @Get(':id')
-  getUserById(@Param() params: MongoIdParamDto) {
-    return this.usersService.getUserById(params.id);
+  findOne(@Param() params: MongoIdParamDto) {
+    return this.usersService.findOne(params.id);
   }
 }

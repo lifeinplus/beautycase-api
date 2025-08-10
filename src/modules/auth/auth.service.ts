@@ -1,9 +1,15 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { TokenService } from './token.service';
 import type {
   LoginResult,
@@ -24,7 +30,7 @@ export class AuthService {
     dto: LoginDto,
     existingRefreshToken?: string,
   ): Promise<LoginResult> {
-    const foundUser = await this.usersService.getByUsername(dto.username);
+    const foundUser = await this.usersService.findByUsername(dto.username);
 
     if (!foundUser) {
       throw new UnauthorizedException('Username or password is incorrect');
@@ -55,7 +61,7 @@ export class AuthService {
       // 2. RT is stolen
       // 3. Clear all RTs when user logins
       const foundToken =
-        await this.usersService.getByRefreshToken(existingRefreshToken);
+        await this.usersService.findByRefreshToken(existingRefreshToken);
 
       if (!foundToken) {
         this.logger.warn('Attempted refresh token reuse at /api/auth/login');
@@ -81,7 +87,7 @@ export class AuthService {
 
   async logoutUser(existingRefreshToken: string): Promise<boolean> {
     const foundUser =
-      await this.usersService.getByRefreshToken(existingRefreshToken);
+      await this.usersService.findByRefreshToken(existingRefreshToken);
 
     if (!foundUser) {
       return false;
@@ -104,7 +110,7 @@ export class AuthService {
     }
 
     const foundUser =
-      await this.usersService.getByRefreshToken(existingRefreshToken);
+      await this.usersService.findByRefreshToken(existingRefreshToken);
 
     if (!foundUser) {
       const decoded =
@@ -112,7 +118,7 @@ export class AuthService {
 
       this.logger.warn('Attempted refresh token reuse at /api/auth/refresh');
 
-      const hackedUser = await this.usersService.getByUsername(
+      const hackedUser = await this.usersService.findByUsername(
         decoded.username,
       );
 
@@ -172,5 +178,23 @@ export class AuthService {
         username: foundUser.username,
       },
     };
+  }
+
+  async registerUser(dto: RegisterDto): Promise<void> {
+    const { username, password } = dto;
+
+    const existingUser = await this.usersService.findByUsername(username);
+
+    if (existingUser) {
+      throw new ConflictException('Username already in use');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await this.usersService.create({
+      username,
+      password: hashedPassword,
+      role: 'client',
+    });
   }
 }
