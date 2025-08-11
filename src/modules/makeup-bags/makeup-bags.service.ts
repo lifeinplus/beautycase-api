@@ -60,7 +60,17 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  getByClientId(clientId: string): Promise<MakeupBagDocument[]> {
+  async findOneWithClientId(id: string): Promise<MakeupBagDocument> {
+    const makeupBag = await this.makeupBagModel.findById(id).select('clientId');
+
+    if (!makeupBag) {
+      throw new NotFoundException('MakeupBag not found');
+    }
+
+    return makeupBag;
+  }
+
+  findByClientId(clientId: string): Promise<MakeupBagDocument[]> {
     return this.makeupBagModel
       .find({ clientId })
       .select('categoryId')

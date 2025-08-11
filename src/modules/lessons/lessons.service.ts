@@ -41,6 +41,16 @@ export class LessonsService {
     return lesson;
   }
 
+  async findOneWithClientId(id: string): Promise<LessonDocument> {
+    const lesson = await this.lessonModel.findById(id).select('clientIds');
+
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    return lesson;
+  }
+
   getByClientId(clientId: string): Promise<LessonDocument[]> {
     return this.lessonModel.find({ clientIds: clientId }).select('title');
   }

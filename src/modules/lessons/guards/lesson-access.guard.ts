@@ -4,17 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 
 import type { UserRequest } from 'src/common/types/user-request.interface';
-import { Lesson, LessonDocument } from '../schemas/lesson.schema';
+import { LessonsService } from '../lessons.service';
 
 @Injectable()
 export class LessonAccessGuard implements CanActivate {
-  constructor(
-    @InjectModel(Lesson.name) private lessonModel: Model<LessonDocument>,
-  ) {}
+  constructor(private readonly lessonsService: LessonsService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: UserRequest = context.switchToHttp().getRequest();
@@ -27,7 +23,7 @@ export class LessonAccessGuard implements CanActivate {
     }
 
     if (role === 'client') {
-      const lesson = await this.lessonModel.findById(id).select('clientIds');
+      const lesson = await this.lessonsService.findOneWithClientId(id);
 
       if (
         !lesson ||

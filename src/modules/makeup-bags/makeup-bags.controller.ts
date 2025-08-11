@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Post,
   Put,
@@ -28,7 +26,6 @@ export class MakeupBagsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateMakeupBagDto) {
     const makeupBag = await this.makeupBagsService.create(dto);
 

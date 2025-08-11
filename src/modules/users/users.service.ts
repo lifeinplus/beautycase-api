@@ -37,7 +37,7 @@ export class UsersService {
     }
 
     const lessons = await this.lessonsService.getByClientId(id);
-    const makeupBags = await this.makeupBagsService.getByClientId(id);
+    const makeupBags = await this.makeupBagsService.findByClientId(id);
 
     return {
       user,

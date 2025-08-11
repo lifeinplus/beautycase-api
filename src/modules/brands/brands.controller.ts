@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Post,
   Put,
@@ -26,7 +24,6 @@ export class BrandsController {
 
   @Post()
   @Roles('admin')
-  @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateBrandDto) {
     const brand = await this.brandsService.create(dto);
 

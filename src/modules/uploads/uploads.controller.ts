@@ -10,11 +10,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from './config/multer.config';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { UploadUrlDto } from './dto/upload-url.dto';
-import { UploadService } from './uploads.service';
+import { UploadsService } from './uploads.service';
 
 @Controller('uploads')
 export class UploadsController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadsService) {}
 
   @Post('temp-image-file')
   @UseInterceptors(FileInterceptor('imageFile', multerConfig))

@@ -6,7 +6,7 @@ import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TempUploadsService } from 'src/modules/shared/temp-uploads.service';
 
 @Injectable()
-export class UploadService {
+export class UploadsService {
   constructor(
     private readonly tempUploadsService: TempUploadsService,
     private readonly configService: ConfigService,
