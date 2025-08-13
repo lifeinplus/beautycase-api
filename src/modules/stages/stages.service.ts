@@ -88,9 +88,11 @@ export class StagesService {
         secureUrl: imageUrl,
         destroyOnReplace: false,
       });
+
+      await stage.save();
     }
 
-    return stage.save();
+    return stage;
   }
 
   async updateProducts(
