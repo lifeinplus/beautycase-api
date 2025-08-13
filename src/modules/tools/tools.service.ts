@@ -67,7 +67,7 @@ export class ToolsService {
         secureUrl: imageUrl,
       });
 
-      return tool.save();
+      await tool.save();
     }
 
     return tool;

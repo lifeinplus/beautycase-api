@@ -1,14 +1,43 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { CreateToolDto } from './dto/create-tool.dto';
+import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
+import { UpdateToolDto } from './dto/update-tool.dto';
 import { ToolsController } from './tools.controller';
 import { ToolsService } from './tools.service';
 
 describe('ToolsController', () => {
   let controller: ToolsController;
 
+  const mockTool = {
+    id: 'tool-id',
+    brandId: 'brand-id',
+    name: 'Brush',
+    imageUrl: 'http://example.com/image.jpg',
+    number: '123',
+    comment: 'Great tool',
+    storeLinks: [],
+  };
+
+  const mockToolsService = {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    updateStoreLinks: jest.fn(),
+    remove: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ToolsController],
-      providers: [{ provide: ToolsService, useValue: {} }],
+      providers: [
+        {
+          provide: ToolsService,
+          useValue: mockToolsService,
+        },
+      ],
     }).compile();
 
     controller = module.get<ToolsController>(ToolsController);
@@ -16,5 +45,111 @@ describe('ToolsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should create a tool and return id + message', async () => {
+      mockToolsService.create.mockResolvedValue(mockTool as any);
+
+      const dto: CreateToolDto = {
+        brandId: 'brand-id',
+        name: 'Brush',
+        imageUrl: 'http://example.com/image.jpg',
+        number: '123',
+        comment: 'Great tool',
+        storeLinks: [],
+      };
+
+      const result = await controller.create(dto);
+
+      expect(mockToolsService.create).toHaveBeenCalledWith(dto);
+      expect(result).toEqual({
+        id: 'tool-id',
+        message: 'Tool created successfully',
+      });
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return all tools', async () => {
+      mockToolsService.findAll.mockResolvedValue([mockTool]);
+
+      const result = await controller.findAll();
+
+      expect(mockToolsService.findAll).toHaveBeenCalled();
+      expect(result).toEqual([mockTool]);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return tool by id', async () => {
+      mockToolsService.findOne.mockResolvedValue(mockTool);
+
+      const params: MongoIdParamDto = { id: 'tool-id' };
+      const result = await controller.findOne(params);
+
+      expect(mockToolsService.findOne).toHaveBeenCalledWith('tool-id');
+      expect(result).toEqual(mockTool);
+    });
+
+    it('should throw NotFoundException if not found', async () => {
+      mockToolsService.findOne.mockRejectedValue(new NotFoundException());
+
+      await expect(controller.findOne({ id: 'bad-id' })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('update', () => {
+    it('should update a tool and return id + message', async () => {
+      mockToolsService.update.mockResolvedValue(mockTool);
+
+      const params: MongoIdParamDto = { id: 'tool-id' };
+      const dto: UpdateToolDto = { name: 'Updated Brush' };
+
+      const result = await controller.update(params, dto);
+
+      expect(mockToolsService.update).toHaveBeenCalledWith('tool-id', dto);
+      expect(result).toEqual({
+        id: 'tool-id',
+        message: 'Tool updated successfully',
+      });
+    });
+  });
+
+  describe('updateStoreLinks', () => {
+    it('should update store links and return id + message', async () => {
+      mockToolsService.updateStoreLinks.mockResolvedValue(mockTool);
+
+      const params: MongoIdParamDto = { id: 'tool-id' };
+      const dto: UpdateStoreLinksDto = { storeLinks: [] };
+
+      const result = await controller.updateStoreLinks(params, dto);
+
+      expect(mockToolsService.updateStoreLinks).toHaveBeenCalledWith(
+        'tool-id',
+        dto,
+      );
+      expect(result).toEqual({
+        id: 'tool-id',
+        message: 'Tool store links updated successfully',
+      });
+    });
+  });
+
+  describe('remove', () => {
+    it('should delete a tool and return id + message', async () => {
+      mockToolsService.remove.mockResolvedValue(mockTool);
+
+      const params: MongoIdParamDto = { id: 'tool-id' };
+      const result = await controller.remove(params);
+
+      expect(mockToolsService.remove).toHaveBeenCalledWith('tool-id');
+      expect(result).toEqual({
+        id: 'tool-id',
+        message: 'Tool deleted successfully',
+      });
+    });
   });
 });

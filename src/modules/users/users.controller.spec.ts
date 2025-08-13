@@ -1,21 +1,72 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { NotFoundException } from '@nestjs/common';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
+  let service: UsersService;
+
+  const mockUser = {
+    _id: 'user-id',
+    username: 'john_doe',
+    role: 'client',
+  };
+
+  const mockUsersService = {
+    findAll: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue({ id: '1', name: 'Test User' }),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [{ provide: UsersService, useValue: {} }],
+      providers: [
+        {
+          provide: UsersService,
+          useValue: mockUsersService,
+        },
+      ],
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
+    service = module.get<UsersService>(UsersService);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('findAll', () => {
+    it('should return all users', async () => {
+      mockUsersService.findAll.mockResolvedValue([mockUser]);
+
+      const result = await controller.findAll();
+
+      expect(mockUsersService.findAll).toHaveBeenCalled();
+      expect(result).toEqual([mockUser]);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return a user by id', async () => {
+      mockUsersService.findOne.mockResolvedValue(mockUser);
+
+      const params: MongoIdParamDto = { id: 'user-id' };
+      const result = await controller.findOne(params);
+
+      expect(mockUsersService.findOne).toHaveBeenCalledWith('user-id');
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      mockUsersService.findOne.mockRejectedValue(new NotFoundException());
+
+      await expect(controller.findOne({ id: 'invalid-id' })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 });
