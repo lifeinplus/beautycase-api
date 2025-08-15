@@ -22,6 +22,18 @@ describe('Auth (e2e)', () => {
   let configService: ConfigService;
   let mongoConnection: Connection;
 
+  const extractJwtCookie = (response: request.Response): string | undefined => {
+    const setCookieHeader = response.headers['set-cookie'];
+
+    if (!setCookieHeader) return undefined;
+
+    const cookies = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+      : [setCookieHeader];
+
+    return cookies.find((cookie: string) => cookie.startsWith('jwt='));
+  };
+
   const testUser = {
     username: 'testuser',
     password: 'testpass123',
@@ -184,6 +196,10 @@ describe('Auth (e2e)', () => {
         userId: expect.any(String),
         username: testUser.username,
       });
+
+      const jwtCookie = extractJwtCookie(response);
+      expect(jwtCookie).toBeTruthy();
+      expect(jwtCookie).toContain('HttpOnly');
     });
 
     it('should reject login with invalid username', async () => {
@@ -224,9 +240,7 @@ describe('Auth (e2e)', () => {
         })
         .expect(HttpStatus.OK);
 
-      const firstJwtCookie = firstLogin.headers['set-cookie']?.find(
-        (cookie: string) => cookie.startsWith('jwt='),
-      );
+      const firstJwtCookie = extractJwtCookie(firstLogin);
 
       // Second login with existing refresh token
       const secondLogin = await request(app.getHttpServer())
