@@ -4,9 +4,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import * as cookieParser from 'cookie-parser';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
+import { getConnectionToken } from '@nestjs/mongoose';
 import { AuthModule } from 'src/modules/auth/auth.module';
+import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { RegisterDto } from 'src/modules/auth/dto/register.dto';
 import { UsersModule } from 'src/modules/users/users.module';
 import { UsersService } from 'src/modules/users/users.service';
@@ -17,6 +20,7 @@ describe('Auth (e2e)', () => {
   let mongoServer: MongoMemoryServer;
   let usersService: UsersService;
   let configService: ConfigService;
+  let mongoConnection: Connection;
 
   const testUser = {
     username: 'testuser',
@@ -67,6 +71,7 @@ describe('Auth (e2e)', () => {
 
     usersService = moduleFixture.get<UsersService>(UsersService);
     configService = moduleFixture.get<ConfigService>(ConfigService);
+    mongoConnection = moduleFixture.get<Connection>(getConnectionToken());
   });
 
   afterAll(async () => {
@@ -74,11 +79,9 @@ describe('Auth (e2e)', () => {
     await app.close();
   });
 
-  // beforeEach(async () => {
-  //   // Clean up users before each test
-  //   (await usersService.deleteAll?.()) ||
-  //     (await (usersService as any).userModel?.deleteMany({}));
-  // });
+  beforeEach(async () => {
+    await DatabaseHelper.clearDatabase(mongoConnection);
+  });
 
   describe('POST /auth/register', () => {
     it('should register a new user successfully', async () => {
@@ -97,13 +100,11 @@ describe('Auth (e2e)', () => {
         message: 'Account created successfully',
       });
 
-      // Verify user was created in database
       const createdUser = await usersService.findByUsername('newuser');
       expect(createdUser).toBeTruthy();
       expect(createdUser?.username).toBe('newuser');
       expect(createdUser?.role).toBe('client');
 
-      // Verify password was hashed
       const isPasswordHashed = await bcrypt.compare(
         'newpass123',
         createdUser?.password!,
@@ -111,151 +112,143 @@ describe('Auth (e2e)', () => {
       expect(isPasswordHashed).toBe(true);
     });
 
-    // it('should reject registration with duplicate username', async () => {
-    //   // Create user first
-    //   await usersService.create({
-    //     username: testUser.username,
-    //     password: await bcrypt.hash(testUser.password, 10),
-    //     role: testUser.role,
-    //   });
+    it('should reject registration with duplicate username', async () => {
+      await usersService.create({
+        username: testUser.username,
+        password: await bcrypt.hash(testUser.password, 10),
+        role: testUser.role,
+      });
 
-    //   const registerDto = {
-    //     username: testUser.username,
-    //     password: 'anotherpass123',
-    //   };
+      const dto: RegisterDto = {
+        username: testUser.username,
+        password: 'anotherpass123',
+        confirmPassword: 'anotherpass123',
+      };
 
-    //   const response = await request(app.getHttpServer())
-    //     .post('/auth/register')
-    //     .send(registerDto)
-    //     .expect(409);
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send(dto)
+        .expect(409);
 
-    //   expect(response.body.message).toBe('Username already in use');
-    // });
+      expect(response.body.message).toBe('Username already in use');
+    });
 
-    // it('should reject registration with invalid data', async () => {
-    //   const invalidDto = {
-    //     username: '', // Empty username
-    //     password: '123', // Too short password
-    //   };
+    it('should reject registration with invalid data', async () => {
+      const invalidDto = {
+        username: '', // Empty username
+        password: '123', // Too short password
+      };
 
-    //   await request(app.getHttpServer())
-    //     .post('/auth/register')
-    //     .send(invalidDto)
-    //     .expect(400);
-    // });
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send(invalidDto)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
 
-    // it('should reject registration with missing fields', async () => {
-    //   const incompleteDto = {
-    //     username: 'testuser',
-    //     // Missing password
-    //   };
+    it('should reject registration with missing fields', async () => {
+      const incompleteDto = {
+        username: 'testuser',
+        // Missing password
+      };
 
-    //   await request(app.getHttpServer())
-    //     .post('/auth/register')
-    //     .send(incompleteDto)
-    //     .expect(400);
-    // });
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send(incompleteDto)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
   });
 
-  // describe('POST /auth/login', () => {
-  //   beforeEach(async () => {
-  //     // Create test user before each login test
-  //     await usersService.create({
-  //       username: testUser.username,
-  //       password: await bcrypt.hash(testUser.password, 10),
-  //       role: testUser.role,
-  //     });
-  //   });
+  describe('POST /auth/login', () => {
+    beforeEach(async () => {
+      await usersService.create({
+        username: testUser.username,
+        password: await bcrypt.hash(testUser.password, 10),
+        role: testUser.role,
+      });
+    });
 
-  //   it('should login successfully with valid credentials', async () => {
-  //     const loginDto = {
-  //       username: testUser.username,
-  //       password: testUser.password,
-  //     };
+    it('should login successfully with valid credentials', async () => {
+      const loginDto: LoginDto = {
+        username: testUser.username,
+        password: testUser.password,
+      };
 
-  //     const response = await request(app.getHttpServer())
-  //       .post('/auth/login')
-  //       .send(loginDto)
-  //       .expect(200);
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(loginDto)
+        .expect(HttpStatus.OK);
 
-  //     expect(response.body).toMatchObject({
-  //       accessToken: expect.any(String),
-  //       role: testUser.role,
-  //       userId: expect.any(String),
-  //       username: testUser.username,
-  //     });
+      expect(response.body).toMatchObject({
+        accessToken: expect.any(String),
+        role: testUser.role,
+        userId: expect.any(String),
+        username: testUser.username,
+      });
+    });
 
-  //     // Verify JWT cookie is set
-  //     const jwtCookie = response.headers['set-cookie']?.find((cookie: string) =>
-  //       cookie.startsWith('jwt='),
-  //     );
-  //     expect(jwtCookie).toBeTruthy();
-  //     expect(jwtCookie).toContain('HttpOnly');
-  //   });
+    it('should reject login with invalid username', async () => {
+      const dto: LoginDto = {
+        username: 'nonexistent',
+        password: testUser.password,
+      };
 
-  //   it('should reject login with invalid username', async () => {
-  //     const loginDto = {
-  //       username: 'nonexistent',
-  //       password: testUser.password,
-  //     };
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(dto)
+        .expect(HttpStatus.UNAUTHORIZED);
 
-  //     const response = await request(app.getHttpServer())
-  //       .post('/auth/login')
-  //       .send(loginDto)
-  //       .expect(401);
+      expect(response.body.message).toBe('Username or password is incorrect');
+    });
 
-  //     expect(response.body.message).toBe('Username or password is incorrect');
-  //   });
+    it('should reject login with invalid password', async () => {
+      const loginDto = {
+        username: testUser.username,
+        password: 'wrongpassword',
+      };
 
-  //   it('should reject login with invalid password', async () => {
-  //     const loginDto = {
-  //       username: testUser.username,
-  //       password: 'wrongpassword',
-  //     };
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send(loginDto)
+        .expect(HttpStatus.UNAUTHORIZED);
 
-  //     const response = await request(app.getHttpServer())
-  //       .post('/auth/login')
-  //       .send(loginDto)
-  //       .expect(401);
+      expect(response.body.message).toBe('Username or password is incorrect');
+    });
 
-  //     expect(response.body.message).toBe('Username or password is incorrect');
-  //   });
+    it('should clear existing refresh token on login', async () => {
+      // First login
+      const firstLogin = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          username: testUser.username,
+          password: testUser.password,
+        })
+        .expect(HttpStatus.OK);
 
-  //   it('should clear existing refresh token on login', async () => {
-  //     // First login
-  //     const firstLogin = await request(app.getHttpServer())
-  //       .post('/auth/login')
-  //       .send({
-  //         username: testUser.username,
-  //         password: testUser.password,
-  //       })
-  //       .expect(200);
+      const firstJwtCookie = firstLogin.headers['set-cookie']?.find(
+        (cookie: string) => cookie.startsWith('jwt='),
+      );
 
-  //     const firstJwtCookie = firstLogin.headers['set-cookie']?.find(
-  //       (cookie: string) => cookie.startsWith('jwt='),
-  //     );
+      // Second login with existing refresh token
+      const secondLogin = await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('Cookie', firstJwtCookie)
+        .send({
+          username: testUser.username,
+          password: testUser.password,
+        })
+        .expect(HttpStatus.OK);
 
-  //     // Second login with existing refresh token
-  //     const secondLogin = await request(app.getHttpServer())
-  //       .post('/auth/login')
-  //       .set('Cookie', firstJwtCookie)
-  //       .send({
-  //         username: testUser.username,
-  //         password: testUser.password,
-  //       })
-  //       .expect(200);
+      expect(secondLogin.body.accessToken).not.toBe(
+        firstLogin.body.accessToken,
+      );
 
-  //     expect(secondLogin.body.accessToken).not.toBe(
-  //       firstLogin.body.accessToken,
-  //     );
-
-  //     // Should receive clear cookie instruction
-  //     const clearCookieHeader = secondLogin.headers['set-cookie']?.find(
-  //       (header: string) => header.includes('jwt=;'),
-  //     );
-  //     expect(clearCookieHeader).toBeTruthy();
-  //   });
-  // });
+      // Should receive clear cookie instruction
+      const clearCookieHeader = secondLogin.headers['set-cookie']?.find(
+        (header: string) => header.includes('jwt=;'),
+      );
+      expect(clearCookieHeader).toBeTruthy();
+    });
+  });
 
   // describe('GET /auth/refresh', () => {
   //   let validRefreshToken: string;
@@ -285,7 +278,7 @@ describe('Auth (e2e)', () => {
   //     const response = await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', jwtCookie)
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     expect(response.body).toMatchObject({
   //       accessToken: expect.any(String),
@@ -303,14 +296,14 @@ describe('Auth (e2e)', () => {
   //   });
 
   //   it('should reject refresh without token', async () => {
-  //     await request(app.getHttpServer()).get('/auth/refresh').expect(401);
+  //     await request(app.getHttpServer()).get('/auth/refresh').expect(HttpStatus.UNAUTHORIZED);
   //   });
 
   //   it('should reject refresh with invalid token', async () => {
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', 'jwt=invalid-token')
-  //       .expect(401);
+  //       .expect(HttpStatus.UNAUTHORIZED);
   //   });
 
   //   it('should detect refresh token reuse', async () => {
@@ -318,13 +311,13 @@ describe('Auth (e2e)', () => {
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', jwtCookie)
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     // Try to use the same token again (should be detected as reuse)
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', jwtCookie)
-  //       .expect(401);
+  //       .expect(HttpStatus.UNAUTHORIZED);
   //   });
   // });
 
@@ -364,7 +357,7 @@ describe('Auth (e2e)', () => {
   //   it('should reject logout without refresh token', async () => {
   //     const response = await request(app.getHttpServer())
   //       .post('/auth/logout')
-  //       .expect(400);
+  //       .expect(HttpStatus.BAD_REQUEST);
 
   //     expect(response.body.message).toBe('No refresh token provided');
   //   });
@@ -387,7 +380,7 @@ describe('Auth (e2e)', () => {
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', jwtCookie)
-  //       .expect(401);
+  //       .expect(HttpStatus.UNAUTHORIZED);
   //   });
   // });
 
@@ -408,7 +401,7 @@ describe('Auth (e2e)', () => {
   //     const loginResponse = await request(app.getHttpServer())
   //       .post('/auth/login')
   //       .send(userData)
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     const jwtCookie = loginResponse.headers['set-cookie']?.find(
   //       (cookie: string) => cookie.startsWith('jwt='),
@@ -418,7 +411,7 @@ describe('Auth (e2e)', () => {
   //     const refreshResponse = await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', jwtCookie)
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     const newJwtCookie = refreshResponse.headers['set-cookie']?.find(
   //       (cookie: string) => cookie.startsWith('jwt='),
@@ -434,7 +427,7 @@ describe('Auth (e2e)', () => {
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', newJwtCookie)
-  //       .expect(401);
+  //       .expect(HttpStatus.UNAUTHORIZED);
   //   });
 
   //   it('should handle multiple concurrent logins', async () => {
@@ -452,7 +445,7 @@ describe('Auth (e2e)', () => {
   //         username: testUser.username,
   //         password: testUser.password,
   //       })
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     const login2 = await request(app.getHttpServer())
   //       .post('/auth/login')
@@ -460,7 +453,7 @@ describe('Auth (e2e)', () => {
   //         username: testUser.username,
   //         password: testUser.password,
   //       })
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     // Both should have valid but different tokens
   //     expect(login1.body.accessToken).not.toBe(login2.body.accessToken);
@@ -476,12 +469,12 @@ describe('Auth (e2e)', () => {
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', cookie1)
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     await request(app.getHttpServer())
   //       .get('/auth/refresh')
   //       .set('Cookie', cookie2)
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
   //   });
   // });
 
@@ -499,7 +492,7 @@ describe('Auth (e2e)', () => {
   //         username: testUser.username,
   //         password: testUser.password,
   //       })
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     // Should not contain password or refresh tokens
   //     expect(response.body).not.toHaveProperty('password');
@@ -520,7 +513,7 @@ describe('Auth (e2e)', () => {
   //         username: testUser.username,
   //         password: testUser.password,
   //       })
-  //       .expect(200);
+  //       .expect(HttpStatus.OK);
 
   //     const jwtCookie = response.headers['set-cookie']?.find((cookie: string) =>
   //       cookie.startsWith('jwt='),

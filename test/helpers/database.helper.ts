@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { Connection } from 'mongoose';
 
-let mongoServer: MongoMemoryServer | null;
+let mongoServer: MongoMemoryServer | null = null;
 
 export class DatabaseHelper {
   static async getMongoUri(): Promise<string> {
@@ -10,6 +11,15 @@ export class DatabaseHelper {
       mongoServer = await MongoMemoryServer.create();
     }
     return mongoServer.getUri();
+  }
+
+  static async clearDatabase(connection: Connection): Promise<void> {
+    const collections = connection.collections;
+
+    for (const key in collections) {
+      const collection = collections[key];
+      await collection.deleteMany({});
+    }
   }
 
   static async closeConnection() {
