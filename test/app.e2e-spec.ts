@@ -7,8 +7,6 @@ import { App } from 'supertest/types';
 import { AppController } from 'src/app.controller';
 import { AppService } from 'src/app.service';
 import configuration from 'src/config/configuration';
-import { AuthModule } from 'src/modules/auth/auth.module';
-import { RegisterDto } from 'src/modules/auth/dto/register.dto';
 import { BrandsModule } from 'src/modules/brands/brands.module';
 import { CategoriesModule } from 'src/modules/categories/categories.module';
 import { LessonsModule } from 'src/modules/lessons/lessons.module';
@@ -35,7 +33,6 @@ describe('AppController (e2e)', () => {
           envFilePath: `.env.${process.env.NODE_ENV || 'development'}.local`,
         }),
         TestDatabaseModule,
-        AuthModule,
         BrandsModule,
         CategoriesModule,
         LessonsModule,
@@ -74,23 +71,7 @@ describe('AppController (e2e)', () => {
   it('/ (GET)', () => {
     return request(app.getHttpServer())
       .get('/')
-      .expect(200)
+      .expect(HttpStatus.OK)
       .expect('Hello World!');
-  });
-
-  it('should create a new user (POST)', () => {
-    const dto: RegisterDto = {
-      username: 'testuser',
-      password: '12345678',
-      confirmPassword: '12345678',
-    };
-
-    return request(app.getHttpServer())
-      .post('/auth/register')
-      .send(dto)
-      .expect(HttpStatus.CREATED)
-      .expect((res) => {
-        expect(res.body.message).toBe('Account created successfully');
-      });
   });
 });

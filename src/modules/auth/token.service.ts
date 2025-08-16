@@ -20,7 +20,13 @@ export class TokenService {
 
   signAccessToken(user: AuthUser): string {
     const { role, userId, username } = user;
-    const payload = { role, userId, username };
+
+    const payload = {
+      userId,
+      username,
+      role,
+      nonce: Date.now() + Math.random(),
+    };
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get('ACCESS_TOKEN_SECRET'),
@@ -29,7 +35,10 @@ export class TokenService {
   }
 
   signRefreshToken(username: string): string {
-    const payload = { username };
+    const payload = {
+      username,
+      nonce: Date.now() + Math.random(),
+    };
 
     return this.jwtService.sign(payload, {
       secret: this.configService.get('REFRESH_TOKEN_SECRET'),
