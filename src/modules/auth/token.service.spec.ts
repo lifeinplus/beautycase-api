@@ -76,16 +76,13 @@ describe('TokenService', () => {
       const token = service.signAccessToken(user);
 
       expect(jwtService.sign).toHaveBeenCalledWith(
-        {
-          role: 'client',
-          userId: 'uid1',
-          username: 'john',
-        },
+        { ...user, nonce: expect.any(Number) },
         {
           secret: 'access-secret',
           expiresIn: '15m',
         },
       );
+
       expect(token).toBe('signed-access-token');
     });
   });
@@ -97,7 +94,7 @@ describe('TokenService', () => {
       const token = service.signRefreshToken('john');
 
       expect(jwtService.sign).toHaveBeenCalledWith(
-        { username: 'john' },
+        { nonce: expect.any(Number), username: 'john' },
         {
           secret: 'refresh-secret',
           expiresIn: '7d',
