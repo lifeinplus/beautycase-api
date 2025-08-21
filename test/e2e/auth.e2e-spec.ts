@@ -7,6 +7,7 @@ import * as cookieParser from 'cookie-parser';
 import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
+import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { RegisterDto } from 'src/modules/auth/dto/register.dto';
@@ -38,22 +39,8 @@ describe('Auth (e2e)', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          load: [
-            () => ({
-              ACCESS_TOKEN_SECRET: 'test-access-secret',
-              REFRESH_TOKEN_SECRET: 'test-refresh-secret',
-              ACCESS_TOKEN_EXPIRES_IN: '15m',
-              REFRESH_TOKEN_EXPIRES_IN: '7d',
-              auth: {
-                cookieOptions: {
-                  httpOnly: true,
-                  secure: false, // For testing
-                  sameSite: 'strict',
-                  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-                },
-              },
-            }),
-          ],
+          load: [configuration],
+          envFilePath: '.env.test.local',
         }),
         TestDatabaseModule,
         AuthModule,
@@ -488,7 +475,7 @@ describe('Auth (e2e)', () => {
       const jwtCookie = CookieHelper.extractJwtCookie(response);
 
       expect(jwtCookie).toContain('HttpOnly');
-      expect(jwtCookie).toContain('SameSite=Strict');
+      expect(jwtCookie).toContain('SameSite=Lax');
     });
   });
 });
