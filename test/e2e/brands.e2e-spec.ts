@@ -21,7 +21,7 @@ import {
 
 describe('Brands (e2e)', () => {
   let app: INestApplication;
-  let mongoConnection: Connection;
+  let connection: Connection;
 
   let usersService: UsersService;
 
@@ -45,17 +45,12 @@ describe('Brands (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    connection = moduleFixture.get<Connection>(getConnectionToken());
+    usersService = moduleFixture.get<UsersService>(UsersService);
+
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
-
-    mongoConnection = moduleFixture.get<Connection>(getConnectionToken());
-    usersService = moduleFixture.get<UsersService>(UsersService);
-  });
-
-  afterAll(async () => {
-    await DatabaseHelper.closeConnection();
-    await app.close();
   });
 
   beforeEach(async () => {
@@ -113,10 +108,15 @@ describe('Brands (e2e)', () => {
   });
 
   afterEach(async () => {
-    await DatabaseHelper.clearDatabase(mongoConnection);
+    await DatabaseHelper.clearDatabase(connection);
   });
 
-  describe('/brands (POST)', () => {
+  afterAll(async () => {
+    await app.close();
+    await DatabaseHelper.closeConnection();
+  });
+
+  describe('POST /brands', () => {
     it('should create a brand successfully with valid admin token', async () => {
       const dto: CreateBrandDto = {
         name: 'Test Brand',
@@ -171,7 +171,7 @@ describe('Brands (e2e)', () => {
     });
   });
 
-  describe('/brands (GET)', () => {
+  describe('GET /brands', () => {
     beforeEach(async () => {
       const brandModel = app.get('BrandModel');
       await brandModel.create([
@@ -207,7 +207,7 @@ describe('Brands (e2e)', () => {
     });
   });
 
-  describe('/brands/:id (PUT)', () => {
+  describe('PUT /brands/:id', () => {
     let brandId: string;
 
     beforeEach(async () => {
@@ -277,7 +277,7 @@ describe('Brands (e2e)', () => {
     });
   });
 
-  describe('/brands/:id (DELETE)', () => {
+  describe('DELETE /brands/:id', () => {
     let brandId: string;
 
     beforeEach(async () => {
