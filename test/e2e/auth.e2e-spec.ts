@@ -1,5 +1,5 @@
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
@@ -20,7 +20,6 @@ import { DatabaseHelper, TestDatabaseModule } from '../helpers/database.helper';
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let usersService: UsersService;
-  let configService: ConfigService;
   let connection: Connection;
 
   const clientUser = TestDataFactory.createClientUser();
@@ -43,11 +42,10 @@ describe('Auth (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     app.use(cookieParser());
 
-    await app.init();
-
     connection = moduleFixture.get<Connection>(getConnectionToken());
-    configService = moduleFixture.get<ConfigService>(ConfigService);
     usersService = moduleFixture.get<UsersService>(UsersService);
+
+    await app.init();
   });
 
   beforeEach(async () => {
@@ -141,14 +139,9 @@ describe('Auth (e2e)', () => {
     });
 
     it('should login successfully with valid credentials', async () => {
-      const loginDto: LoginDto = {
-        username: clientUser.username,
-        password: clientUser.password,
-      };
-
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(loginDto)
+        .send(clientUser)
         .expect(HttpStatus.OK);
 
       expect(response.body).toMatchObject({
@@ -164,28 +157,28 @@ describe('Auth (e2e)', () => {
     });
 
     it('should reject login with invalid username', async () => {
-      const dto: LoginDto = {
+      const loginDto: LoginDto = {
+        ...clientUser,
         username: 'nonexistent',
-        password: clientUser.password,
       };
 
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(dto)
+        .send(loginDto)
         .expect(HttpStatus.UNAUTHORIZED);
 
       expect(response.body.message).toBe('Username or password is incorrect');
     });
 
     it('should reject login with invalid password', async () => {
-      const dto: LoginDto = {
-        username: clientUser.username,
+      const loginDto: LoginDto = {
+        ...clientUser,
         password: 'wrongpassword',
       };
 
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(dto)
+        .send(loginDto)
         .expect(HttpStatus.UNAUTHORIZED);
 
       expect(response.body.message).toBe('Username or password is incorrect');
@@ -194,10 +187,7 @@ describe('Auth (e2e)', () => {
     it('should clear existing refresh token on login', async () => {
       const firstLogin = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        })
+        .send(clientUser)
         .expect(HttpStatus.OK);
 
       const firstJwtCookie = CookieHelper.extractJwtCookie(firstLogin);
@@ -205,10 +195,7 @@ describe('Auth (e2e)', () => {
       const secondLogin = await request(app.getHttpServer())
         .post('/auth/login')
         .set('Cookie', firstJwtCookie || '')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        })
+        .send(clientUser)
         .expect(HttpStatus.OK);
 
       expect(secondLogin.body.accessToken).not.toBe(
@@ -239,10 +226,7 @@ describe('Auth (e2e)', () => {
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        });
+        .send(clientUser);
 
       jwtCookie = CookieHelper.extractJwtCookie(loginResponse) || '';
     });
@@ -295,10 +279,7 @@ describe('Auth (e2e)', () => {
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        });
+        .send(clientUser);
 
       jwtCookie = CookieHelper.extractJwtCookie(loginResponse) || '';
     });
@@ -341,14 +322,8 @@ describe('Auth (e2e)', () => {
   describe('Authentication Flow Integration', () => {
     it('should complete full auth cycle: register -> login -> refresh -> logout', async () => {
       const registerDto: RegisterDto = {
-        username: 'flowtest',
-        password: 'flowtest123',
-        confirmPassword: 'flowtest123',
-      };
-
-      const loginDto: LoginDto = {
-        username: 'flowtest',
-        password: 'flowtest123',
+        ...clientUser,
+        confirmPassword: clientUser.password,
       };
 
       await request(app.getHttpServer())
@@ -358,7 +333,7 @@ describe('Auth (e2e)', () => {
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(loginDto)
+        .send(clientUser)
         .expect(HttpStatus.OK);
 
       const jwtCookie = CookieHelper.extractJwtCookie(loginResponse);
@@ -387,26 +362,22 @@ describe('Auth (e2e)', () => {
         password: await bcrypt.hash(clientUser.password, 10),
       });
 
-      const login1 = await request(app.getHttpServer())
+      const loginResponse1 = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        })
+        .send(clientUser)
         .expect(HttpStatus.OK);
 
-      const login2 = await request(app.getHttpServer())
+      const loginResponse2 = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        })
+        .send(clientUser)
         .expect(HttpStatus.OK);
 
-      expect(login1.body.accessToken).not.toBe(login2.body.accessToken);
+      expect(loginResponse1.body.accessToken).not.toBe(
+        loginResponse2.body.accessToken,
+      );
 
-      const cookie1 = CookieHelper.extractJwtCookie(login1);
-      const cookie2 = CookieHelper.extractJwtCookie(login2);
+      const cookie1 = CookieHelper.extractJwtCookie(loginResponse1);
+      const cookie2 = CookieHelper.extractJwtCookie(loginResponse2);
 
       await request(app.getHttpServer())
         .get('/auth/refresh')
@@ -429,11 +400,8 @@ describe('Auth (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        })
-        .expect(200);
+        .send(clientUser)
+        .expect(HttpStatus.OK);
 
       expect(response.body).not.toHaveProperty('password');
       expect(response.body).not.toHaveProperty('refreshToken');
@@ -448,11 +416,8 @@ describe('Auth (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({
-          username: clientUser.username,
-          password: clientUser.password,
-        })
-        .expect(200);
+        .send(clientUser)
+        .expect(HttpStatus.OK);
 
       const jwtCookie = CookieHelper.extractJwtCookie(response);
 

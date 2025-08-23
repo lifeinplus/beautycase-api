@@ -1,47 +1,27 @@
-import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 
 import { AppController } from 'src/app.controller';
 import { AppService } from 'src/app.service';
-import configuration from 'src/config/configuration';
-import { DatabaseHelper, TestDatabaseModule } from '../helpers/database.helper';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [configuration],
-          envFilePath: '.env.test.local',
-        }),
-        TestDatabaseModule,
-      ],
       controllers: [AppController],
       providers: [AppService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
 
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-
     await app.init();
   });
 
   afterAll(async () => {
     await app.close();
-    await DatabaseHelper.closeConnection();
   });
 
   it('/ (GET)', () => {

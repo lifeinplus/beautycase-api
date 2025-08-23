@@ -20,8 +20,11 @@ import {
 describe('Brands (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
+  let tokens: AuthTokens;
 
-  let auth: AuthTokens;
+  const mockBrand: CreateBrandDto = {
+    name: 'Test Brand',
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -44,11 +47,12 @@ describe('Brands (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
+
+    tokens = await AuthHelper.setupAuthTokens(app);
   });
 
   beforeEach(async () => {
-    await DatabaseHelper.clearDatabase(connection);
-    auth = await AuthHelper.setupAuthTokens(app);
+    await DatabaseHelper.clearCollection(connection, 'brands');
   });
 
   afterAll(async () => {
@@ -58,14 +62,10 @@ describe('Brands (e2e)', () => {
 
   describe('POST /brands', () => {
     it('should create a brand successfully with valid admin token', async () => {
-      const dto: CreateBrandDto = {
-        name: 'Test Brand',
-      };
-
       const response = await request(app.getHttpServer())
         .post('/brands')
-        .set('Authorization', `Bearer ${auth.adminToken}`)
-        .send(dto)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .send(mockBrand)
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
@@ -76,37 +76,25 @@ describe('Brands (e2e)', () => {
     });
 
     it('should reject invalid JWT token', async () => {
-      const dto: CreateBrandDto = {
-        name: 'Test Brand',
-      };
-
       await request(app.getHttpServer())
         .post('/brands')
         .set('Authorization', 'Bearer invalid-token')
-        .send(dto)
+        .send(mockBrand)
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
     it('should reject request without authorization header', async () => {
-      const dto: CreateBrandDto = {
-        name: 'Test Brand',
-      };
-
       await request(app.getHttpServer())
         .post('/brands')
-        .send(dto)
+        .send(mockBrand)
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
     it('should reject non-admin users', async () => {
-      const dto: CreateBrandDto = {
-        name: 'Test Brand',
-      };
-
       await request(app.getHttpServer())
         .post('/brands')
-        .set('Authorization', `Bearer ${auth.muaToken}`)
-        .send(dto)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
+        .send(mockBrand)
         .expect(HttpStatus.FORBIDDEN);
     });
   });
@@ -124,7 +112,7 @@ describe('Brands (e2e)', () => {
     it('should allow admin to get all brands', async () => {
       const response = await request(app.getHttpServer())
         .get('/brands')
-        .set('Authorization', `Bearer ${auth.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
@@ -133,7 +121,7 @@ describe('Brands (e2e)', () => {
     it('should allow mua to get all brands', async () => {
       const response = await request(app.getHttpServer())
         .get('/brands')
-        .set('Authorization', `Bearer ${auth.muaToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
@@ -142,31 +130,29 @@ describe('Brands (e2e)', () => {
     it('should reject regular clients', async () => {
       await request(app.getHttpServer())
         .get('/brands')
-        .set('Authorization', `Bearer ${auth.clientToken}`)
+        .set('Authorization', `Bearer ${tokens.clientToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
   });
 
   describe('PUT /brands/:id', () => {
+    const updateBrandDto: UpdateBrandDto = {
+      name: 'Updated Brand',
+    };
+
     let brandId: string;
 
     beforeEach(async () => {
       const brandModel = app.get('BrandModel');
-      const brand = await brandModel.create({
-        name: 'Original Brand',
-      });
+      const brand = await brandModel.create(mockBrand);
       brandId = brand.id;
     });
 
     it('should update a brand successfully with admin role', async () => {
-      const dto: UpdateBrandDto = {
-        name: 'Updated Brand',
-      };
-
       const response = await request(app.getHttpServer())
         .put(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${auth.adminToken}`)
-        .send(dto)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .send(updateBrandDto)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id');
@@ -179,40 +165,28 @@ describe('Brands (e2e)', () => {
     it('should fail to update a non-existent brand', async () => {
       const nonExistentId = '507f1f77bcf86cd799439011';
 
-      const dto: UpdateBrandDto = {
-        name: 'Updated Brand',
-      };
-
       await request(app.getHttpServer())
         .put(`/brands/${nonExistentId}`)
-        .set('Authorization', `Bearer ${auth.adminToken}`)
-        .send(dto)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .send(updateBrandDto)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should fail to update with invalid ObjectId', async () => {
       const invalidId = 'invalid-id';
 
-      const dto: UpdateBrandDto = {
-        name: 'Updated Brand',
-      };
-
       await request(app.getHttpServer())
         .put(`/brands/${invalidId}`)
-        .set('Authorization', `Bearer ${auth.adminToken}`)
-        .send(dto)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .send(updateBrandDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should fail to update without admin role', async () => {
-      const dto: UpdateBrandDto = {
-        name: 'Updated Brand',
-      };
-
       await request(app.getHttpServer())
         .put(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${auth.muaToken}`)
-        .send(dto)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
+        .send(updateBrandDto)
         .expect(HttpStatus.FORBIDDEN);
     });
   });
@@ -222,16 +196,14 @@ describe('Brands (e2e)', () => {
 
     beforeEach(async () => {
       const brandModel = app.get('BrandModel');
-      const brand = await brandModel.create({
-        name: 'Brand to Delete',
-      });
+      const brand = await brandModel.create(mockBrand);
       brandId = brand._id.toString();
     });
 
     it('should delete a brand successfully with admin role', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${auth.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id');
@@ -250,7 +222,7 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/brands/${nonExistentId}`)
-        .set('Authorization', `Bearer ${auth.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -259,14 +231,14 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/brands/${invalidId}`)
-        .set('Authorization', `Bearer ${auth.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should fail to delete without admin role', async () => {
       await request(app.getHttpServer())
         .delete(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${auth.muaToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
   });
