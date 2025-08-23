@@ -2,7 +2,6 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as bcrypt from 'bcrypt';
 import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
@@ -11,9 +10,8 @@ import { AuthModule } from 'src/modules/auth/auth.module';
 import { BrandsModule } from 'src/modules/brands/brands.module';
 import { CreateBrandDto } from 'src/modules/brands/dto/create-brand.dto';
 import { UpdateBrandDto } from 'src/modules/brands/dto/update-brand.dto';
-import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import { UsersModule } from 'src/modules/users/users.module';
-import { UsersService } from 'src/modules/users/users.service';
+import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
@@ -23,11 +21,7 @@ describe('Brands (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
 
-  let usersService: UsersService;
-
-  let adminToken: string;
-  let muaToken: string;
-  let clientToken: string;
+  let auth: AuthTokens;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -46,7 +40,6 @@ describe('Brands (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-    usersService = moduleFixture.get<UsersService>(UsersService);
 
     app.useGlobalPipes(new ValidationPipe());
 
@@ -54,61 +47,8 @@ describe('Brands (e2e)', () => {
   });
 
   beforeEach(async () => {
-    const adminDto: CreateUserDto = {
-      username: 'admin',
-      password: 'admin123',
-      role: 'admin',
-    };
-
-    const muaDto: CreateUserDto = {
-      username: 'mua',
-      password: 'mua123',
-      role: 'mua',
-    };
-
-    const clientDto: CreateUserDto = {
-      username: 'client',
-      password: 'client123',
-      role: 'client',
-    };
-
-    await usersService.create({
-      ...adminDto,
-      password: await bcrypt.hash(adminDto.password, 10),
-    });
-
-    await usersService.create({
-      ...muaDto,
-      password: await bcrypt.hash(muaDto.password, 10),
-    });
-
-    await usersService.create({
-      ...clientDto,
-      password: await bcrypt.hash(clientDto.password, 10),
-    });
-
-    const adminResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(adminDto)
-      .expect(HttpStatus.OK);
-
-    const muaResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(muaDto)
-      .expect(HttpStatus.OK);
-
-    const clientResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(clientDto)
-      .expect(HttpStatus.OK);
-
-    adminToken = adminResponse.body.accessToken;
-    muaToken = muaResponse.body.accessToken;
-    clientToken = clientResponse.body.accessToken;
-  });
-
-  afterEach(async () => {
     await DatabaseHelper.clearDatabase(connection);
+    auth = await AuthHelper.setupAuthTokens(app);
   });
 
   afterAll(async () => {
@@ -124,7 +64,7 @@ describe('Brands (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/brands')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(dto)
         .expect(HttpStatus.CREATED);
 
@@ -165,7 +105,7 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/brands')
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .send(dto)
         .expect(HttpStatus.FORBIDDEN);
     });
@@ -184,7 +124,7 @@ describe('Brands (e2e)', () => {
     it('should allow admin to get all brands', async () => {
       const response = await request(app.getHttpServer())
         .get('/brands')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
@@ -193,7 +133,7 @@ describe('Brands (e2e)', () => {
     it('should allow mua to get all brands', async () => {
       const response = await request(app.getHttpServer())
         .get('/brands')
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
@@ -202,7 +142,7 @@ describe('Brands (e2e)', () => {
     it('should reject regular clients', async () => {
       await request(app.getHttpServer())
         .get('/brands')
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
   });
@@ -225,7 +165,7 @@ describe('Brands (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(dto)
         .expect(HttpStatus.OK);
 
@@ -245,7 +185,7 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/brands/${nonExistentId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(dto)
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -259,7 +199,7 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/brands/${invalidId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(dto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -271,7 +211,7 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .send(dto)
         .expect(HttpStatus.FORBIDDEN);
     });
@@ -291,7 +231,7 @@ describe('Brands (e2e)', () => {
     it('should delete a brand successfully with admin role', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id');
@@ -310,7 +250,7 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/brands/${nonExistentId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -319,14 +259,14 @@ describe('Brands (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/brands/${invalidId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should fail to delete without admin role', async () => {
       await request(app.getHttpServer())
         .delete(`/brands/${brandId}`)
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
   });

@@ -2,7 +2,6 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as bcrypt from 'bcrypt';
 import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
@@ -11,9 +10,8 @@ import { AuthModule } from 'src/modules/auth/auth.module';
 import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
 import { LessonsModule } from 'src/modules/lessons/lessons.module';
 import { ProductsModule } from 'src/modules/products/products.module';
-import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import { UsersModule } from 'src/modules/users/users.module';
-import { UsersService } from 'src/modules/users/users.service';
+import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
@@ -23,13 +21,7 @@ describe('Lessons (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
 
-  let usersService: UsersService;
-
-  let adminToken: string;
-  let muaToken: string;
-  let clientToken: string;
-
-  let clientId: string;
+  let auth: AuthTokens;
 
   const mockLesson1: CreateLessonDto = {
     title: 'Advanced Makeup Techniques',
@@ -69,7 +61,6 @@ describe('Lessons (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-    usersService = moduleFixture.get<UsersService>(UsersService);
 
     app.useGlobalPipes(new ValidationPipe());
 
@@ -77,63 +68,8 @@ describe('Lessons (e2e)', () => {
   });
 
   beforeEach(async () => {
-    const adminDto: CreateUserDto = {
-      username: 'admin',
-      password: 'admin123',
-      role: 'admin',
-    };
-
-    const muaDto: CreateUserDto = {
-      username: 'mua',
-      password: 'mua123',
-      role: 'mua',
-    };
-
-    const clientDto: CreateUserDto = {
-      username: 'client',
-      password: 'client123',
-      role: 'client',
-    };
-
-    await usersService.create({
-      ...adminDto,
-      password: await bcrypt.hash(adminDto.password, 10),
-    });
-
-    await usersService.create({
-      ...muaDto,
-      password: await bcrypt.hash(muaDto.password, 10),
-    });
-
-    await usersService.create({
-      ...clientDto,
-      password: await bcrypt.hash(clientDto.password, 10),
-    });
-
-    const adminResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(adminDto)
-      .expect(HttpStatus.OK);
-
-    const muaResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(muaDto)
-      .expect(HttpStatus.OK);
-
-    const clientResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(clientDto)
-      .expect(HttpStatus.OK);
-
-    adminToken = adminResponse.body.accessToken;
-    muaToken = muaResponse.body.accessToken;
-    clientToken = clientResponse.body.accessToken;
-
-    clientId = clientResponse.body.userId;
-  });
-
-  afterEach(async () => {
     await DatabaseHelper.clearDatabase(connection);
+    auth = await AuthHelper.setupAuthTokens(app);
   });
 
   afterAll(async () => {
@@ -145,7 +81,7 @@ describe('Lessons (e2e)', () => {
     it('should create a lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson1)
         .expect(HttpStatus.CREATED);
 
@@ -156,7 +92,7 @@ describe('Lessons (e2e)', () => {
     it('should create a lesson as mua', async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .send(mockLesson1)
         .expect(HttpStatus.CREATED);
 
@@ -167,7 +103,7 @@ describe('Lessons (e2e)', () => {
     it('should reject creation by client role', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .send(mockLesson1)
         .expect(HttpStatus.FORBIDDEN);
     });
@@ -189,7 +125,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(invalidData)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -199,7 +135,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({
           ...mockLesson1,
           title: longTitle,
@@ -210,7 +146,7 @@ describe('Lessons (e2e)', () => {
     it('should validate URL format', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({
           ...mockLesson1,
           videoUrl: 'invalid-url',
@@ -227,7 +163,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(dataWithIds)
         .expect(HttpStatus.CREATED);
 
@@ -244,7 +180,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(dataWithInvalidIds)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -254,19 +190,19 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson1);
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson2);
     });
 
     it('should return all lessons when authenticated', async () => {
       const response = await request(app.getHttpServer())
         .get('/lessons')
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toBeInstanceOf(Array);
@@ -295,18 +231,18 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const lessonResponse = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson1);
 
       lessonId = lessonResponse.body.id;
 
       const clientLessonResponse = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({
           ...mockLesson2,
           title: 'Client Accessible Lesson',
-          clientIds: [clientId],
+          clientIds: [auth.clientId],
         });
 
       clientAccessibleLessonId = clientLessonResponse.body.id;
@@ -315,7 +251,7 @@ describe('Lessons (e2e)', () => {
     it('should return lesson details for admin', async () => {
       const response = await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('title', mockLesson1.title);
@@ -327,7 +263,7 @@ describe('Lessons (e2e)', () => {
     it('should return lesson details for mua', async () => {
       const response = await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('title', mockLesson1.title);
@@ -336,7 +272,7 @@ describe('Lessons (e2e)', () => {
     it('should allow client access to assigned lessons', async () => {
       const response = await request(app.getHttpServer())
         .get(`/lessons/${clientAccessibleLessonId}`)
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('title', 'Client Accessible Lesson');
@@ -345,7 +281,7 @@ describe('Lessons (e2e)', () => {
     it('should deny client access to non-assigned lessons', async () => {
       await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -354,14 +290,14 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .get(`/lessons/${fakeId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .get('/lessons/invalid-id')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -378,7 +314,7 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson1);
 
       lessonId = response.body.id;
@@ -392,7 +328,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(updateData)
         .expect(HttpStatus.OK);
 
@@ -401,7 +337,7 @@ describe('Lessons (e2e)', () => {
 
       const getResponse = await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(getResponse.body.title).toBe(updateData.title);
@@ -417,7 +353,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .send(updateData)
         .expect(HttpStatus.OK);
 
@@ -431,7 +367,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .send(updateData)
         .expect(HttpStatus.FORBIDDEN);
     });
@@ -444,7 +380,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(invalidData)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -454,7 +390,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/lessons/${fakeId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({ title: 'Updated Title' })
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -466,7 +402,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
 
@@ -480,7 +416,7 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson1);
 
       lessonId = response.body.id;
@@ -494,7 +430,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({ productIds })
         .expect(HttpStatus.OK);
 
@@ -509,7 +445,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .send({ productIds })
         .expect(HttpStatus.OK);
 
@@ -523,7 +459,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .send({ productIds })
         .expect(HttpStatus.FORBIDDEN);
     });
@@ -533,7 +469,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({ productIds: invalidProductIds })
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -541,7 +477,7 @@ describe('Lessons (e2e)', () => {
     it('should require productIds array', async () => {
       await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -549,7 +485,7 @@ describe('Lessons (e2e)', () => {
     it('should handle empty productIds array', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({ productIds: [] })
         .expect(HttpStatus.OK);
 
@@ -563,7 +499,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/lessons/${fakeId}/products`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({ productIds: [] })
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -575,7 +511,7 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockLesson1);
 
       lessonId = response.body.id;
@@ -584,7 +520,7 @@ describe('Lessons (e2e)', () => {
     it('should delete lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
@@ -592,14 +528,14 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should delete lesson as mua', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body.message).toBe('Lesson deleted successfully');
@@ -608,7 +544,7 @@ describe('Lessons (e2e)', () => {
     it('should reject deletion by client role', async () => {
       await request(app.getHttpServer())
         .delete(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${clientToken}`)
+        .set('Authorization', `Bearer ${auth.clientToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
 
@@ -617,14 +553,14 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/lessons/${fakeId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .delete('/lessons/invalid-id')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -672,7 +608,7 @@ describe('Lessons (e2e)', () => {
       for (const endpoint of restrictedEndpoints) {
         const request_builder = request(app.getHttpServer())
           [endpoint.method](endpoint.path)
-          .set('Authorization', `Bearer ${clientToken}`);
+          .set('Authorization', `Bearer ${auth.clientToken}`);
 
         if (endpoint.data) {
           request_builder.send(endpoint.data);
@@ -687,7 +623,7 @@ describe('Lessons (e2e)', () => {
     it('should handle malformed request bodies gracefully', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send('invalid json')
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -695,7 +631,7 @@ describe('Lessons (e2e)', () => {
     it('should handle missing required fields', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -703,7 +639,7 @@ describe('Lessons (e2e)', () => {
     it('should handle invalid route parameters', async () => {
       await request(app.getHttpServer())
         .get('/lessons/not-an-object-id')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
   });

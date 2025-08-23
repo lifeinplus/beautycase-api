@@ -2,7 +2,6 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as bcrypt from 'bcrypt';
 import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
@@ -10,9 +9,8 @@ import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { CategoriesModule } from 'src/modules/categories/categories.module';
 import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
-import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import { UsersModule } from 'src/modules/users/users.module';
-import { UsersService } from 'src/modules/users/users.service';
+import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
@@ -22,11 +20,7 @@ describe('Categories (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
 
-  let usersService: UsersService;
-
-  let adminToken: string;
-  let muaToken: string;
-  let clientToken: string;
+  let auth: AuthTokens;
 
   const mockCategory1: CreateCategoryDto = {
     name: 'basic',
@@ -55,7 +49,6 @@ describe('Categories (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-    usersService = moduleFixture.get<UsersService>(UsersService);
 
     app.useGlobalPipes(new ValidationPipe());
 
@@ -63,61 +56,8 @@ describe('Categories (e2e)', () => {
   });
 
   beforeEach(async () => {
-    const adminDto: CreateUserDto = {
-      username: 'admin',
-      password: 'admin123',
-      role: 'admin',
-    };
-
-    const muaDto: CreateUserDto = {
-      username: 'mua',
-      password: 'mua123',
-      role: 'mua',
-    };
-
-    const clientDto: CreateUserDto = {
-      username: 'client',
-      password: 'client123',
-      role: 'client',
-    };
-
-    await usersService.create({
-      ...adminDto,
-      password: await bcrypt.hash(adminDto.password, 10),
-    });
-
-    await usersService.create({
-      ...muaDto,
-      password: await bcrypt.hash(muaDto.password, 10),
-    });
-
-    await usersService.create({
-      ...clientDto,
-      password: await bcrypt.hash(clientDto.password, 10),
-    });
-
-    const adminResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(adminDto)
-      .expect(HttpStatus.OK);
-
-    const muaResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(muaDto)
-      .expect(HttpStatus.OK);
-
-    const clientResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send(clientDto)
-      .expect(HttpStatus.OK);
-
-    adminToken = adminResponse.body.accessToken;
-    muaToken = muaResponse.body.accessToken;
-    clientToken = clientResponse.body.accessToken;
-  });
-
-  afterEach(async () => {
     await DatabaseHelper.clearDatabase(connection);
+    auth = await AuthHelper.setupAuthTokens(app);
   });
 
   afterAll(async () => {
@@ -150,7 +90,7 @@ describe('Categories (e2e)', () => {
       it('should reject requests from users without required roles', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${clientToken}`)
+          .set('Authorization', `Bearer ${auth.clientToken}`)
           .send(mockCategory1)
           .expect(HttpStatus.FORBIDDEN);
 
@@ -161,7 +101,7 @@ describe('Categories (e2e)', () => {
       it('should allow admin users to create categories', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .send(mockCategory1)
           .expect(HttpStatus.CREATED);
 
@@ -175,7 +115,7 @@ describe('Categories (e2e)', () => {
       it('should allow mua users to create categories', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${muaToken}`)
+          .set('Authorization', `Bearer ${auth.muaToken}`)
           .send(mockCategory1)
           .expect(HttpStatus.CREATED);
 
@@ -191,7 +131,7 @@ describe('Categories (e2e)', () => {
       it('should reject empty string values', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .send({ name: '', type: '' })
           .expect(HttpStatus.BAD_REQUEST);
 
@@ -202,7 +142,7 @@ describe('Categories (e2e)', () => {
       it('should reject non-string values', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .send({ name: 123, type: true })
           .expect(HttpStatus.BAD_REQUEST);
 
@@ -213,7 +153,7 @@ describe('Categories (e2e)', () => {
       it('should accept valid category data', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .send(mockCategory1)
           .expect(HttpStatus.CREATED);
 
@@ -235,7 +175,7 @@ describe('Categories (e2e)', () => {
 
         const response = await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .send(categoryData)
           .expect(HttpStatus.CREATED);
 
@@ -244,7 +184,7 @@ describe('Categories (e2e)', () => {
 
         const getResponse = await request(app.getHttpServer())
           .get('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .expect(HttpStatus.OK);
 
         expect(getResponse.body).toHaveLength(1);
@@ -258,12 +198,12 @@ describe('Categories (e2e)', () => {
     beforeEach(async () => {
       await request(app.getHttpServer())
         .post('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockCategory1);
 
       await request(app.getHttpServer())
         .post('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockCategory2);
     });
 
@@ -289,7 +229,7 @@ describe('Categories (e2e)', () => {
       it('should reject requests from users without required roles', async () => {
         const response = await request(app.getHttpServer())
           .get('/categories')
-          .set('Authorization', `Bearer ${clientToken}`);
+          .set('Authorization', `Bearer ${auth.clientToken}`);
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toContain('Forbidden');
@@ -298,7 +238,7 @@ describe('Categories (e2e)', () => {
       it('should allow admin users to get categories', async () => {
         const response = await request(app.getHttpServer())
           .get('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .expect(HttpStatus.OK);
 
         expect(Array.isArray(response.body)).toBe(true);
@@ -308,7 +248,7 @@ describe('Categories (e2e)', () => {
       it('should allow mua users to get categories', async () => {
         const response = await request(app.getHttpServer())
           .get('/categories')
-          .set('Authorization', `Bearer ${muaToken}`)
+          .set('Authorization', `Bearer ${auth.muaToken}`)
           .expect(HttpStatus.OK);
 
         expect(Array.isArray(response.body)).toBe(true);
@@ -320,7 +260,7 @@ describe('Categories (e2e)', () => {
       it('should return all categories with correct structure', async () => {
         const response = await request(app.getHttpServer())
           .get('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .expect(HttpStatus.OK);
 
         expect(Array.isArray(response.body)).toBe(true);
@@ -338,7 +278,7 @@ describe('Categories (e2e)', () => {
       it('should return categories in insertion order', async () => {
         const response = await request(app.getHttpServer())
           .get('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .expect(HttpStatus.OK);
 
         expect(response.body[0].name).toBe('basic');
@@ -351,12 +291,12 @@ describe('Categories (e2e)', () => {
     it('should handle complete CRUD workflow', async () => {
       await request(app.getHttpServer())
         .get('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
 
       const createResponse = await request(app.getHttpServer())
         .post('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockCategory1)
         .expect(HttpStatus.CREATED);
 
@@ -364,7 +304,7 @@ describe('Categories (e2e)', () => {
 
       const getResponse = await request(app.getHttpServer())
         .get('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(getResponse.body).toHaveLength(1);
@@ -382,14 +322,14 @@ describe('Categories (e2e)', () => {
       for (const category of categories) {
         await request(app.getHttpServer())
           .post('/categories')
-          .set('Authorization', `Bearer ${adminToken}`)
+          .set('Authorization', `Bearer ${auth.adminToken}`)
           .send(category)
           .expect(HttpStatus.CREATED);
       }
 
       const response = await request(app.getHttpServer())
         .get('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
@@ -403,24 +343,24 @@ describe('Categories (e2e)', () => {
     it('should maintain data consistency across different user roles', async () => {
       await request(app.getHttpServer())
         .post('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .send(mockCategory1)
         .expect(HttpStatus.CREATED);
 
       await request(app.getHttpServer())
         .post('/categories')
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .send(mockCategory2)
         .expect(HttpStatus.CREATED);
 
       const adminResponse = await request(app.getHttpServer())
         .get('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .expect(HttpStatus.OK);
 
       const muaResponse = await request(app.getHttpServer())
         .get('/categories')
-        .set('Authorization', `Bearer ${muaToken}`)
+        .set('Authorization', `Bearer ${auth.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(adminResponse.body).toHaveLength(2);
@@ -433,7 +373,7 @@ describe('Categories (e2e)', () => {
     it('should handle malformed JSON in request body', async () => {
       const response = await request(app.getHttpServer())
         .post('/categories')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${auth.adminToken}`)
         .set('Content-Type', 'application/json')
         .send('{"name": "test", "type":}') // Invalid JSON
         .expect(HttpStatus.BAD_REQUEST);

@@ -40,8 +40,8 @@ describe('AppController (e2e)', () => {
   });
 
   afterAll(async () => {
-    await DatabaseHelper.closeConnection();
     await app.close();
+    await DatabaseHelper.closeConnection();
   });
 
   it('/ (GET)', () => {
