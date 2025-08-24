@@ -8,39 +8,25 @@ import * as request from 'supertest';
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { BrandsModule } from 'src/modules/brands/brands.module';
-import { CreateBrandDto } from 'src/modules/brands/dto/create-brand.dto';
-import { CreateProductDto } from 'src/modules/products/dto/create-product.dto';
 import { UpdateProductDto } from 'src/modules/products/dto/update-product.dto';
 import { UpdateStoreLinksDto } from 'src/modules/products/dto/update-store-links.dto';
 import { ProductsModule } from 'src/modules/products/products.module';
 import { UsersModule } from 'src/modules/users/users.module';
+import { TestDataFactory, TestProduct } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { BrandResources, ResourceHelper } from 'test/helpers/resource.helper';
 
 describe('Products (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
+
   let tokens: AuthTokens;
-
-  const createBrandDto: CreateBrandDto = { name: 'Test Brand' };
-  let brandId: string;
-
-  const mockProduct: CreateProductDto = {
-    brandId: '507f1f77bcf86cd799439011',
-    name: 'Test Lipstick',
-    imageUrl: 'https://example.com/lipstick.jpg',
-    comment: 'A beautiful red lipstick perfect for evening wear',
-    shade: 'Ruby Red',
-    storeLinks: [
-      {
-        name: 'Sephora',
-        link: 'https://sephora.com/product/test-lipstick',
-      },
-    ],
-  };
+  let brandResources: BrandResources;
+  let productId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -59,21 +45,13 @@ describe('Products (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-
     connection = moduleFixture.get<Connection>(getConnectionToken());
+    app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
-
-    const createBrandResponse = await request(app.getHttpServer())
-      .post('/brands')
-      .set('Authorization', `Bearer ${tokens.adminToken}`)
-      .send(createBrandDto)
-      .expect(HttpStatus.CREATED);
-
-    brandId = createBrandResponse.body.id;
+    brandResources = await ResourceHelper.createBrand(app, tokens.adminToken);
   });
 
   beforeEach(async () => {
@@ -86,11 +64,14 @@ describe('Products (e2e)', () => {
   });
 
   describe('POST /products', () => {
+    const createProductDto = () =>
+      TestDataFactory.createProduct(brandResources.id);
+
     it('should create a product as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/products')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockProduct)
+        .send(createProductDto())
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toMatchObject({
@@ -103,7 +84,7 @@ describe('Products (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/products')
         .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(mockProduct)
+        .send(createProductDto())
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toMatchObject({
@@ -116,14 +97,14 @@ describe('Products (e2e)', () => {
       await request(app.getHttpServer())
         .post('/products')
         .set('Authorization', `Bearer ${tokens.clientToken}`)
-        .send(mockProduct)
+        .send(createProductDto())
         .expect(HttpStatus.FORBIDDEN);
     });
 
     it('should reject creation without authentication', async () => {
       await request(app.getHttpServer())
         .post('/products')
-        .send(mockProduct)
+        .send(createProductDto())
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
@@ -149,7 +130,7 @@ describe('Products (e2e)', () => {
 
     it('should validate brandId format', async () => {
       const invalidProduct = {
-        ...mockProduct,
+        ...createProductDto(),
         brandId: 'invalid-mongo-id',
       };
 
@@ -166,7 +147,7 @@ describe('Products (e2e)', () => {
 
     it('should validate imageUrl format', async () => {
       const invalidProduct = {
-        ...mockProduct,
+        ...createProductDto(),
         imageUrl: 'not-a-valid-url',
       };
 
@@ -183,7 +164,7 @@ describe('Products (e2e)', () => {
 
     it('should validate name length', async () => {
       const invalidProduct = {
-        ...mockProduct,
+        ...createProductDto(),
         name: 'a'.repeat(101),
       };
 
@@ -200,7 +181,7 @@ describe('Products (e2e)', () => {
 
     it('should validate comment length', async () => {
       const invalidProduct = {
-        ...mockProduct,
+        ...createProductDto(),
         comment: 'a'.repeat(501),
       };
 
@@ -236,10 +217,11 @@ describe('Products (e2e)', () => {
 
   describe('GET /products', () => {
     beforeEach(async () => {
-      await request(app.getHttpServer())
-        .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockProduct);
+      await ResourceHelper.createProduct(
+        app,
+        tokens.adminToken,
+        brandResources.id,
+      );
     });
 
     it('should get all products as admin', async () => {
@@ -287,21 +269,17 @@ describe('Products (e2e)', () => {
   });
 
   describe('GET /products/:id', () => {
-    let productId: string;
+    let productData: TestProduct;
 
     beforeEach(async () => {
-      const createProductDto: CreateProductDto = {
-        ...mockProduct,
-        brandId,
-      };
+      const { id, data } = await ResourceHelper.createProduct(
+        app,
+        tokens.adminToken,
+        brandResources.id,
+      );
 
-      const createResponse = await request(app.getHttpServer())
-        .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(createProductDto)
-        .expect(HttpStatus.CREATED);
-
-      productId = createResponse.body.id;
+      productId = id;
+      productData = data;
     });
 
     it('should get product by id for any authenticated user', async () => {
@@ -312,11 +290,11 @@ describe('Products (e2e)', () => {
 
       expect(response.body).toMatchObject({
         _id: productId,
-        name: mockProduct.name,
-        imageUrl: mockProduct.imageUrl,
-        comment: mockProduct.comment,
-        shade: mockProduct.shade,
-        storeLinks: mockProduct.storeLinks,
+        name: productData.name,
+        imageUrl: productData.imageUrl,
+        comment: productData.comment,
+        shade: productData.shade,
+        storeLinks: productData.storeLinks,
       });
     });
 
@@ -353,15 +331,14 @@ describe('Products (e2e)', () => {
   });
 
   describe('PUT /products/:id', () => {
-    let productId: string;
-
     beforeEach(async () => {
-      const createResponse = await request(app.getHttpServer())
-        .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockProduct);
+      const { id } = await ResourceHelper.createProduct(
+        app,
+        tokens.adminToken,
+        brandResources.id,
+      );
 
-      productId = createResponse.body.id;
+      productId = id;
     });
 
     it('should update product as admin', async () => {
@@ -469,15 +446,14 @@ describe('Products (e2e)', () => {
   });
 
   describe('PATCH /products/:id/store-links', () => {
-    let productId: string;
-
     beforeEach(async () => {
-      const createResponse = await request(app.getHttpServer())
-        .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockProduct);
+      const { id } = await ResourceHelper.createProduct(
+        app,
+        tokens.adminToken,
+        brandResources.id,
+      );
 
-      productId = createResponse.body.id;
+      productId = id;
     });
 
     it('should update store links when authenticated as admin', async () => {
@@ -589,15 +565,14 @@ describe('Products (e2e)', () => {
   });
 
   describe('DELETE /products/:id', () => {
-    let productId: string;
-
     beforeEach(async () => {
-      const createResponse = await request(app.getHttpServer())
-        .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockProduct);
+      const { id } = await ResourceHelper.createProduct(
+        app,
+        tokens.adminToken,
+        brandResources.id,
+      );
 
-      productId = createResponse.body.id;
+      productId = id;
     });
 
     it('should delete product as admin', async () => {
@@ -662,11 +637,14 @@ describe('Products (e2e)', () => {
   });
 
   describe('Multiple Products Operations', () => {
+    const createProductDto = () =>
+      TestDataFactory.createProduct(brandResources.id);
+
     it('should handle multiple products correctly', async () => {
       const products = [
-        { ...mockProduct, name: 'Product 1' },
-        { ...mockProduct, name: 'Product 2' },
-        { ...mockProduct, name: 'Product 3' },
+        { ...createProductDto(), name: 'Product 1' },
+        { ...createProductDto(), name: 'Product 2' },
+        { ...createProductDto(), name: 'Product 3' },
       ];
 
       const createdIds: string[] = [];

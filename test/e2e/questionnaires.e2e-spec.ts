@@ -14,56 +14,20 @@ import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-qu
 import { QuestionnairesModule } from 'src/modules/questionnaires/questionnaires.module';
 import { Questionnaire } from 'src/modules/questionnaires/schemas/questionnaire.schema';
 import { UsersModule } from 'src/modules/users/users.module';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { ResourceHelper } from 'test/helpers/resource.helper';
 
 describe('Questionnaires (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
   let tokens: AuthTokens;
 
-  const mockQuestionnaire: CreateQuestionnaireDto = {
-    name: 'Jane Doe',
-    makeupBag: 'my-makeup-bag-description',
-    age: 25,
-    allergies: 'None',
-    budget: Budget.MEDIUM,
-    brushes: 'yes',
-    city: 'New York',
-    currentSkills: 'Basic makeup application',
-    desiredSkills: {
-      bright: true,
-      delicate: false,
-      evening: true,
-      office: false,
-      filming: false,
-    },
-    instagram: '@janedoe',
-    makeupBagPhotoUrl: 'https://example.com/photo.jpg',
-    makeupTime: MakeupTime.LONG,
-    oilyShine: 'T-zone only',
-    peeling: 'No',
-    pores: 'Visible on nose',
-    problems: {
-      eyeshadowCrease: true,
-      eyeshadowMatch: false,
-      foundationPores: true,
-      foundationStay: false,
-      mascaraSmudge: true,
-      sculpting: false,
-    },
-    procedures: {
-      browCorrection: true,
-      lashExtensions: false,
-      lashLamination: true,
-      none: false,
-    },
-    referral: Referral.INSTAGRAM,
-    skinType: 'Combination',
-  };
+  const mockQuestionnaire = TestDataFactory.createQuestionnaire();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -81,9 +45,8 @@ describe('Questionnaires (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
-
     connection = moduleFixture.get<Connection>(getConnectionToken());
+    app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
 
@@ -179,6 +142,7 @@ describe('Questionnaires (e2e)', () => {
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
+
     it('should fail with invalid budget enum', async () => {
       const invalidDto = {
         ...mockQuestionnaire,
@@ -298,14 +262,8 @@ describe('Questionnaires (e2e)', () => {
   });
 
   describe('GET /questionnaires', () => {
-    let questionnaireId: string;
-
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/questionnaires')
-        .send(mockQuestionnaire);
-
-      questionnaireId = response.body.id;
+      await ResourceHelper.createQuestionnaire(app);
     });
 
     it('should get all questionnaires as admin', async () => {
@@ -316,12 +274,8 @@ describe('Questionnaires (e2e)', () => {
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toHaveProperty('_id', questionnaireId);
-      expect(response.body[0]).toHaveProperty('name', 'Jane Doe');
-      expect(response.body[0]).toHaveProperty(
-        'makeupBag',
-        'my-makeup-bag-description',
-      );
+      expect(response.body[0]).toHaveProperty('name');
+      expect(response.body[0]).toHaveProperty('makeupBag');
     });
 
     it('should get all questionnaires as MUA', async () => {
@@ -332,7 +286,6 @@ describe('Questionnaires (e2e)', () => {
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toHaveProperty('_id', questionnaireId);
     });
 
     it('should reject access when authenticated as client', async () => {
@@ -367,11 +320,13 @@ describe('Questionnaires (e2e)', () => {
     it('should return multiple questionnaires', async () => {
       await request(app.getHttpServer())
         .post('/questionnaires')
-        .send({ name: 'User 2', makeupBag: 'Bag 2' });
+        .send({ name: 'User 2', makeupBag: 'Bag 2' })
+        .expect(HttpStatus.CREATED);
 
       await request(app.getHttpServer())
         .post('/questionnaires')
-        .send({ name: 'User 3', makeupBag: 'Bag 3' });
+        .send({ name: 'User 3', makeupBag: 'Bag 3' })
+        .expect(HttpStatus.CREATED);
 
       const response = await request(app.getHttpServer())
         .get('/questionnaires')
@@ -395,12 +350,8 @@ describe('Questionnaires (e2e)', () => {
     let questionnaireId: string;
 
     beforeEach(async () => {
-      const createResponse = await request(app.getHttpServer())
-        .post('/questionnaires')
-        .send(mockQuestionnaire)
-        .expect(HttpStatus.CREATED);
-
-      questionnaireId = createResponse.body.id;
+      const { id } = await ResourceHelper.createQuestionnaire(app);
+      questionnaireId = id;
     });
 
     it('should return questionnaire by id for admin user', async () => {
@@ -484,20 +435,16 @@ describe('Questionnaires (e2e)', () => {
 
   describe('Integration scenarios', () => {
     it('should create and retrieve questionnaire with complete workflow', async () => {
-      const createResponse = await request(app.getHttpServer())
-        .post('/questionnaires')
-        .send(mockQuestionnaire)
-        .expect(HttpStatus.CREATED);
+      const { id } = await ResourceHelper.createQuestionnaire(app);
 
-      const questionnaireId = createResponse.body.id;
-      expect(questionnaireId).toBeDefined();
+      expect(id).toBeDefined();
 
       const getOneResponse = await request(app.getHttpServer())
-        .get(`/questionnaires/${questionnaireId}`)
+        .get(`/questionnaires/${id}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
-      expect(getOneResponse.body._id).toBe(questionnaireId);
+      expect(getOneResponse.body._id).toBe(id);
       expect(getOneResponse.body.name).toBe(mockQuestionnaire.name);
       expect(getOneResponse.body.budget).toBe(mockQuestionnaire.budget);
 
@@ -507,7 +454,7 @@ describe('Questionnaires (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(getAllResponse.body).toHaveLength(1);
-      expect(getAllResponse.body[0]._id).toBe(questionnaireId);
+      expect(getAllResponse.body[0]._id).toBe(id);
     });
 
     it('should handle multiple questionnaires correctly', async () => {

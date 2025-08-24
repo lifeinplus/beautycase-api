@@ -150,15 +150,14 @@ describe('MakeupBags (e2e)', () => {
 
   describe('GET /makeup-bags', () => {
     beforeEach(async () => {
-      await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
+      await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
     });
 
     it('should get all makeup bags as admin', async () => {
@@ -198,20 +197,17 @@ describe('MakeupBags (e2e)', () => {
   });
 
   describe('GET /makeup-bags/:id', () => {
-    let makeupBagId: string;
-
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
+      const { id } = await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
-      makeupBagId = response.body.id;
+      makeupBagId = id;
     });
 
     it('should return makeup-bag details for admin', async () => {
@@ -272,17 +268,16 @@ describe('MakeupBags (e2e)', () => {
     let updateDto: UpdateMakeupBagDto;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
+      const { id } = await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
-      makeupBagId = response.body.id;
+      makeupBagId = id;
 
       updateDto = {
         stageIds: [resources.stageId],
@@ -371,17 +366,16 @@ describe('MakeupBags (e2e)', () => {
 
   describe('DELETE /makeup-bags/:id', () => {
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
+      const { id } = await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
-      makeupBagId = response.body.id;
+      makeupBagId = id;
     });
 
     it('should delete makeup-bag as admin', async () => {
@@ -453,40 +447,34 @@ describe('MakeupBags (e2e)', () => {
     });
 
     it('should handle MakeupBagAccessGuard when user ID is missing', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
-
-      const makeupBagId = response.body.id;
+      const { id } = await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
       await request(app.getHttpServer())
-        .get(`/makeup-bags/${makeupBagId}`)
+        .get(`/makeup-bags/${id}`)
         .expect(HttpStatus.UNAUTHORIZED);
     });
   });
 
   describe('Data Integrity', () => {
     it('should maintain referential integrity', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
-
-      const makeupBagId = response.body.id;
+      const { id } = await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
       const makeupBag = await request(app.getHttpServer())
-        .get(`/makeup-bags/${makeupBagId}`)
+        .get(`/makeup-bags/${id}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
@@ -516,20 +504,17 @@ describe('MakeupBags (e2e)', () => {
     });
 
     it('should handle population of related documents', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          categoryId: resources.categoryId,
-          clientId: tokens.clientId,
-          stageIds: [resources.stageId],
-          toolIds: [resources.toolId],
-        });
-
-      const makeupBagId = response.body.id;
+      const { id } = await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
       const makeupBag = await request(app.getHttpServer())
-        .get(`/makeup-bags/${makeupBagId}`)
+        .get(`/makeup-bags/${id}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 

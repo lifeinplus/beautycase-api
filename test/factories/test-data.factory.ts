@@ -1,7 +1,11 @@
+import { Budget } from 'src/common/enums/budget.enum';
+import { MakeupTime } from 'src/common/enums/makeup-time.enum';
+import { Referral } from 'src/common/enums/referral.enum';
 import { CreateBrandDto } from 'src/modules/brands/dto/create-brand.dto';
 import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
 import { CreateMakeupBagDto } from 'src/modules/makeup-bags/dto/create-makeup-bag.dto';
 import { CreateProductDto } from 'src/modules/products/dto/create-product.dto';
+import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-questionnaire.dto';
 import { CreateStageDto } from 'src/modules/stages/dto/create-stage.dto';
 import { CreateToolDto } from 'src/modules/tools/dto/create-tool.dto';
 import { Role } from 'src/modules/users/schemas/user.schema';
@@ -16,6 +20,7 @@ export interface TestBrand extends CreateBrandDto {}
 export interface TestCategory extends CreateCategoryDto {}
 export interface TestMakeupBag extends CreateMakeupBagDto {}
 export interface TestProduct extends CreateProductDto {}
+export interface TestQuestionnaire extends CreateQuestionnaireDto {}
 export interface TestStage extends CreateStageDto {}
 export interface TestTool extends CreateToolDto {}
 
@@ -94,6 +99,51 @@ export class TestDataFactory {
           link: 'https://sephora.com/product/test-lipstick',
         },
       ],
+      ...overrides,
+    };
+  }
+
+  static createQuestionnaire(
+    overrides: Partial<TestQuestionnaire> = {},
+  ): TestQuestionnaire {
+    return {
+      name: 'Jane Doe',
+      makeupBag: 'my-makeup-bag-description',
+      age: 25,
+      allergies: 'None',
+      budget: Budget.MEDIUM,
+      brushes: 'yes',
+      city: 'New York',
+      currentSkills: 'Basic makeup application',
+      desiredSkills: {
+        bright: true,
+        delicate: false,
+        evening: true,
+        office: false,
+        filming: false,
+      },
+      instagram: '@janedoe',
+      makeupBagPhotoUrl: 'https://example.com/photo.jpg',
+      makeupTime: MakeupTime.LONG,
+      oilyShine: 'T-zone only',
+      peeling: 'No',
+      pores: 'Visible on nose',
+      problems: {
+        eyeshadowCrease: true,
+        eyeshadowMatch: false,
+        foundationPores: true,
+        foundationStay: false,
+        mascaraSmudge: true,
+        sculpting: false,
+      },
+      procedures: {
+        browCorrection: true,
+        lashExtensions: false,
+        lashLamination: true,
+        none: false,
+      },
+      referral: Referral.INSTAGRAM,
+      skinType: 'Combination',
       ...overrides,
     };
   }
