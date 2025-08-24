@@ -9,51 +9,27 @@ import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { BrandsModule } from 'src/modules/brands/brands.module';
 import { CategoriesModule } from 'src/modules/categories/categories.module';
-import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
-import { CreateMakeupBagDto } from 'src/modules/makeup-bags/dto/create-makeup-bag.dto';
 import { UpdateMakeupBagDto } from 'src/modules/makeup-bags/dto/update-makeup-bag.dto';
 import { MakeupBagsModule } from 'src/modules/makeup-bags/makeup-bags.module';
 import { ProductsModule } from 'src/modules/products/products.module';
-import { CreateStageDto } from 'src/modules/stages/dto/create-stage.dto';
 import { StagesModule } from 'src/modules/stages/stages.module';
-import { CreateToolDto } from 'src/modules/tools/dto/create-tool.dto';
 import { ToolsModule } from 'src/modules/tools/tools.module';
 import { UsersModule } from 'src/modules/users/users.module';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { ResourceHelper, TestResources } from 'test/helpers/resource.helper';
 
 describe('MakeupBags (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
+
   let tokens: AuthTokens;
-
-  let categoryId: string;
+  let resources: TestResources;
   let makeupBagId: string;
-  let stageId: string;
-  let toolId: string;
-
-  const mockCategory: CreateCategoryDto = {
-    name: 'basic',
-    type: 'makeup_bag',
-  };
-
-  const mockStage: CreateStageDto = {
-    title: 'Morning routine',
-    subtitle: 'Soft and natural',
-    imageUrl: 'http://example.com/image.jpg',
-    productIds: [],
-  };
-
-  const mockTool: CreateToolDto = {
-    brandId: '507f1f77bcf86cd799439011',
-    name: 'Brush',
-    imageUrl: 'http://example.com/image.jpg',
-    comment: 'Great tool',
-    storeLinks: [],
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -77,36 +53,15 @@ describe('MakeupBags (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
-
-    const category = await request(app.getHttpServer())
-      .post('/categories')
-      .set('Authorization', `Bearer ${tokens.adminToken}`)
-      .send(mockCategory)
-      .expect(HttpStatus.CREATED);
-
-    categoryId = category.body.id;
-
-    const stage = await request(app.getHttpServer())
-      .post('/stages')
-      .set('Authorization', `Bearer ${tokens.adminToken}`)
-      .send(mockStage)
-      .expect(HttpStatus.CREATED);
-
-    stageId = stage.body.id;
-
-    const tool = await request(app.getHttpServer())
-      .post('/tools')
-      .set('Authorization', `Bearer ${tokens.adminToken}`)
-      .send(mockTool)
-      .expect(HttpStatus.CREATED);
-
-    toolId = tool.body.id;
+    resources = await ResourceHelper.setupBasicResources(
+      app,
+      tokens.adminToken,
+    );
   });
 
   beforeEach(async () => {
@@ -119,25 +74,19 @@ describe('MakeupBags (e2e)', () => {
   });
 
   describe('POST /makeup-bags', () => {
-    const mockMakeupBag: CreateMakeupBagDto = {
-      categoryId: '',
-      clientId: '',
-      stageIds: [],
-      toolIds: [],
-    };
-
-    beforeEach(() => {
-      mockMakeupBag.categoryId = categoryId;
-      mockMakeupBag.clientId = tokens.clientId;
-      mockMakeupBag.stageIds = [stageId];
-      mockMakeupBag.toolIds = [toolId];
-    });
+    const createMakeupBagDto = () =>
+      TestDataFactory.createMakeupBag(
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [resources.toolId],
+      );
 
     it('should create a makeup-bag as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockMakeupBag)
+        .send(createMakeupBagDto())
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
@@ -148,7 +97,7 @@ describe('MakeupBags (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(mockMakeupBag)
+        .send(createMakeupBagDto())
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
@@ -159,14 +108,14 @@ describe('MakeupBags (e2e)', () => {
       await request(app.getHttpServer())
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.clientToken}`)
-        .send(mockMakeupBag)
+        .send(createMakeupBagDto())
         .expect(HttpStatus.FORBIDDEN);
     });
 
     it('should reject creation without authentication', async () => {
       await request(app.getHttpServer())
         .post('/makeup-bags')
-        .send(mockMakeupBag)
+        .send(createMakeupBagDto())
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
@@ -179,24 +128,22 @@ describe('MakeupBags (e2e)', () => {
     });
 
     it('should validate MongoDB ObjectId format', async () => {
+      const invalidDto = { ...createMakeupBagDto(), categoryId: 'invalid-id' };
+
       await request(app.getHttpServer())
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          ...mockMakeupBag,
-          categoryId: 'invalid-id',
-        })
+        .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should validate array fields', async () => {
+      const invalidDto = { ...createMakeupBagDto(), stageIds: 'not-an-array' };
+
       await request(app.getHttpServer())
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          ...mockMakeupBag,
-          stageIds: 'not-an-array',
-        })
+        .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
   });
@@ -207,10 +154,10 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
     });
 
@@ -258,10 +205,10 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
 
       makeupBagId = response.body.id;
@@ -329,16 +276,16 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
 
       makeupBagId = response.body.id;
 
       updateDto = {
-        stageIds: [stageId],
+        stageIds: [resources.stageId],
         toolIds: [],
       };
     });
@@ -428,10 +375,10 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
 
       makeupBagId = response.body.id;
@@ -510,10 +457,10 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
 
       const makeupBagId = response.body.id;
@@ -530,10 +477,10 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
 
       const makeupBagId = response.body.id;
@@ -554,7 +501,7 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
           stageIds: [],
           toolIds: [],
@@ -573,10 +520,10 @@ describe('MakeupBags (e2e)', () => {
         .post('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          categoryId,
+          categoryId: resources.categoryId,
           clientId: tokens.clientId,
-          stageIds: [stageId],
-          toolIds: [toolId],
+          stageIds: [resources.stageId],
+          toolIds: [resources.toolId],
         });
 
       const makeupBagId = response.body.id;
