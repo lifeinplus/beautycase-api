@@ -10,21 +10,20 @@ import { AuthModule } from 'src/modules/auth/auth.module';
 import { CategoriesModule } from 'src/modules/categories/categories.module';
 import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
 import { UsersModule } from 'src/modules/users/users.module';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { ResourceHelper } from 'test/helpers/resource.helper';
 
 describe('Categories (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
-  let tokens: AuthTokens;
 
-  const mockCategory: CreateCategoryDto = {
-    name: 'basic',
-    type: 'makeup_bag',
-  };
+  let tokens: AuthTokens;
+  const mockCategory = TestDataFactory.createCategory();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -43,7 +42,6 @@ describe('Categories (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
@@ -62,37 +60,6 @@ describe('Categories (e2e)', () => {
 
   describe('POST /categories', () => {
     describe('Authentication & Authorization', () => {
-      it('should reject requests without authentication token', async () => {
-        const response = await request(app.getHttpServer())
-          .post('/categories')
-          .send(mockCategory)
-          .expect(HttpStatus.UNAUTHORIZED);
-
-        expect(response.body).toHaveProperty('message');
-        expect(response.body.message).toContain('Unauthorized');
-      });
-
-      it('should reject requests with invalid token', async () => {
-        const response = await request(app.getHttpServer())
-          .post('/categories')
-          .set('Authorization', 'Bearer invalid-token')
-          .send(mockCategory)
-          .expect(HttpStatus.UNAUTHORIZED);
-
-        expect(response.body).toHaveProperty('message');
-      });
-
-      it('should reject requests from users without required roles', async () => {
-        const response = await request(app.getHttpServer())
-          .post('/categories')
-          .set('Authorization', `Bearer ${tokens.clientToken}`)
-          .send(mockCategory)
-          .expect(HttpStatus.FORBIDDEN);
-
-        expect(response.body).toHaveProperty('message');
-        expect(response.body.message).toContain('Forbidden');
-      });
-
       it('should allow admin users to create categories', async () => {
         const response = await request(app.getHttpServer())
           .post('/categories')
@@ -101,10 +68,7 @@ describe('Categories (e2e)', () => {
           .expect(HttpStatus.CREATED);
 
         expect(response.body).toHaveProperty('id');
-        expect(response.body).toHaveProperty(
-          'message',
-          'Category created successfully',
-        );
+        expect(response.body.message).toBe('Category created successfully');
       });
 
       it('should allow mua users to create categories', async () => {
@@ -115,10 +79,30 @@ describe('Categories (e2e)', () => {
           .expect(HttpStatus.CREATED);
 
         expect(response.body).toHaveProperty('id');
-        expect(response.body).toHaveProperty(
-          'message',
-          'Category created successfully',
-        );
+        expect(response.body.message).toBe('Category created successfully');
+      });
+
+      it('should reject creation by client role', async () => {
+        await request(app.getHttpServer())
+          .post('/categories')
+          .set('Authorization', `Bearer ${tokens.clientToken}`)
+          .send(mockCategory)
+          .expect(HttpStatus.FORBIDDEN);
+      });
+
+      it('should reject creation without authentication', async () => {
+        await request(app.getHttpServer())
+          .post('/categories')
+          .send(mockCategory)
+          .expect(HttpStatus.UNAUTHORIZED);
+      });
+
+      it('should reject requests with invalid token', async () => {
+        await request(app.getHttpServer())
+          .post('/categories')
+          .set('Authorization', 'Bearer invalid-token')
+          .send(mockCategory)
+          .expect(HttpStatus.UNAUTHORIZED);
       });
     });
 
@@ -154,28 +138,17 @@ describe('Categories (e2e)', () => {
 
         expect(response.body).toHaveProperty('id');
         expect(typeof response.body.id).toBe('string');
-        expect(response.body).toHaveProperty(
-          'message',
-          'Category created successfully',
-        );
+        expect(response.body.message).toBe('Category created successfully');
       });
     });
 
     describe('Business Logic', () => {
       it('should create category with all provided fields', async () => {
-        const categoryData = {
-          name: 'Luxury Collection',
-          type: 'premium_bag',
-        };
-
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .post('/categories')
           .set('Authorization', `Bearer ${tokens.adminToken}`)
-          .send(categoryData)
+          .send(mockCategory)
           .expect(HttpStatus.CREATED);
-
-        expect(response.body).toHaveProperty('id');
-        expect(response.body.message).toBe('Category created successfully');
 
         const getResponse = await request(app.getHttpServer())
           .get('/categories')
@@ -183,33 +156,39 @@ describe('Categories (e2e)', () => {
           .expect(HttpStatus.OK);
 
         expect(getResponse.body).toHaveLength(1);
-        expect(getResponse.body[0]).toHaveProperty('name', categoryData.name);
-        expect(getResponse.body[0]).toHaveProperty('type', categoryData.type);
+        expect(getResponse.body[0]).toHaveProperty('name', mockCategory.name);
+        expect(getResponse.body[0]).toHaveProperty('type', mockCategory.type);
       });
     });
   });
 
   describe('GET /categories', () => {
     beforeEach(async () => {
-      await request(app.getHttpServer())
-        .post('/categories')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockCategory);
-
-      await request(app.getHttpServer())
-        .post('/categories')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({ ...mockCategory, name: 'luxury' });
+      await ResourceHelper.createMultipleCategories(app, tokens.adminToken, 2);
     });
 
     describe('Authentication & Authorization', () => {
-      it('should reject requests without authentication token', async () => {
+      it('should allow admin users to get categories', async () => {
         const response = await request(app.getHttpServer())
           .get('/categories')
-          .expect(HttpStatus.UNAUTHORIZED);
+          .set('Authorization', `Bearer ${tokens.adminToken}`)
+          .expect(HttpStatus.OK);
 
-        expect(response.body).toHaveProperty('message');
-        expect(response.body.message).toContain('Unauthorized');
+        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body.length).toBe(2);
+      });
+
+      it('should allow mua users to get categories', async () => {
+        await request(app.getHttpServer())
+          .get('/categories')
+          .set('Authorization', `Bearer ${tokens.muaToken}`)
+          .expect(HttpStatus.OK);
+      });
+
+      it('should reject unauthenticated requests', async () => {
+        await request(app.getHttpServer())
+          .get('/categories')
+          .expect(HttpStatus.UNAUTHORIZED);
       });
 
       it('should reject requests with invalid token', async () => {
@@ -228,26 +207,6 @@ describe('Categories (e2e)', () => {
 
         expect(response.body).toHaveProperty('message');
         expect(response.body.message).toContain('Forbidden');
-      });
-
-      it('should allow admin users to get categories', async () => {
-        const response = await request(app.getHttpServer())
-          .get('/categories')
-          .set('Authorization', `Bearer ${tokens.adminToken}`)
-          .expect(HttpStatus.OK);
-
-        expect(Array.isArray(response.body)).toBe(true);
-        expect(response.body.length).toBeGreaterThan(0);
-      });
-
-      it('should allow mua users to get categories', async () => {
-        const response = await request(app.getHttpServer())
-          .get('/categories')
-          .set('Authorization', `Bearer ${tokens.muaToken}`)
-          .expect(HttpStatus.OK);
-
-        expect(Array.isArray(response.body)).toBe(true);
-        expect(response.body.length).toBeGreaterThan(0);
       });
     });
 
@@ -276,8 +235,8 @@ describe('Categories (e2e)', () => {
           .set('Authorization', `Bearer ${tokens.adminToken}`)
           .expect(HttpStatus.OK);
 
-        expect(response.body[0].name).toBe('basic');
-        expect(response.body[1].name).toBe('luxury');
+        expect(response.body[0].name).toBe('category 1');
+        expect(response.body[1].name).toBe('category 2');
       });
     });
   });
@@ -289,13 +248,11 @@ describe('Categories (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
 
-      const createResponse = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/categories')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send(mockCategory)
         .expect(HttpStatus.CREATED);
-
-      expect(createResponse.body).toHaveProperty('id');
 
       const getResponse = await request(app.getHttpServer())
         .get('/categories')

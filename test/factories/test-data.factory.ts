@@ -9,13 +9,7 @@ import { CreateProductDto } from 'src/modules/products/dto/create-product.dto';
 import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-questionnaire.dto';
 import { CreateStageDto } from 'src/modules/stages/dto/create-stage.dto';
 import { CreateToolDto } from 'src/modules/tools/dto/create-tool.dto';
-import { Role } from 'src/modules/users/schemas/user.schema';
-
-export interface TestUser {
-  username: string;
-  password: string;
-  role: Role;
-}
+import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 
 export interface TestBrand extends CreateBrandDto {}
 export interface TestCategory extends CreateCategoryDto {}
@@ -25,6 +19,7 @@ export interface TestProduct extends CreateProductDto {}
 export interface TestQuestionnaire extends CreateQuestionnaireDto {}
 export interface TestStage extends CreateStageDto {}
 export interface TestTool extends CreateToolDto {}
+export interface TestUser extends CreateUserDto {}
 
 export class TestDataFactory {
   static createAdminUser(overrides: Partial<TestUser> = {}): TestUser {
@@ -61,12 +56,28 @@ export class TestDataFactory {
     };
   }
 
+  static createMultipleBrands(count: number): TestBrand[] {
+    return Array.from({ length: count }, (_, index) =>
+      this.createBrand({
+        name: `Test Brand ${index + 1}`,
+      }),
+    );
+  }
+
   static createCategory(overrides: Partial<TestCategory> = {}): TestCategory {
     return {
       name: 'basic',
       type: 'makeup_bag',
       ...overrides,
     };
+  }
+
+  static createMultipleCategories(count: number): TestCategory[] {
+    return Array.from({ length: count }, (_, index) =>
+      this.createCategory({
+        name: `category ${index + 1}`,
+      }),
+    );
   }
 
   static createLesson(
@@ -90,9 +101,9 @@ export class TestDataFactory {
     productIds: string[] = [],
     clientIds: string[] = [],
   ): TestLesson[] {
-    return Array.from({ length: count }, () =>
+    return Array.from({ length: count }, (_, index) =>
       this.createLesson(productIds, clientIds, {
-        title: `Lesson ${count + 1}`,
+        title: `Lesson ${index + 1}`,
       }),
     );
   }

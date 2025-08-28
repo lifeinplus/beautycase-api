@@ -14,13 +14,14 @@ import { RegisterDto } from 'src/modules/auth/dto/register.dto';
 import { UsersModule } from 'src/modules/users/users.module';
 import { UsersService } from 'src/modules/users/users.service';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { AuthHelper } from 'test/helpers/auth.helper';
 import { CookieHelper } from '../helpers/cookie.helper';
 import { DatabaseHelper, TestDatabaseModule } from '../helpers/database.helper';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
-  let usersService: UsersService;
   let connection: Connection;
+  let usersService: UsersService;
 
   const clientUser = TestDataFactory.createClientUser();
 
@@ -60,9 +61,8 @@ describe('Auth (e2e)', () => {
   describe('POST /auth/register', () => {
     it('should register a new user successfully', async () => {
       const dto: RegisterDto = {
-        username: 'newuser',
-        password: 'newpass123',
-        confirmPassword: 'newpass123',
+        ...clientUser,
+        confirmPassword: clientUser.password,
       };
 
       const response = await request(app.getHttpServer())
@@ -74,42 +74,39 @@ describe('Auth (e2e)', () => {
         message: 'Account created successfully',
       });
 
-      const createdUser = await usersService.findByUsername('newuser');
+      const createdUser = await usersService.findByUsername('client');
       expect(createdUser).toBeTruthy();
-      expect(createdUser?.username).toBe('newuser');
+      expect(createdUser?.username).toBe('client');
       expect(createdUser?.role).toBe('client');
 
       const isPasswordHashed = await bcrypt.compare(
-        'newpass123',
+        'client123',
         createdUser?.password!,
       );
       expect(isPasswordHashed).toBe(true);
     });
 
     it('should reject registration with duplicate username', async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
+      await AuthHelper.createClientUser(app);
 
-      const dto: RegisterDto = {
+      const duplicatedDto: RegisterDto = {
         ...clientUser,
-        password: 'anotherpass123',
-        confirmPassword: 'anotherpass123',
+        confirmPassword: clientUser.password,
       };
 
       const response = await request(app.getHttpServer())
         .post('/auth/register')
-        .send(dto)
+        .send(duplicatedDto)
         .expect(HttpStatus.CONFLICT);
 
       expect(response.body.message).toBe('Username already in use');
     });
 
     it('should reject registration with invalid data', async () => {
-      const invalidDto = {
+      const invalidDto: RegisterDto = {
         username: '',
         password: '123',
+        confirmPassword: '123',
       };
 
       await request(app.getHttpServer())
@@ -119,7 +116,7 @@ describe('Auth (e2e)', () => {
     });
 
     it('should reject registration with missing fields', async () => {
-      const incompleteDto = {
+      const incompleteDto: Partial<RegisterDto> = {
         username: 'testuser',
       };
 
@@ -132,10 +129,7 @@ describe('Auth (e2e)', () => {
 
   describe('POST /auth/login', () => {
     beforeEach(async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
+      await AuthHelper.createClientUser(app);
     });
 
     it('should login successfully with valid credentials', async () => {
@@ -219,10 +213,7 @@ describe('Auth (e2e)', () => {
     let jwtCookie: string;
 
     beforeEach(async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
+      await AuthHelper.createClientUser(app);
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
@@ -272,10 +263,7 @@ describe('Auth (e2e)', () => {
     let jwtCookie: string;
 
     beforeEach(async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
+      await AuthHelper.createClientUser(app);
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
@@ -357,10 +345,7 @@ describe('Auth (e2e)', () => {
     });
 
     it('should handle multiple concurrent logins', async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
+      await AuthHelper.createClientUser(app);
 
       const loginResponse1 = await request(app.getHttpServer())
         .post('/auth/login')
@@ -392,12 +377,11 @@ describe('Auth (e2e)', () => {
   });
 
   describe('Security Tests', () => {
-    it('should not expose sensitive user data in responses', async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
+    beforeEach(async () => {
+      await AuthHelper.createClientUser(app);
+    });
 
+    it('should not expose sensitive user data in responses', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send(clientUser)
@@ -409,11 +393,6 @@ describe('Auth (e2e)', () => {
     });
 
     it('should use secure cookie settings', async () => {
-      await usersService.create({
-        ...clientUser,
-        password: await bcrypt.hash(clientUser.password, 10),
-      });
-
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send(clientUser)

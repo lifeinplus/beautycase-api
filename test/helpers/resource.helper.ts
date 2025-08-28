@@ -117,6 +117,27 @@ export class ResourceHelper {
     };
   }
 
+  static async createMultipleBrands(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+  ): Promise<BrandResources[]> {
+    const brands: BrandResources[] = [];
+    const brandsData = TestDataFactory.createMultipleBrands(count);
+
+    for (const data of brandsData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/brands')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      brands.push({ id: body.id, data });
+    }
+
+    return brands;
+  }
+
   static async createCategory(
     app: INestApplication,
     adminToken: string,
@@ -133,6 +154,27 @@ export class ResourceHelper {
       id: response.body.id,
       data,
     };
+  }
+
+  static async createMultipleCategories(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+  ): Promise<CategoryResources[]> {
+    const categories: CategoryResources[] = [];
+    const categoriesData = TestDataFactory.createMultipleCategories(count);
+
+    for (const data of categoriesData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/categories')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      categories.push({ id: body.id, data });
+    }
+
+    return categories;
   }
 
   static async createLesson(

@@ -369,7 +369,7 @@ describe('Lessons (e2e)', () => {
       await request(app.getHttpServer())
         .put(`/lessons/${fakeId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({ title: 'Updated Title' })
+        .send(updateDto)
         .expect(HttpStatus.NOT_FOUND);
     });
 

@@ -25,8 +25,8 @@ import { ResourceHelper } from 'test/helpers/resource.helper';
 describe('Questionnaires (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
-  let tokens: AuthTokens;
 
+  let tokens: AuthTokens;
   const mockQuestionnaire = TestDataFactory.createQuestionnaire();
 
   beforeAll(async () => {
