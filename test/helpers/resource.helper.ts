@@ -5,6 +5,7 @@ import {
   TestBrand,
   TestCategory,
   TestDataFactory,
+  TestLesson,
   TestMakeupBag,
   TestProduct,
   TestQuestionnaire,
@@ -20,6 +21,11 @@ export interface TestResources {
   toolId: string;
 }
 
+export interface TestLessonResources {
+  brandId: string;
+  productId: string;
+}
+
 export interface BrandResources {
   id: string;
   data: TestBrand;
@@ -28,6 +34,11 @@ export interface BrandResources {
 export interface CategoryResources {
   id: string;
   data: TestCategory;
+}
+
+export interface LessonResources {
+  id: string;
+  data: TestLesson;
 }
 
 export interface MakeupBagResources {
@@ -56,35 +67,35 @@ export interface ToolResources {
 }
 
 export class ResourceHelper {
+  static async setupLessonResources(
+    app: INestApplication,
+    adminToken: string,
+  ): Promise<TestLessonResources> {
+    const brand = await this.createBrand(app, adminToken);
+    const product = await this.createProduct(app, adminToken, brand.id);
+
+    return {
+      brandId: brand.id,
+      productId: product.id,
+    };
+  }
+
   static async setupBasicResources(
     app: INestApplication,
     adminToken: string,
   ): Promise<TestResources> {
-    const categoryResources = await this.createCategory(app, adminToken);
-    const brandResources = await this.createBrand(app, adminToken);
-
-    const productResources = await this.createProduct(
-      app,
-      adminToken,
-      brandResources.id,
-    );
-
-    const stageResources = await this.createStage(app, adminToken, [
-      brandResources.id,
-    ]);
-
-    const toolResources = await this.createTool(
-      app,
-      adminToken,
-      brandResources.id,
-    );
+    const category = await this.createCategory(app, adminToken);
+    const brand = await this.createBrand(app, adminToken);
+    const product = await this.createProduct(app, adminToken, brand.id);
+    const stage = await this.createStage(app, adminToken, [brand.id]);
+    const tool = await this.createTool(app, adminToken, brand.id);
 
     return {
-      brandId: brandResources.id,
-      categoryId: categoryResources.id,
-      productIds: [productResources.id],
-      stageId: stageResources.id,
-      toolId: toolResources.id,
+      brandId: brand.id,
+      categoryId: category.id,
+      productIds: [product.id],
+      stageId: stage.id,
+      toolId: tool.id,
     };
   }
 
@@ -122,6 +133,53 @@ export class ResourceHelper {
       id: response.body.id,
       data,
     };
+  }
+
+  static async createLesson(
+    app: INestApplication,
+    adminToken: string,
+    productIds: string[] = [],
+    clientIds: string[] = [],
+  ): Promise<LessonResources> {
+    const data = TestDataFactory.createLesson(productIds, clientIds);
+
+    const response = await request(app.getHttpServer())
+      .post('/lessons')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(data)
+      .expect(HttpStatus.CREATED);
+
+    return {
+      id: response.body.id,
+      data,
+    };
+  }
+
+  static async createMultipleLessons(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+    productIds: string[] = [],
+    clientIds: string[] = [],
+  ): Promise<LessonResources[]> {
+    const lessons: LessonResources[] = [];
+    const lessonsData = TestDataFactory.createMultipleLessons(
+      count,
+      productIds,
+      clientIds,
+    );
+
+    for (const data of lessonsData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/lessons')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      lessons.push({ id: body.id, data });
+    }
+
+    return lessons;
   }
 
   static async createMakeupBag(

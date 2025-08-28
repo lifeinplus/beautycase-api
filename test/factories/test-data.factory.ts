@@ -3,6 +3,7 @@ import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
 import { CreateBrandDto } from 'src/modules/brands/dto/create-brand.dto';
 import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
+import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
 import { CreateMakeupBagDto } from 'src/modules/makeup-bags/dto/create-makeup-bag.dto';
 import { CreateProductDto } from 'src/modules/products/dto/create-product.dto';
 import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-questionnaire.dto';
@@ -18,6 +19,7 @@ export interface TestUser {
 
 export interface TestBrand extends CreateBrandDto {}
 export interface TestCategory extends CreateCategoryDto {}
+export interface TestLesson extends CreateLessonDto {}
 export interface TestMakeupBag extends CreateMakeupBagDto {}
 export interface TestProduct extends CreateProductDto {}
 export interface TestQuestionnaire extends CreateQuestionnaireDto {}
@@ -65,6 +67,34 @@ export class TestDataFactory {
       type: 'makeup_bag',
       ...overrides,
     };
+  }
+
+  static createLesson(
+    productIds: string[] = [],
+    clientIds: string[] = [],
+    overrides: Partial<TestLesson> = {},
+  ): TestLesson {
+    return {
+      title: 'Advanced Makeup Techniques',
+      shortDescription: 'Learn advanced makeup application methods',
+      videoUrl: 'https://example.com/video.mp4',
+      fullDescription: 'This lesson covers advanced makeup techniques',
+      productIds,
+      clientIds,
+      ...overrides,
+    };
+  }
+
+  static createMultipleLessons(
+    count: number,
+    productIds: string[] = [],
+    clientIds: string[] = [],
+  ): TestLesson[] {
+    return Array.from({ length: count }, () =>
+      this.createLesson(productIds, clientIds, {
+        title: `Lesson ${count + 1}`,
+      }),
+    );
   }
 
   static createMakeupBag(

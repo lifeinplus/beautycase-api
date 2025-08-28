@@ -7,30 +7,30 @@ import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
+import { BrandsModule } from 'src/modules/brands/brands.module';
 import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
+import { UpdateLessonDto } from 'src/modules/lessons/dto/update-lesson.dto';
 import { LessonsModule } from 'src/modules/lessons/lessons.module';
 import { ProductsModule } from 'src/modules/products/products.module';
 import { UsersModule } from 'src/modules/users/users.module';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
 import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import {
+  ResourceHelper,
+  TestLessonResources,
+} from 'test/helpers/resource.helper';
 
 describe('Lessons (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
-  let tokens: AuthTokens;
 
-  const mockLesson: CreateLessonDto = {
-    title: 'Advanced Makeup Techniques',
-    shortDescription: 'Learn advanced makeup application methods',
-    videoUrl: 'https://example.com/video1.mp4',
-    fullDescription:
-      'This comprehensive lesson covers advanced makeup techniques including contouring, highlighting, and professional finishing touches that will elevate your makeup skills to the next level.',
-    productIds: [],
-    clientIds: [],
-  };
+  let tokens: AuthTokens;
+  let lessonResources: TestLessonResources;
+  let lessonId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,6 +42,7 @@ describe('Lessons (e2e)', () => {
         }),
         TestDatabaseModule,
         AuthModule,
+        BrandsModule,
         LessonsModule,
         ProductsModule,
         UsersModule,
@@ -50,12 +51,16 @@ describe('Lessons (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     connection = moduleFixture.get<Connection>(getConnectionToken());
-
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
+
+    lessonResources = await ResourceHelper.setupLessonResources(
+      app,
+      tokens.adminToken,
+    );
   });
 
   beforeEach(async () => {
@@ -68,11 +73,17 @@ describe('Lessons (e2e)', () => {
   });
 
   describe('POST /lessons', () => {
+    const createLessonDto = () =>
+      TestDataFactory.createLesson(
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
+
     it('should create a lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockLesson)
+        .send(createLessonDto())
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
@@ -83,7 +94,7 @@ describe('Lessons (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
         .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(mockLesson)
+        .send(createLessonDto())
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
@@ -94,14 +105,14 @@ describe('Lessons (e2e)', () => {
       await request(app.getHttpServer())
         .post('/lessons')
         .set('Authorization', `Bearer ${tokens.clientToken}`)
-        .send(mockLesson)
+        .send(createLessonDto())
         .expect(HttpStatus.FORBIDDEN);
     });
 
     it('should reject creation without authentication', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .send(mockLesson)
+        .send(createLessonDto())
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
@@ -127,7 +138,7 @@ describe('Lessons (e2e)', () => {
         .post('/lessons')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          ...mockLesson,
+          ...createLessonDto(),
           title: longTitle,
         })
         .expect(HttpStatus.BAD_REQUEST);
@@ -138,7 +149,7 @@ describe('Lessons (e2e)', () => {
         .post('/lessons')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({
-          ...mockLesson,
+          ...createLessonDto(),
           videoUrl: 'invalid-url',
         })
         .expect(HttpStatus.BAD_REQUEST);
@@ -146,7 +157,7 @@ describe('Lessons (e2e)', () => {
 
     it('should accept valid productIds and clientIds', async () => {
       const dataWithIds = {
-        ...mockLesson,
+        ...createLessonDto(),
         productIds: ['507f1f77bcf86cd799439011'],
         clientIds: ['507f1f77bcf86cd799439012'],
       };
@@ -163,7 +174,7 @@ describe('Lessons (e2e)', () => {
 
     it('should reject invalid MongoDB ObjectIds', async () => {
       const dataWithInvalidIds = {
-        ...mockLesson,
+        ...createLessonDto(),
         productIds: ['invalid-id'],
         clientIds: ['also-invalid'],
       };
@@ -178,15 +189,13 @@ describe('Lessons (e2e)', () => {
 
   describe('GET /lessons', () => {
     beforeEach(async () => {
-      await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockLesson);
-
-      await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({ ...mockLesson, title: 'Basic Makeup Fundamentals' });
+      await ResourceHelper.createMultipleLessons(
+        app,
+        tokens.adminToken,
+        2,
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
     });
 
     it('should return all lessons when authenticated', async () => {
@@ -215,27 +224,23 @@ describe('Lessons (e2e)', () => {
   });
 
   describe('GET /lessons/:id', () => {
-    let lessonId: string;
     let clientAccessibleLessonId: string;
 
     beforeEach(async () => {
-      const lessonResponse = await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockLesson);
+      const { id } = await ResourceHelper.createLesson(app, tokens.adminToken, [
+        lessonResources.productId,
+      ]);
 
-      lessonId = lessonResponse.body.id;
+      lessonId = id;
 
-      const clientLessonResponse = await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send({
-          ...mockLesson,
-          title: 'Client Accessible Lesson',
-          clientIds: [tokens.clientId],
-        });
+      const clientLesson = await ResourceHelper.createLesson(
+        app,
+        tokens.adminToken,
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
 
-      clientAccessibleLessonId = clientLessonResponse.body.id;
+      clientAccessibleLessonId = clientLesson.id;
     });
 
     it('should return lesson details for admin', async () => {
@@ -244,7 +249,8 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
-      expect(response.body).toHaveProperty('title', mockLesson.title);
+      expect(response.body).toHaveProperty('_id', lessonId);
+      expect(response.body).toHaveProperty('title');
       expect(response.body).toHaveProperty('shortDescription');
       expect(response.body).toHaveProperty('videoUrl');
       expect(response.body).toHaveProperty('fullDescription');
@@ -256,7 +262,7 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
-      expect(response.body).toHaveProperty('title', mockLesson.title);
+      expect(response.body).toHaveProperty('_id', lessonId);
     });
 
     it('should allow client access to assigned lessons', async () => {
@@ -265,7 +271,7 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.clientToken}`)
         .expect(HttpStatus.OK);
 
-      expect(response.body).toHaveProperty('title', 'Client Accessible Lesson');
+      expect(response.body).toHaveProperty('id', clientAccessibleLessonId);
     });
 
     it('should deny client access to non-assigned lessons', async () => {
@@ -299,27 +305,29 @@ describe('Lessons (e2e)', () => {
   });
 
   describe('PUT /lessons/:id', () => {
-    let lessonId: string;
+    let updateDto: UpdateLessonDto;
 
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockLesson);
+      const { id } = await ResourceHelper.createLesson(
+        app,
+        tokens.adminToken,
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
 
-      lessonId = response.body.id;
-    });
+      lessonId = id;
 
-    it('should update lesson as admin', async () => {
-      const updateData = {
+      updateDto = {
         title: 'Updated Lesson Title',
         shortDescription: 'Updated description for the lesson',
       };
+    });
 
+    it('should update lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(updateData)
+        .send(updateDto)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
@@ -330,49 +338,29 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
-      expect(getResponse.body.title).toBe(updateData.title);
+      expect(getResponse.body.title).toBe(updateDto.title);
       expect(getResponse.body.shortDescription).toBe(
-        updateData.shortDescription,
+        updateDto.shortDescription,
       );
     });
 
     it('should update lesson as mua', async () => {
-      const updateData = {
-        title: 'MUA Updated Title',
-      };
-
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(updateData)
+        .send(updateDto)
         .expect(HttpStatus.OK);
 
+      expect(response.body).toHaveProperty('id', lessonId);
       expect(response.body.message).toBe('Lesson updated successfully');
     });
 
     it('should reject update by client role', async () => {
-      const updateData = {
-        title: 'Client Attempt',
-      };
-
       await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
         .set('Authorization', `Bearer ${tokens.clientToken}`)
-        .send(updateData)
+        .send(updateDto)
         .expect(HttpStatus.FORBIDDEN);
-    });
-
-    it('should validate update data', async () => {
-      const invalidData = {
-        title: 'A',
-        videoUrl: 'not-a-url',
-      };
-
-      await request(app.getHttpServer())
-        .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(invalidData)
-        .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 404 for non-existent lesson', async () => {
@@ -383,6 +371,13 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({ title: 'Updated Title' })
         .expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should require authentication', async () => {
+      await request(app.getHttpServer())
+        .put(`/lessons/${lessonId}`)
+        .send(updateDto)
+        .expect(HttpStatus.UNAUTHORIZED);
     });
 
     it('should allow partial updates', async () => {
@@ -398,18 +393,31 @@ describe('Lessons (e2e)', () => {
 
       expect(response.body.message).toBe('Lesson updated successfully');
     });
+
+    it('should validate update data', async () => {
+      const invalidData = {
+        title: 'A',
+        videoUrl: 'not-a-url',
+      };
+
+      await request(app.getHttpServer())
+        .put(`/lessons/${lessonId}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .send(invalidData)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
   });
 
   describe('PATCH /lessons/:id/products', () => {
-    let lessonId: string;
-
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockLesson);
+      const { id } = await ResourceHelper.createLesson(
+        app,
+        tokens.adminToken,
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
 
-      lessonId = response.body.id;
+      lessonId = id;
     });
 
     it('should update lesson products as admin', async () => {
@@ -496,15 +504,15 @@ describe('Lessons (e2e)', () => {
   });
 
   describe('DELETE /lessons/:id', () => {
-    let lessonId: string;
-
     beforeEach(async () => {
-      const response = await request(app.getHttpServer())
-        .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
-        .send(mockLesson);
+      const { id } = await ResourceHelper.createLesson(
+        app,
+        tokens.adminToken,
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
 
-      lessonId = response.body.id;
+      lessonId = id;
     });
 
     it('should delete lesson as admin', async () => {
@@ -528,6 +536,7 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
+      expect(response.body).toHaveProperty('id', lessonId);
       expect(response.body.message).toBe('Lesson deleted successfully');
     });
 
@@ -561,51 +570,27 @@ describe('Lessons (e2e)', () => {
     });
   });
 
-  describe('Access Control', () => {
-    it('should enforce JWT authentication on all endpoints', async () => {
-      const endpoints = [
-        { method: 'post', path: '/lessons' },
-        { method: 'get', path: '/lessons' },
-        { method: 'get', path: '/lessons/507f1f77bcf86cd799439011' },
-        { method: 'put', path: '/lessons/507f1f77bcf86cd799439011' },
-        { method: 'patch', path: '/lessons/507f1f77bcf86cd799439011/products' },
-        { method: 'delete', path: '/lessons/507f1f77bcf86cd799439011' },
-      ];
+  describe('Access Control Edge Cases', () => {
+    it('should handle LessonAccessGuard when makeup bag does not exist', async () => {
+      const nonExistentId = '507f1f77bcf86cd799439011';
 
-      for (const endpoint of endpoints) {
-        await request(app.getHttpServer())
-          [endpoint.method](endpoint.path)
-          .expect(HttpStatus.UNAUTHORIZED);
-      }
+      await request(app.getHttpServer())
+        .get(`/lessons/${nonExistentId}`)
+        .set('Authorization', `Bearer ${tokens.clientToken}`)
+        .expect(HttpStatus.NOT_FOUND);
     });
 
-    it('should enforce role-based access control', async () => {
-      const restrictedEndpoints = [
-        { method: 'post', path: '/lessons', data: mockLesson },
-        {
-          method: 'put',
-          path: '/lessons/507f1f77bcf86cd799439011',
-          data: { title: 'Updated' },
-        },
-        {
-          method: 'patch',
-          path: '/lessons/507f1f77bcf86cd799439011/products',
-          data: { productIds: [] },
-        },
-        { method: 'delete', path: '/lessons/507f1f77bcf86cd799439011' },
-      ];
+    it('should handle LessonAccessGuard when user ID is missing', async () => {
+      const { id } = await ResourceHelper.createLesson(
+        app,
+        tokens.adminToken,
+        [lessonResources.productId],
+        [tokens.clientId],
+      );
 
-      for (const endpoint of restrictedEndpoints) {
-        const request_builder = request(app.getHttpServer())
-          [endpoint.method](endpoint.path)
-          .set('Authorization', `Bearer ${tokens.clientToken}`);
-
-        if (endpoint.data) {
-          request_builder.send(endpoint.data);
-        }
-
-        await request_builder.expect(HttpStatus.FORBIDDEN);
-      }
+      await request(app.getHttpServer())
+        .get(`/lessons/${id}`)
+        .expect(HttpStatus.UNAUTHORIZED);
     });
   });
 
