@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
 describe('AuthController', () => {
@@ -18,6 +18,7 @@ describe('AuthController', () => {
   let mockConfigService: jest.Mocked<ConfigService>;
 
   const mockCookieOptions = { httpOnly: true, secure: true };
+  const mockUser = TestDataFactory.createClientUser();
 
   beforeEach(async () => {
     mockAuthService = {
@@ -52,55 +53,65 @@ describe('AuthController', () => {
     controller = module.get<AuthController>(AuthController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('loginUser', () => {
     it('should login user and set cookie', async () => {
-      const dto: LoginDto = { username: 'john', password: 'pass' };
       const req: any = { cookies: {} };
-      const res: any = {
-        clearCookie: jest.fn(),
-        cookie: jest.fn(),
-      };
+      const res: any = { clearCookie: jest.fn(), cookie: jest.fn() };
 
       mockAuthService.loginUser.mockResolvedValue({
         accessToken: 'at',
         refreshToken: 'rt',
-        user: { role: 'client', userId: 'u1', username: 'john' },
+        user: {
+          userId: 'u1',
+          username: mockUser.username,
+          role: mockUser.role!,
+        },
       });
 
-      const result = await controller.loginUser(dto, req, res);
+      const result = await controller.loginUser(mockUser, req, res);
 
-      expect(mockAuthService.loginUser).toHaveBeenCalledWith(dto, undefined);
+      expect(mockAuthService.loginUser).toHaveBeenCalledWith(
+        mockUser,
+        undefined,
+      );
       expect(res.cookie).toHaveBeenCalledWith('jwt', 'rt', mockCookieOptions);
       expect(result).toEqual({
         accessToken: 'at',
-        role: 'client',
         userId: 'u1',
-        username: 'john',
+        username: mockUser.username,
+        role: mockUser.role,
       });
     });
 
     it('should clear old cookie if refreshToken exists', async () => {
-      const dto: LoginDto = { username: 'john', password: 'pass' };
       const req: any = { cookies: { jwt: 'oldrt' } };
       const res: any = { clearCookie: jest.fn(), cookie: jest.fn() };
 
       mockAuthService.loginUser.mockResolvedValue({
         accessToken: 'at',
         refreshToken: 'rt',
-        user: { role: 'client', userId: 'u1', username: 'john' },
+        user: {
+          userId: 'u1',
+          username: mockUser.username,
+          role: mockUser.role || '',
+        },
       });
 
-      await controller.loginUser(dto, req, res);
+      await controller.loginUser(mockUser, req, res);
 
       expect(res.clearCookie).toHaveBeenCalledWith('jwt');
     });
   });
 
   describe('logoutUser', () => {
+    it('should call logout service', async () => {
+      mockAuthService.logoutUser.mockResolvedValue(true);
+
+      const result = await controller.logoutUser('rt');
+      expect(mockAuthService.logoutUser).toHaveBeenCalledWith('rt');
+      expect(result).toBeUndefined();
+    });
+
     it('should throw if no refresh token', async () => {
       await expect(controller.logoutUser(undefined)).rejects.toThrow(
         BadRequestException,
@@ -113,14 +124,6 @@ describe('AuthController', () => {
       await expect(controller.logoutUser('rt')).rejects.toThrow(
         NotFoundException,
       );
-    });
-
-    it('should call logout service', async () => {
-      mockAuthService.logoutUser.mockResolvedValue(true);
-
-      const result = await controller.logoutUser('rt');
-      expect(mockAuthService.logoutUser).toHaveBeenCalledWith('rt');
-      expect(result).toBeUndefined(); // since controller returns nothing
     });
   });
 
@@ -137,7 +140,11 @@ describe('AuthController', () => {
       mockAuthService.refreshToken.mockResolvedValue({
         accessToken: 'newat',
         refreshToken: 'newrt',
-        user: { role: 'client', userId: 'u1', username: 'john' },
+        user: {
+          userId: 'u1',
+          username: mockUser.username,
+          role: mockUser.role!,
+        },
       });
 
       await controller.refreshToken(req, res);
@@ -151,9 +158,9 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
       expect(res.json).toHaveBeenCalledWith({
         accessToken: 'newat',
-        role: 'client',
         userId: 'u1',
-        username: 'john',
+        username: mockUser.username,
+        role: mockUser.role!,
       });
     });
   });
@@ -161,19 +168,15 @@ describe('AuthController', () => {
   describe('registerUser', () => {
     it('should call register service and return success message', async () => {
       const dto: RegisterDto = {
-        username: 'john',
-        password: 'pass1234',
-        confirmPassword: 'pass1234',
+        ...mockUser,
+        confirmPassword: mockUser.password,
       };
 
       mockAuthService.registerUser.mockResolvedValue(undefined);
-
       const result = await controller.registerUser(dto);
 
       expect(mockAuthService.registerUser).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({
-        message: 'Account created successfully',
-      });
+      expect(result.message).toBe('Account created successfully');
     });
   });
 });

@@ -4,9 +4,9 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TokenService } from './token.service';
 
@@ -17,11 +17,11 @@ describe('AuthService', () => {
   let mockUsersService: jest.Mocked<UsersService>;
   let mockTokenService: jest.Mocked<TokenService>;
 
-  const mockUser = {
+  const mockUser = TestDataFactory.createClientUser();
+
+  const mockUserResponse = {
+    ...mockUser,
     id: 'user-id',
-    username: 'testuser',
-    password: 'hashedpass',
-    role: 'client',
     refreshTokens: ['rt1'],
     save: jest.fn(),
   } as any;
@@ -58,65 +58,64 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('loginUser', () => {
-    const dto: LoginDto = { username: 'testuser', password: 'pass' };
-
-    it('should throw if user not found', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(null);
-
-      await expect(service.loginUser(dto)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('should throw if password mismatch', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-
-      await expect(service.loginUser(dto)).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
     it('should login and return tokens', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockUsersService.findByUsername.mockResolvedValue(mockUserResponse);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       mockTokenService.signAccessToken.mockReturnValue('at');
       mockTokenService.signRefreshToken.mockReturnValue('rt');
       mockTokenService.filterRefreshTokens.mockReturnValue(['rt1']);
-      mockUsersService.findByRefreshToken.mockResolvedValue(mockUser);
+      mockUsersService.findByRefreshToken.mockResolvedValue(mockUserResponse);
 
-      const result = await service.loginUser(dto, 'oldrt');
+      const result = await service.loginUser(mockUser, 'oldrt');
 
       expect(mockTokenService.signAccessToken).toHaveBeenCalledWith({
-        role: 'client',
-        userId: 'user-id',
-        username: 'testuser',
+        userId: mockUserResponse.id,
+        username: mockUser.username,
+        role: mockUser.role,
       });
+
       expect(result).toEqual({
         accessToken: 'at',
         refreshToken: 'rt',
-        user: { role: 'client', userId: 'user-id', username: 'testuser' },
+        user: {
+          userId: mockUserResponse.id,
+          username: mockUser.username,
+          role: mockUser.role,
+        },
       });
     });
 
     it('should clear tokens if refresh token reuse detected', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockUsersService.findByUsername.mockResolvedValue(mockUserResponse);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       mockTokenService.signAccessToken.mockReturnValue('at');
       mockTokenService.signRefreshToken.mockReturnValue('rt');
       mockTokenService.filterRefreshTokens.mockReturnValue(['rt1']);
       mockUsersService.findByRefreshToken.mockResolvedValue(null);
 
-      await service.loginUser(dto, 'stolenrt');
+      await service.loginUser(mockUser, 'stolenrt');
 
       expect(mockTokenService.filterRefreshTokens).toHaveBeenCalledWith(
         ['rt1'],
         'stolenrt',
+      );
+    });
+
+    it('should throw if user not found', async () => {
+      mockUsersService.findByUsername.mockResolvedValue(null);
+
+      await expect(service.loginUser(mockUser)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw if password mismatch', async () => {
+      mockUsersService.findByUsername.mockResolvedValue(mockUserResponse);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(service.loginUser(mockUser)).rejects.toThrow(
+        UnauthorizedException,
       );
     });
   });
@@ -130,12 +129,12 @@ describe('AuthService', () => {
     });
 
     it('should remove refresh token and return true', async () => {
-      mockUsersService.findByRefreshToken.mockResolvedValue(mockUser);
+      mockUsersService.findByRefreshToken.mockResolvedValue(mockUserResponse);
       mockTokenService.filterRefreshTokens.mockReturnValue([]);
 
       const result = await service.logoutUser('rt');
       expect(result).toBe(true);
-      expect(mockUser.save).toHaveBeenCalled();
+      expect(mockUserResponse.save).toHaveBeenCalled();
     });
   });
 
@@ -151,17 +150,17 @@ describe('AuthService', () => {
       mockTokenService.verifyRefreshToken.mockReturnValue({
         username: 'testuser',
       } as any);
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
+      mockUsersService.findByUsername.mockResolvedValue(mockUserResponse);
 
       await expect(service.refreshToken('rt')).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(mockUser.refreshTokens).toEqual([]);
-      expect(mockUser.save).toHaveBeenCalled();
+      expect(mockUserResponse.refreshTokens).toEqual([]);
+      expect(mockUserResponse.save).toHaveBeenCalled();
     });
 
     it('should remove expired token and throw', async () => {
-      mockUsersService.findByRefreshToken.mockResolvedValue(mockUser);
+      mockUsersService.findByRefreshToken.mockResolvedValue(mockUserResponse);
       mockTokenService.verifyRefreshToken.mockImplementation(() => {
         throw new TokenExpiredError('expired', new Date());
       });
@@ -170,11 +169,11 @@ describe('AuthService', () => {
       await expect(service.refreshToken('rt')).rejects.toThrow(
         TokenExpiredError,
       );
-      expect(mockUser.save).toHaveBeenCalled();
+      expect(mockUserResponse.save).toHaveBeenCalled();
     });
 
     it('should throw if username mismatch', async () => {
-      mockUsersService.findByRefreshToken.mockResolvedValue(mockUser);
+      mockUsersService.findByRefreshToken.mockResolvedValue(mockUserResponse);
       mockTokenService.verifyRefreshToken.mockReturnValue({
         username: 'other',
       } as any);
@@ -185,9 +184,9 @@ describe('AuthService', () => {
     });
 
     it('should refresh tokens and return result', async () => {
-      mockUsersService.findByRefreshToken.mockResolvedValue(mockUser);
+      mockUsersService.findByRefreshToken.mockResolvedValue(mockUserResponse);
       mockTokenService.verifyRefreshToken.mockReturnValue({
-        username: 'testuser',
+        username: mockUser.username,
       } as any);
       mockTokenService.signAccessToken.mockReturnValue('newat');
       mockTokenService.signRefreshToken.mockReturnValue('newrt');
@@ -197,26 +196,21 @@ describe('AuthService', () => {
       expect(result).toEqual({
         accessToken: 'newat',
         refreshToken: 'newrt',
-        user: { role: 'client', userId: 'user-id', username: 'testuser' },
+        user: {
+          userId: mockUserResponse.id,
+          username: mockUser.username,
+          role: mockUser.role,
+        },
       });
-      expect(mockUser.save).toHaveBeenCalled();
+      expect(mockUserResponse.save).toHaveBeenCalled();
     });
   });
 
   describe('registerUser', () => {
     const dto: RegisterDto = {
-      username: 'testuser',
-      password: 'pass',
-      confirmPassword: 'pass',
+      ...mockUser,
+      confirmPassword: mockUser.password,
     };
-
-    it('should throw if username exists', async () => {
-      mockUsersService.findByUsername.mockResolvedValue(mockUser);
-
-      await expect(service.registerUser(dto)).rejects.toThrow(
-        ConflictException,
-      );
-    });
 
     it('should create user with hashed password', async () => {
       mockUsersService.findByUsername.mockResolvedValue(null);
@@ -224,10 +218,18 @@ describe('AuthService', () => {
       await service.registerUser(dto);
 
       expect(mockUsersService.create).toHaveBeenCalledWith({
-        username: 'testuser',
+        username: mockUser.username,
         password: 'hashed',
-        role: 'client',
+        role: mockUser.role,
       });
+    });
+
+    it('should throw if username exists', async () => {
+      mockUsersService.findByUsername.mockResolvedValue(mockUserResponse);
+
+      await expect(service.registerUser(dto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 });

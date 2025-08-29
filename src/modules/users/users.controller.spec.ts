@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { NotFoundException } from '@nestjs/common';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -9,10 +10,11 @@ describe('UsersController', () => {
   let controller: UsersController;
   let service: UsersService;
 
-  const mockUser = {
+  const mockUser = TestDataFactory.createClientUser();
+
+  const mockUserResponse = {
+    ...mockUser,
     _id: 'user-id',
-    username: 'john_doe',
-    role: 'client',
   };
 
   const mockUsersService = {
@@ -35,30 +37,26 @@ describe('UsersController', () => {
     service = module.get<UsersService>(UsersService);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('findAll', () => {
     it('should return all users', async () => {
-      mockUsersService.findAll.mockResolvedValue([mockUser]);
+      mockUsersService.findAll.mockResolvedValue([mockUserResponse]);
 
       const result = await controller.findAll();
 
       expect(mockUsersService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockUser]);
+      expect(result).toEqual([mockUserResponse]);
     });
   });
 
   describe('findOne', () => {
     it('should return a user by id', async () => {
-      mockUsersService.findOne.mockResolvedValue(mockUser);
+      mockUsersService.findOne.mockResolvedValue(mockUserResponse);
 
       const params: MongoIdParamDto = { id: 'user-id' };
       const result = await controller.findOne(params);
 
       expect(mockUsersService.findOne).toHaveBeenCalledWith('user-id');
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockUserResponse);
     });
 
     it('should throw NotFoundException if user is not found', async () => {

@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { LessonsService } from '../lessons/lessons.service';
 import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
 import { User } from './schemas/user.schema';
@@ -8,6 +9,14 @@ import { UsersService } from './users.service';
 
 describe('UsersService', () => {
   let service: UsersService;
+
+  const mockUser = TestDataFactory.createClientUser();
+
+  const mockUserResponse = {
+    ...mockUser,
+    _id: 'user-id',
+    refreshTokens: ['token1'],
+  };
 
   const mockUserModel = {
     create: jest.fn(),
@@ -24,13 +33,6 @@ describe('UsersService', () => {
   const mockMakeupBagsService = {
     findByClientId: jest.fn(),
   } as any;
-
-  const mockUser = {
-    _id: 'user-id',
-    username: 'john_doe',
-    role: 'client',
-    refreshTokens: ['token1'],
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,30 +56,25 @@ describe('UsersService', () => {
     service = module.get<UsersService>(UsersService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a user', async () => {
-      mockUserModel.create.mockResolvedValue(mockUser);
+      mockUserModel.create.mockResolvedValue(mockUserResponse);
 
-      const dto = { username: 'john_doe', password: 'pass1234' } as any;
-      const result = await service.create(dto);
+      const result = await service.create(mockUser);
 
-      expect(mockUserModel.create).toHaveBeenCalledWith(dto);
-      expect(result).toEqual(mockUser);
+      expect(mockUserModel.create).toHaveBeenCalledWith(mockUser);
+      expect(result).toEqual(mockUserResponse);
     });
   });
 
   describe('findAll', () => {
     it('should return all users', async () => {
       mockUserModel.find.mockReturnValue({
-        select: jest.fn().mockResolvedValue([mockUser]),
+        select: jest.fn().mockResolvedValue([mockUserResponse]),
       });
 
       const result = await service.findAll();
-      expect(result).toEqual([mockUser]);
+      expect(result).toEqual([mockUserResponse]);
     });
 
     it('should throw NotFoundException if no users found', async () => {
@@ -92,7 +89,7 @@ describe('UsersService', () => {
   describe('findOne', () => {
     it('should return user with lessons and makeupBags', async () => {
       mockUserModel.findById.mockReturnValue({
-        select: jest.fn().mockResolvedValue(mockUser),
+        select: jest.fn().mockResolvedValue(mockUserResponse),
       });
       mockLessonsService.getByClientId.mockResolvedValue(['lesson1'] as any);
       mockMakeupBagsService.findByClientId.mockResolvedValue(['bag1'] as any);
@@ -101,7 +98,7 @@ describe('UsersService', () => {
 
       expect(mockUserModel.findById).toHaveBeenCalledWith('user-id');
       expect(result).toEqual({
-        user: mockUser,
+        user: mockUserResponse,
         lessons: ['lesson1'],
         makeupBags: ['bag1'],
       });
@@ -120,32 +117,32 @@ describe('UsersService', () => {
 
   describe('findByRefreshToken', () => {
     it('should return user by refresh token', async () => {
-      mockUserModel.findOne.mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockResolvedValue(mockUserResponse);
 
       const result = await service.findByRefreshToken('token1');
       expect(mockUserModel.findOne).toHaveBeenCalledWith({
         refreshTokens: 'token1',
       });
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockUserResponse);
     });
   });
 
   describe('findByUsername', () => {
     it('should return user by username', async () => {
-      mockUserModel.findOne.mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockResolvedValue(mockUserResponse);
 
       const result = await service.findByUsername('john_doe');
       expect(mockUserModel.findOne).toHaveBeenCalledWith({
         username: 'john_doe',
       });
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockUserResponse);
     });
   });
 
   describe('updateRefreshTokens', () => {
     it('should update refresh tokens', async () => {
       mockUserModel.findByIdAndUpdate.mockResolvedValue({
-        ...mockUser,
+        ...mockUserResponse,
         refreshTokens: ['token2'],
       });
 

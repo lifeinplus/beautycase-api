@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 
 import { NotFoundException } from '@nestjs/common';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { ImageService } from '../shared/image.service';
 import { QuestionnairesService } from './questionnaires.service';
 import { Questionnaire } from './schemas/questionnaire.schema';
@@ -17,17 +18,18 @@ describe('QuestionnairesService', () => {
   let mockQuestionnaireModel: MockModel;
   let imageService: jest.Mocked<ImageService>;
 
-  const mockQuestionnaire = {
+  const mockQuestionnaire = TestDataFactory.createQuestionnaire();
+
+  const mockQuestionnaireResponse = {
+    ...mockQuestionnaire,
     _id: 'questionnaire-id',
-    name: 'Jane Doe',
-    makeupBag: 'bag-id',
     save: jest.fn(),
   };
 
   beforeEach(async () => {
     mockQuestionnaireModel = jest.fn(() => ({
-      ...mockQuestionnaire,
-      save: jest.fn().mockResolvedValue(mockQuestionnaire),
+      ...mockQuestionnaireResponse,
+      save: jest.fn().mockResolvedValue(mockQuestionnaireResponse),
     })) as any;
 
     mockQuestionnaireModel.find = jest.fn();
@@ -53,34 +55,29 @@ describe('QuestionnairesService', () => {
     service = module.get<QuestionnairesService>(QuestionnairesService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a questionnaire without image upload', async () => {
-      const dto = { name: 'Jane Doe', makeupBag: 'bag-id' };
-      const result = await service.create(dto as any);
+      const result = await service.create({
+        ...mockQuestionnaire,
+        makeupBagPhotoUrl: undefined,
+      });
 
       expect(imageService.handleImageUpload).not.toHaveBeenCalled();
-      expect(result).toEqual(mockQuestionnaire);
+      expect(result).toEqual(mockQuestionnaireResponse);
     });
 
     it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
-      const dto = {
-        name: 'Jane Doe',
-        makeupBag: 'bag-id',
-        makeupBagPhotoUrl: 'http://example.com/photo.jpg',
-      };
-
-      await service.create(dto as any);
+      await service.create(mockQuestionnaire as any);
 
       expect(imageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ imageId: undefined, imageUrl: '' }),
+        expect.objectContaining({
+          imageId: undefined,
+          imageUrl: 'https://example.com/photo.jpg',
+        }),
         {
           filename: 'makeup-bag',
-          folder: `${UploadFolder.QUESTIONNAIRES}/${mockQuestionnaire._id}`,
-          secureUrl: 'http://example.com/photo.jpg',
+          folder: `${UploadFolder.QUESTIONNAIRES}/${mockQuestionnaireResponse._id}`,
+          secureUrl: 'https://example.com/photo.jpg',
         },
       );
     });
@@ -89,11 +86,11 @@ describe('QuestionnairesService', () => {
   describe('findAll', () => {
     it('should return all questionnaires', async () => {
       (mockQuestionnaireModel.find as jest.Mock).mockResolvedValue([
-        mockQuestionnaire,
+        mockQuestionnaireResponse,
       ]);
 
       const result = await service.findAll();
-      expect(result).toEqual([mockQuestionnaire]);
+      expect(result).toEqual([mockQuestionnaireResponse]);
     });
 
     it('should throw NotFoundException if no questionnaires found', async () => {
@@ -106,11 +103,11 @@ describe('QuestionnairesService', () => {
   describe('findOne', () => {
     it('should return a questionnaire by id', async () => {
       (mockQuestionnaireModel.findById as jest.Mock).mockResolvedValue(
-        mockQuestionnaire,
+        mockQuestionnaireResponse,
       );
 
       const result = await service.findOne('questionnaire-id');
-      expect(result).toEqual(mockQuestionnaire);
+      expect(result).toEqual(mockQuestionnaireResponse);
     });
 
     it('should throw NotFoundException if questionnaire not found', async () => {

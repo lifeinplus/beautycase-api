@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
-import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBagsController } from './makeup-bags.controller';
 import { MakeupBagsService } from './makeup-bags.service';
@@ -10,12 +10,16 @@ import { MakeupBagsService } from './makeup-bags.service';
 describe('MakeupBagsController', () => {
   let controller: MakeupBagsController;
 
-  const mockMakeupBag = {
+  const mockMakeupBag = TestDataFactory.createMakeupBag(
+    'cat-id',
+    'client-id',
+    ['stage-id'],
+    ['tool-id'],
+  );
+
+  const mockMakeupBagResponse = {
+    ...mockMakeupBag,
     id: 'makeupbag-id',
-    categoryId: 'cat-id',
-    clientId: 'client-id',
-    stageIds: ['stage-id'],
-    toolIds: ['tool-id'],
   };
 
   const mockMakeupBagsService = {
@@ -40,24 +44,15 @@ describe('MakeupBagsController', () => {
     controller = module.get<MakeupBagsController>(MakeupBagsController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a makeup bag and return id + message', async () => {
-      mockMakeupBagsService.create.mockResolvedValue(mockMakeupBag as any);
+      mockMakeupBagsService.create.mockResolvedValue(
+        mockMakeupBagResponse as any,
+      );
 
-      const dto: CreateMakeupBagDto = {
-        categoryId: 'cat-id',
-        clientId: 'client-id',
-        stageIds: ['stage-id'],
-        toolIds: ['tool-id'],
-      };
+      const result = await controller.create(mockMakeupBag);
 
-      const result = await controller.create(dto);
-
-      expect(mockMakeupBagsService.create).toHaveBeenCalledWith(dto);
+      expect(mockMakeupBagsService.create).toHaveBeenCalledWith(mockMakeupBag);
       expect(result).toEqual({
         id: 'makeupbag-id',
         message: 'MakeupBag created successfully',
@@ -67,18 +62,18 @@ describe('MakeupBagsController', () => {
 
   describe('findAll', () => {
     it('should return all makeup bags', async () => {
-      mockMakeupBagsService.findAll.mockResolvedValue([mockMakeupBag]);
+      mockMakeupBagsService.findAll.mockResolvedValue([mockMakeupBagResponse]);
 
       const result = await controller.findAll();
 
       expect(mockMakeupBagsService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockMakeupBag]);
+      expect(result).toEqual([mockMakeupBagResponse]);
     });
   });
 
   describe('findOne', () => {
     it('should return makeup bag by id', async () => {
-      mockMakeupBagsService.findOne.mockResolvedValue(mockMakeupBag);
+      mockMakeupBagsService.findOne.mockResolvedValue(mockMakeupBagResponse);
 
       const params: MongoIdParamDto = { id: 'makeupbag-id' };
       const result = await controller.findOne(params);
@@ -86,7 +81,7 @@ describe('MakeupBagsController', () => {
       expect(mockMakeupBagsService.findOne).toHaveBeenCalledWith(
         'makeupbag-id',
       );
-      expect(result).toEqual(mockMakeupBag);
+      expect(result).toEqual(mockMakeupBagResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -100,7 +95,7 @@ describe('MakeupBagsController', () => {
 
   describe('update', () => {
     it('should update a makeup bag and return id + message', async () => {
-      mockMakeupBagsService.update.mockResolvedValue(mockMakeupBag);
+      mockMakeupBagsService.update.mockResolvedValue(mockMakeupBagResponse);
 
       const params: MongoIdParamDto = { id: 'makeupbag-id' };
       const dto: UpdateMakeupBagDto = { stageIds: ['new-stage'] };
@@ -120,7 +115,7 @@ describe('MakeupBagsController', () => {
 
   describe('remove', () => {
     it('should delete a makeup bag and return id + message', async () => {
-      mockMakeupBagsService.remove.mockResolvedValue(mockMakeupBag);
+      mockMakeupBagsService.remove.mockResolvedValue(mockMakeupBagResponse);
 
       const params: MongoIdParamDto = { id: 'makeupbag-id' };
       const result = await controller.remove(params);

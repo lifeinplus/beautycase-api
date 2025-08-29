@@ -23,7 +23,7 @@ describe('Auth (e2e)', () => {
   let connection: Connection;
   let usersService: UsersService;
 
-  const clientUser = TestDataFactory.createClientUser();
+  const mockUser = TestDataFactory.createClientUser();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -61,8 +61,8 @@ describe('Auth (e2e)', () => {
   describe('POST /auth/register', () => {
     it('should register a new user successfully', async () => {
       const dto: RegisterDto = {
-        ...clientUser,
-        confirmPassword: clientUser.password,
+        ...mockUser,
+        confirmPassword: mockUser.password,
       };
 
       const response = await request(app.getHttpServer())
@@ -90,8 +90,8 @@ describe('Auth (e2e)', () => {
       await AuthHelper.createClientUser(app);
 
       const duplicatedDto: RegisterDto = {
-        ...clientUser,
-        confirmPassword: clientUser.password,
+        ...mockUser,
+        confirmPassword: mockUser.password,
       };
 
       const response = await request(app.getHttpServer())
@@ -135,14 +135,14 @@ describe('Auth (e2e)', () => {
     it('should login successfully with valid credentials', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       expect(response.body).toMatchObject({
         accessToken: expect.any(String),
-        role: clientUser.role,
+        role: mockUser.role,
         userId: expect.any(String),
-        username: clientUser.username,
+        username: mockUser.username,
       });
 
       const jwtCookie = CookieHelper.extractJwtCookie(response);
@@ -152,7 +152,7 @@ describe('Auth (e2e)', () => {
 
     it('should reject login with invalid username', async () => {
       const loginDto: LoginDto = {
-        ...clientUser,
+        ...mockUser,
         username: 'nonexistent',
       };
 
@@ -166,7 +166,7 @@ describe('Auth (e2e)', () => {
 
     it('should reject login with invalid password', async () => {
       const loginDto: LoginDto = {
-        ...clientUser,
+        ...mockUser,
         password: 'wrongpassword',
       };
 
@@ -181,7 +181,7 @@ describe('Auth (e2e)', () => {
     it('should clear existing refresh token on login', async () => {
       const firstLogin = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       const firstJwtCookie = CookieHelper.extractJwtCookie(firstLogin);
@@ -189,7 +189,7 @@ describe('Auth (e2e)', () => {
       const secondLogin = await request(app.getHttpServer())
         .post('/auth/login')
         .set('Cookie', firstJwtCookie || '')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       expect(secondLogin.body.accessToken).not.toBe(
@@ -217,7 +217,7 @@ describe('Auth (e2e)', () => {
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser);
+        .send(mockUser);
 
       jwtCookie = CookieHelper.extractJwtCookie(loginResponse) || '';
     });
@@ -230,9 +230,9 @@ describe('Auth (e2e)', () => {
 
       expect(response.body).toMatchObject({
         accessToken: expect.any(String),
-        role: clientUser.role,
+        role: mockUser.role,
         userId: expect.any(String),
-        username: clientUser.username,
+        username: mockUser.username,
       });
 
       const newJwtCookie = CookieHelper.extractJwtCookie(response) || '';
@@ -267,7 +267,7 @@ describe('Auth (e2e)', () => {
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser);
+        .send(mockUser);
 
       jwtCookie = CookieHelper.extractJwtCookie(loginResponse) || '';
     });
@@ -310,8 +310,8 @@ describe('Auth (e2e)', () => {
   describe('Authentication Flow Integration', () => {
     it('should complete full auth cycle: register -> login -> refresh -> logout', async () => {
       const registerDto: RegisterDto = {
-        ...clientUser,
-        confirmPassword: clientUser.password,
+        ...mockUser,
+        confirmPassword: mockUser.password,
       };
 
       await request(app.getHttpServer())
@@ -321,7 +321,7 @@ describe('Auth (e2e)', () => {
 
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       const jwtCookie = CookieHelper.extractJwtCookie(loginResponse);
@@ -349,12 +349,12 @@ describe('Auth (e2e)', () => {
 
       const loginResponse1 = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       const loginResponse2 = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       expect(loginResponse1.body.accessToken).not.toBe(
@@ -384,7 +384,7 @@ describe('Auth (e2e)', () => {
     it('should not expose sensitive user data in responses', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       expect(response.body).not.toHaveProperty('password');
@@ -395,7 +395,7 @@ describe('Auth (e2e)', () => {
     it('should use secure cookie settings', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
-        .send(clientUser)
+        .send(mockUser)
         .expect(HttpStatus.OK);
 
       const jwtCookie = CookieHelper.extractJwtCookie(response);

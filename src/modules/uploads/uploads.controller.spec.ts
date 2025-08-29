@@ -30,10 +30,6 @@ describe('UploadsController', () => {
     service = module.get(UploadsService) as jest.Mocked<UploadsService>;
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('uploadTempImageByFile', () => {
     it('should upload image from file and return imageUrl', async () => {
       const dto: UploadFileDto = { folder: UploadFolder.PRODUCTS };

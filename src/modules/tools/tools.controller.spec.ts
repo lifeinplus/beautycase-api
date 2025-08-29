@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
-import { CreateToolDto } from './dto/create-tool.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
 import { ToolsController } from './tools.controller';
@@ -10,14 +10,11 @@ import { ToolsService } from './tools.service';
 describe('ToolsController', () => {
   let controller: ToolsController;
 
-  const mockTool = {
+  const mockTool = TestDataFactory.createTool('brand-id');
+
+  const mockToolResponse = {
+    ...mockTool,
     id: 'tool-id',
-    brandId: 'brand-id',
-    name: 'Brush',
-    imageUrl: 'http://example.com/image.jpg',
-    number: '123',
-    comment: 'Great tool',
-    storeLinks: [],
   };
 
   const mockToolsService = {
@@ -43,26 +40,13 @@ describe('ToolsController', () => {
     controller = module.get<ToolsController>(ToolsController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a tool and return id + message', async () => {
-      mockToolsService.create.mockResolvedValue(mockTool as any);
+      mockToolsService.create.mockResolvedValue(mockToolResponse as any);
 
-      const dto: CreateToolDto = {
-        brandId: 'brand-id',
-        name: 'Brush',
-        imageUrl: 'http://example.com/image.jpg',
-        number: '123',
-        comment: 'Great tool',
-        storeLinks: [],
-      };
+      const result = await controller.create(mockTool);
 
-      const result = await controller.create(dto);
-
-      expect(mockToolsService.create).toHaveBeenCalledWith(dto);
+      expect(mockToolsService.create).toHaveBeenCalledWith(mockTool);
       expect(result).toEqual({
         id: 'tool-id',
         message: 'Tool created successfully',
@@ -72,24 +56,24 @@ describe('ToolsController', () => {
 
   describe('findAll', () => {
     it('should return all tools', async () => {
-      mockToolsService.findAll.mockResolvedValue([mockTool]);
+      mockToolsService.findAll.mockResolvedValue([mockToolResponse]);
 
       const result = await controller.findAll();
 
       expect(mockToolsService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockTool]);
+      expect(result).toEqual([mockToolResponse]);
     });
   });
 
   describe('findOne', () => {
     it('should return tool by id', async () => {
-      mockToolsService.findOne.mockResolvedValue(mockTool);
+      mockToolsService.findOne.mockResolvedValue(mockToolResponse);
 
       const params: MongoIdParamDto = { id: 'tool-id' };
       const result = await controller.findOne(params);
 
       expect(mockToolsService.findOne).toHaveBeenCalledWith('tool-id');
-      expect(result).toEqual(mockTool);
+      expect(result).toEqual(mockToolResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -103,7 +87,7 @@ describe('ToolsController', () => {
 
   describe('update', () => {
     it('should update a tool and return id + message', async () => {
-      mockToolsService.update.mockResolvedValue(mockTool);
+      mockToolsService.update.mockResolvedValue(mockToolResponse);
 
       const params: MongoIdParamDto = { id: 'tool-id' };
       const dto: UpdateToolDto = { name: 'Updated Brush' };
@@ -120,7 +104,7 @@ describe('ToolsController', () => {
 
   describe('updateStoreLinks', () => {
     it('should update store links and return id + message', async () => {
-      mockToolsService.updateStoreLinks.mockResolvedValue(mockTool);
+      mockToolsService.updateStoreLinks.mockResolvedValue(mockToolResponse);
 
       const params: MongoIdParamDto = { id: 'tool-id' };
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
@@ -140,7 +124,7 @@ describe('ToolsController', () => {
 
   describe('remove', () => {
     it('should delete a tool and return id + message', async () => {
-      mockToolsService.remove.mockResolvedValue(mockTool);
+      mockToolsService.remove.mockResolvedValue(mockToolResponse);
 
       const params: MongoIdParamDto = { id: 'tool-id' };
       const result = await controller.remove(params);

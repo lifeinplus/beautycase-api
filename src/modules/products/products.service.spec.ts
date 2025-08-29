@@ -4,8 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { ImageService } from '../shared/image.service';
-import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { ProductsService } from './products.service';
@@ -19,21 +19,19 @@ describe('ProductsService', () => {
   let service: ProductsService;
   let mockProductModel: MockModel<ProductDocument>;
 
-  const mockProduct = {
+  const mockProduct = TestDataFactory.createProduct('brand-id');
+
+  const mockProductResponse = {
+    ...mockProduct,
     _id: 'product-id',
-    brandId: 'brand-id',
-    name: 'Lipstick',
-    imageId: 'img-id',
-    imageUrl: 'http://example.com/image.jpg',
-    comment: 'Nice product',
-    storeLinks: [],
+    imageId: 'image-id',
     save: jest.fn(),
-  } as any;
+  };
 
   mockProductModel = jest.fn(() => ({
-    ...mockProduct,
-    save: jest.fn().mockResolvedValue(mockProduct),
-  })) as any;
+    ...mockProductResponse,
+    save: jest.fn().mockResolvedValue(mockProductResponse),
+  }));
 
   mockProductModel.find = jest.fn();
   mockProductModel.findById = jest.fn();
@@ -64,40 +62,28 @@ describe('ProductsService', () => {
     service = module.get<ProductsService>(ProductsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a product and upload image', async () => {
-      const dto: CreateProductDto = {
-        brandId: 'brand-id',
-        name: 'Lipstick',
-        imageUrl: 'http://example.com/image.jpg',
-        comment: 'Nice product',
-        storeLinks: [],
-      };
-
-      const result = await service.create(dto);
+      const result = await service.create(mockProduct);
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
         expect.objectContaining({ _id: 'product-id' }),
-        { folder: UploadFolder.PRODUCTS, secureUrl: dto.imageUrl },
+        { folder: UploadFolder.PRODUCTS, secureUrl: mockProduct.imageUrl },
       );
-      expect(result._id).toBe(mockProduct._id);
-      expect(result.name).toBe(mockProduct.name);
-      expect(result.imageUrl).toBe(mockProduct.imageUrl);
+      expect(result._id).toBe(mockProductResponse._id);
+      expect(result.name).toBe(mockProductResponse.name);
+      expect(result.imageUrl).toBe(mockProductResponse.imageUrl);
     });
   });
 
   describe('findAll', () => {
     it('should return all products', async () => {
       (mockProductModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue([mockProduct]),
+        select: jest.fn().mockResolvedValue([mockProductResponse]),
       });
 
       const result = await service.findAll();
-      expect(result).toEqual([mockProduct]);
+      expect(result).toEqual([mockProductResponse]);
     });
 
     it('should throw NotFoundException if no products found', async () => {
@@ -112,11 +98,11 @@ describe('ProductsService', () => {
   describe('findOne', () => {
     it('should return product by id', async () => {
       (mockProductModel.findById as jest.Mock).mockReturnValue({
-        populate: jest.fn().mockResolvedValue(mockProduct),
+        populate: jest.fn().mockResolvedValue(mockProductResponse),
       });
 
       const result = await service.findOne('product-id');
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(mockProductResponse);
     });
 
     it('should throw NotFoundException if product not found', async () => {
@@ -133,20 +119,20 @@ describe('ProductsService', () => {
   describe('update', () => {
     it('should update product and handle image if provided', async () => {
       (mockProductModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockProduct,
+        mockProductResponse,
       );
 
       const dto: UpdateProductDto = { imageUrl: 'http://example.com/new.jpg' };
       const result = await service.update('product-id', dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
-        mockProduct,
+        mockProductResponse,
         {
           folder: UploadFolder.PRODUCTS,
           secureUrl: dto.imageUrl,
         },
       );
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(mockProductResponse);
     });
 
     it('should throw NotFoundException if product not found', async () => {
@@ -161,13 +147,13 @@ describe('ProductsService', () => {
   describe('updateStoreLinks', () => {
     it('should update store links', async () => {
       (mockProductModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockProduct,
+        mockProductResponse,
       );
 
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
       const result = await service.updateStoreLinks('product-id', dto);
 
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(mockProductResponse);
     });
 
     it('should throw NotFoundException if product not found', async () => {
@@ -182,15 +168,15 @@ describe('ProductsService', () => {
   describe('remove', () => {
     it('should delete product and remove image if exists', async () => {
       (mockProductModel.findByIdAndDelete as jest.Mock).mockResolvedValue(
-        mockProduct,
+        mockProductResponse,
       );
 
       const result = await service.remove('product-id');
 
       expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
-        mockProduct.imageId,
+        mockProductResponse.imageId,
       );
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(mockProductResponse);
     });
 
     it('should throw NotFoundException if product not found', async () => {

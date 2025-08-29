@@ -54,10 +54,6 @@ describe('UploadsService', () => {
     service = module.get<UploadsService>(UploadsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('uploadTempImageByFile', () => {
     it('should throw BadRequestException if no file is provided', async () => {
       await expect(

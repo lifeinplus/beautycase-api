@@ -2,19 +2,20 @@ import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { BrandsService } from './brands.service';
-import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { Brand } from './schemas/brand.schema';
 
 describe('BrandsService', () => {
   let service: BrandsService;
 
-  const mockBrand = {
+  const mockBrand = TestDataFactory.createBrand();
+  const mockBrands = TestDataFactory.createMultipleBrands(2);
+
+  const mockBrandResponse = {
+    ...mockBrand,
     _id: '507f1f77bcf86cd799439011',
-    name: 'Test Brand',
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockBrandModel = {
@@ -42,50 +43,32 @@ describe('BrandsService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should successfully create a brand', async () => {
-      const dto: CreateBrandDto = {
-        name: 'New Brand',
-      };
+      mockBrandModel.create.mockResolvedValue(mockBrandResponse);
 
-      mockBrandModel.create.mockResolvedValue(mockBrand);
+      const result = await service.create(mockBrand);
 
-      const result = await service.create(dto);
-
-      expect(mockBrandModel.create).toHaveBeenCalledWith(dto);
-      expect(result).toEqual(mockBrand);
+      expect(mockBrandModel.create).toHaveBeenCalledWith(mockBrand);
+      expect(result).toEqual(mockBrandResponse);
     });
 
     it('should handle creation errors', async () => {
-      const dto: CreateBrandDto = {
-        name: 'New Brand',
-      };
-
       const error = new Error('Database error');
       mockBrandModel.create.mockRejectedValue(error);
 
-      await expect(service.create(dto)).rejects.toThrow(error);
-      expect(mockBrandModel.create).toHaveBeenCalledWith(dto);
+      await expect(service.create(mockBrand)).rejects.toThrow(error);
+      expect(mockBrandModel.create).toHaveBeenCalledWith(mockBrand);
     });
   });
 
   describe('findAll', () => {
     it('should return all brands sorted by name', async () => {
-      const mockBrands = [
-        { ...mockBrand, name: 'Brand A' },
-        { ...mockBrand, name: 'Brand B' },
-      ];
-
       const mockQuery = {
         sort: jest.fn().mockResolvedValue(mockBrands),
       };
 
       mockBrandModel.find.mockReturnValue(mockQuery);
-
       const result = await service.findAll();
 
       expect(mockBrandModel.find).toHaveBeenCalledWith();
@@ -116,7 +99,7 @@ describe('BrandsService', () => {
         name: 'Updated Brand',
       };
 
-      const updatedBrand = { ...mockBrand, ...dto };
+      const updatedBrand = { ...mockBrandResponse, ...dto };
       mockBrandModel.findByIdAndUpdate.mockResolvedValue(updatedBrand);
 
       const result = await service.update(brandId, dto);
@@ -171,12 +154,12 @@ describe('BrandsService', () => {
     it('should successfully remove a brand', async () => {
       const brandId = '507f1f77bcf86cd799439011';
 
-      mockBrandModel.findByIdAndDelete.mockResolvedValue(mockBrand);
+      mockBrandModel.findByIdAndDelete.mockResolvedValue(mockBrandResponse);
 
       const result = await service.remove(brandId);
 
       expect(mockBrandModel.findByIdAndDelete).toHaveBeenCalledWith(brandId);
-      expect(result).toEqual(mockBrand);
+      expect(result).toEqual(mockBrandResponse);
     });
 
     it('should throw NotFoundException when brand to remove is not found', async () => {

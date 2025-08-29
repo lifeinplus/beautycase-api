@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateStoreDto } from './dto/create-store.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Store } from './schemas/store.schema';
 import { StoresService } from './stores.service';
@@ -9,11 +9,12 @@ import { StoresService } from './stores.service';
 describe('StoresService', () => {
   let service: StoresService;
 
-  const mockStore = {
+  const mockStore = TestDataFactory.createStore();
+  const mockStores = TestDataFactory.createMultipleStores(2);
+
+  const mockStoreResponse = {
+    ...mockStore,
     _id: '507f1f77bcf86cd799439011',
-    name: 'Test Store',
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockStoreModel = {
@@ -41,44 +42,27 @@ describe('StoresService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should successfully create a store', async () => {
-      const dto: CreateStoreDto = {
-        name: 'New Store',
-      };
+      mockStoreModel.create.mockResolvedValue(mockStoreResponse);
 
-      mockStoreModel.create.mockResolvedValue(mockStore);
+      const result = await service.create(mockStore);
 
-      const result = await service.create(dto);
-
-      expect(mockStoreModel.create).toHaveBeenCalledWith(dto);
-      expect(result).toEqual(mockStore);
+      expect(mockStoreModel.create).toHaveBeenCalledWith(mockStore);
+      expect(result).toEqual(mockStoreResponse);
     });
 
     it('should handle creation errors', async () => {
-      const dto: CreateStoreDto = {
-        name: 'New Store',
-      };
-
       const error = new Error('Database error');
       mockStoreModel.create.mockRejectedValue(error);
 
-      await expect(service.create(dto)).rejects.toThrow(error);
-      expect(mockStoreModel.create).toHaveBeenCalledWith(dto);
+      await expect(service.create(mockStore)).rejects.toThrow(error);
+      expect(mockStoreModel.create).toHaveBeenCalledWith(mockStore);
     });
   });
 
   describe('findAll', () => {
     it('should return all stores sorted by name', async () => {
-      const mockStores = [
-        { ...mockStore, name: 'Store A' },
-        { ...mockStore, name: 'Store B' },
-      ];
-
       const mockQuery = {
         sort: jest.fn().mockResolvedValue(mockStores),
       };
@@ -115,7 +99,7 @@ describe('StoresService', () => {
         name: 'Updated Store',
       };
 
-      const updatedStore = { ...mockStore, ...dto };
+      const updatedStore = { ...mockStoreResponse, ...dto };
       mockStoreModel.findByIdAndUpdate.mockResolvedValue(updatedStore);
 
       const result = await service.update(storeId, dto);
@@ -170,12 +154,12 @@ describe('StoresService', () => {
     it('should successfully remove a store', async () => {
       const storeId = '507f1f77bcf86cd799439011';
 
-      mockStoreModel.findByIdAndDelete.mockResolvedValue(mockStore);
+      mockStoreModel.findByIdAndDelete.mockResolvedValue(mockStoreResponse);
 
       const result = await service.remove(storeId);
 
       expect(mockStoreModel.findByIdAndDelete).toHaveBeenCalledWith(storeId);
-      expect(result).toEqual(mockStore);
+      expect(result).toEqual(mockStoreResponse);
     });
 
     it('should throw NotFoundException when store to remove is not found', async () => {

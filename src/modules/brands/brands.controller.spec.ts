@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { BrandsController } from './brands.controller';
 import { BrandsService } from './brands.service';
-import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 
 describe('BrandsController', () => {
   let controller: BrandsController;
   let service: BrandsService;
 
-  const mockBrand = {
+  const mockBrand = TestDataFactory.createBrand();
+
+  const mockBrandResponse = {
+    ...mockBrand,
     id: '507f1f77bcf86cd799439011',
-    name: 'Test Brand',
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockBrandsService = {
@@ -43,48 +43,36 @@ describe('BrandsController', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a brand successfully', async () => {
-      const dto: CreateBrandDto = {
-        name: 'New Brand',
-      };
+      mockBrandsService.create.mockResolvedValue(mockBrandResponse);
 
-      mockBrandsService.create.mockResolvedValue(mockBrand);
+      const result = await controller.create(mockBrand);
 
-      const result = await controller.create(dto);
-
-      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(service.create).toHaveBeenCalledWith(mockBrand);
       expect(result).toEqual({
-        id: mockBrand.id,
+        id: mockBrandResponse.id,
         message: 'Brand created successfully',
       });
     });
 
     it('should handle service errors during creation', async () => {
-      const dto: CreateBrandDto = {
-        name: 'New Brand',
-      };
-
       const error = new Error('Database error');
       mockBrandsService.create.mockRejectedValue(error);
 
-      await expect(controller.create(dto)).rejects.toThrow(error);
-      expect(service.create).toHaveBeenCalledWith(dto);
+      await expect(controller.create(mockBrand)).rejects.toThrow(error);
+      expect(service.create).toHaveBeenCalledWith(mockBrand);
     });
   });
 
   describe('findAll', () => {
     it('should return all brands', async () => {
       const mockBrands = [
-        mockBrand,
-        { ...mockBrand, id: '507f1f77bcf86cd799439012' },
+        mockBrandResponse,
+        { ...mockBrandResponse, id: '507f1f77bcf86cd799439012' },
       ];
-      mockBrandsService.findAll.mockResolvedValue(mockBrands);
 
+      mockBrandsService.findAll.mockResolvedValue(mockBrands);
       const result = await controller.findAll();
 
       expect(service.findAll).toHaveBeenCalled();
@@ -111,12 +99,12 @@ describe('BrandsController', () => {
 
   describe('update', () => {
     it('should update a brand successfully', async () => {
-      const params: MongoIdParamDto = { id: mockBrand.id };
+      const params: MongoIdParamDto = { id: mockBrandResponse.id };
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
 
-      const updatedBrand = { ...mockBrand, ...dto };
+      const updatedBrand = { ...mockBrandResponse, ...dto };
       mockBrandsService.update.mockResolvedValue(updatedBrand);
 
       const result = await controller.update(params, dto);
@@ -129,7 +117,7 @@ describe('BrandsController', () => {
     });
 
     it('should handle service errors during update', async () => {
-      const params: MongoIdParamDto = { id: mockBrand.id };
+      const params: MongoIdParamDto = { id: mockBrandResponse.id };
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
@@ -142,12 +130,12 @@ describe('BrandsController', () => {
     });
 
     it('should handle partial updates', async () => {
-      const params: MongoIdParamDto = { id: mockBrand.id };
+      const params: MongoIdParamDto = { id: mockBrandResponse.id };
       const dto: UpdateBrandDto = {
         name: 'Updated Brand Only',
       };
 
-      const updatedBrand = { ...mockBrand, name: dto.name };
+      const updatedBrand = { ...mockBrandResponse, name: dto.name };
       mockBrandsService.update.mockResolvedValue(updatedBrand);
 
       const result = await controller.update(params, dto);
@@ -162,20 +150,20 @@ describe('BrandsController', () => {
 
   describe('remove', () => {
     it('should delete a brand successfully', async () => {
-      const params: MongoIdParamDto = { id: mockBrand.id };
-      mockBrandsService.remove.mockResolvedValue(mockBrand);
+      const params: MongoIdParamDto = { id: mockBrandResponse.id };
+      mockBrandsService.remove.mockResolvedValue(mockBrandResponse);
 
       const result = await controller.remove(params);
 
       expect(service.remove).toHaveBeenCalledWith(params.id);
       expect(result).toEqual({
-        id: mockBrand.id,
+        id: mockBrandResponse.id,
         message: 'Brand deleted successfully',
       });
     });
 
     it('should handle service errors during deletion', async () => {
-      const params: MongoIdParamDto = { id: mockBrand.id };
+      const params: MongoIdParamDto = { id: mockBrandResponse.id };
       const error = new Error('Brand not found');
       mockBrandsService.remove.mockRejectedValue(error);
 

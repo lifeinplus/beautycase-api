@@ -1,7 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { TokenService } from './token.service';
 import { AuthUser } from './types/auth.types';
 
@@ -9,6 +10,8 @@ describe('TokenService', () => {
   let service: TokenService;
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
+
+  const mockUser = TestDataFactory.createClientUser();
 
   beforeEach(async () => {
     jwtService = {
@@ -45,10 +48,6 @@ describe('TokenService', () => {
     service = module.get<TokenService>(TokenService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('filterRefreshTokens', () => {
     it('should remove specific token from list', () => {
       const tokens = ['t1', 't2', 't3'];
@@ -66,13 +65,12 @@ describe('TokenService', () => {
   describe('signAccessToken', () => {
     it('should sign access token with correct payload and config', () => {
       const user: AuthUser = {
-        role: 'client',
         userId: 'uid1',
-        username: 'john',
+        username: mockUser.username,
+        role: mockUser.role!,
       };
 
       jwtService.sign.mockReturnValue('signed-access-token');
-
       const token = service.signAccessToken(user);
 
       expect(jwtService.sign).toHaveBeenCalledWith(
@@ -95,10 +93,7 @@ describe('TokenService', () => {
 
       expect(jwtService.sign).toHaveBeenCalledWith(
         { nonce: expect.any(Number), username: 'john' },
-        {
-          secret: 'refresh-secret',
-          expiresIn: '7d',
-        },
+        { secret: 'refresh-secret', expiresIn: '7d' },
       );
       expect(token).toBe('signed-refresh-token');
     });
@@ -107,17 +102,18 @@ describe('TokenService', () => {
   describe('verifyRefreshToken', () => {
     it('should verify refresh token using config secret', () => {
       const payload = {
-        role: 'client',
         userId: 'uid1',
-        username: 'john',
+        username: mockUser.username,
+        role: mockUser.role,
       };
-      jwtService.verify.mockReturnValue(payload);
 
+      jwtService.verify.mockReturnValue(payload);
       const result = service.verifyRefreshToken('refresh-token');
 
       expect(jwtService.verify).toHaveBeenCalledWith('refresh-token', {
         secret: 'refresh-secret',
       });
+
       expect(result).toBe(payload);
     });
   });

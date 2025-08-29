@@ -4,8 +4,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { ImageService } from '../shared/image.service';
-import { CreateToolDto } from './dto/create-tool.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
 import { Tool, ToolDocument } from './schemas/tool.schema';
@@ -19,22 +19,19 @@ describe('ToolsService', () => {
   let service: ToolsService;
   let mockToolModel: MockModel<ToolDocument>;
 
-  const mockTool = {
+  const mockTool = TestDataFactory.createTool('brand-id');
+
+  const mockToolResponse = {
+    ...mockTool,
     _id: 'tool-id',
-    brandId: 'brand-id',
-    name: 'Brush',
     imageId: 'img-id',
-    imageUrl: 'http://example.com/image.jpg',
-    number: '123',
-    comment: 'Great tool',
-    storeLinks: [],
     save: jest.fn(),
-  } as any;
+  };
 
   mockToolModel = jest.fn(() => ({
-    ...mockTool,
-    save: jest.fn().mockResolvedValue(mockTool),
-  })) as any;
+    ...mockToolResponse,
+    save: jest.fn().mockResolvedValue(mockToolResponse),
+  }));
 
   mockToolModel.find = jest.fn();
   mockToolModel.findById = jest.fn();
@@ -65,41 +62,28 @@ describe('ToolsService', () => {
     service = module.get<ToolsService>(ToolsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a tool and upload image', async () => {
-      const dto: CreateToolDto = {
-        brandId: 'brand-id',
-        name: 'Brush',
-        imageUrl: 'http://example.com/image.jpg',
-        number: '123',
-        comment: 'Great tool',
-        storeLinks: [],
-      };
-
-      const result = await service.create(dto);
+      const result = await service.create(mockTool);
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
         expect.objectContaining({ _id: 'tool-id' }),
-        { folder: UploadFolder.TOOLS, secureUrl: dto.imageUrl },
+        { folder: UploadFolder.TOOLS, secureUrl: mockTool.imageUrl },
       );
-      expect(result._id).toBe(mockTool._id);
-      expect(result.name).toBe(mockTool.name);
-      expect(result.imageUrl).toBe(mockTool.imageUrl);
+      expect(result._id).toBe(mockToolResponse._id);
+      expect(result.name).toBe(mockToolResponse.name);
+      expect(result.imageUrl).toBe(mockToolResponse.imageUrl);
     });
   });
 
   describe('findAll', () => {
     it('should return all tools', async () => {
       (mockToolModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue([mockTool]),
+        select: jest.fn().mockResolvedValue([mockToolResponse]),
       });
 
       const result = await service.findAll();
-      expect(result).toEqual([mockTool]);
+      expect(result).toEqual([mockToolResponse]);
     });
 
     it('should throw NotFoundException if no tools found', async () => {
@@ -114,11 +98,11 @@ describe('ToolsService', () => {
   describe('findOne', () => {
     it('should return tool by id', async () => {
       (mockToolModel.findById as jest.Mock).mockReturnValue({
-        populate: jest.fn().mockResolvedValue(mockTool),
+        populate: jest.fn().mockResolvedValue(mockToolResponse),
       });
 
       const result = await service.findOne('tool-id');
-      expect(result).toEqual(mockTool);
+      expect(result).toEqual(mockToolResponse);
     });
 
     it('should throw NotFoundException if tool not found', async () => {
@@ -135,20 +119,20 @@ describe('ToolsService', () => {
   describe('update', () => {
     it('should update tool and handle image if provided', async () => {
       (mockToolModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockTool,
+        mockToolResponse,
       );
 
       const dto: UpdateToolDto = { imageUrl: 'http://example.com/new.jpg' };
       const result = await service.update('tool-id', dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
-        mockTool,
+        mockToolResponse,
         {
           folder: UploadFolder.TOOLS,
           secureUrl: dto.imageUrl,
         },
       );
-      expect(result).toEqual(mockTool);
+      expect(result).toEqual(mockToolResponse);
     });
 
     it('should throw NotFoundException if tool not found', async () => {
@@ -163,13 +147,13 @@ describe('ToolsService', () => {
   describe('updateStoreLinks', () => {
     it('should update store links', async () => {
       (mockToolModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockTool,
+        mockToolResponse,
       );
 
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
       const result = await service.updateStoreLinks('tool-id', dto);
 
-      expect(result).toEqual(mockTool);
+      expect(result).toEqual(mockToolResponse);
     });
 
     it('should throw NotFoundException if tool not found', async () => {
@@ -184,15 +168,15 @@ describe('ToolsService', () => {
   describe('remove', () => {
     it('should delete tool and remove image if exists', async () => {
       (mockToolModel.findByIdAndDelete as jest.Mock).mockResolvedValue(
-        mockTool,
+        mockToolResponse,
       );
 
       const result = await service.remove('tool-id');
 
       expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
-        mockTool.imageId,
+        mockToolResponse.imageId,
       );
-      expect(result).toEqual(mockTool);
+      expect(result).toEqual(mockToolResponse);
     });
 
     it('should throw NotFoundException if tool not found', async () => {

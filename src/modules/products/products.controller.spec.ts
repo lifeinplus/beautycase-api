@@ -1,8 +1,8 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { NotFoundException } from '@nestjs/common';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
-import { CreateProductDto } from './dto/create-product.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { ProductsController } from './products.controller';
@@ -11,13 +11,11 @@ import { ProductsService } from './products.service';
 describe('ProductsController', () => {
   let controller: ProductsController;
 
-  const mockProduct = {
+  const mockProduct = TestDataFactory.createProduct('brand-id');
+
+  const mockProductResponse = {
+    ...mockProduct,
     id: 'product-id',
-    brandId: 'brand-id',
-    name: 'Lipstick',
-    imageUrl: 'http://example.com/image.jpg',
-    comment: 'Nice product',
-    storeLinks: [],
   };
 
   const mockProductsService = {
@@ -43,25 +41,13 @@ describe('ProductsController', () => {
     controller = module.get<ProductsController>(ProductsController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a product and return id + message', async () => {
-      mockProductsService.create.mockResolvedValue(mockProduct as any);
+      mockProductsService.create.mockResolvedValue(mockProductResponse as any);
 
-      const dto: CreateProductDto = {
-        brandId: 'brand-id',
-        name: 'Lipstick',
-        imageUrl: 'http://example.com/image.jpg',
-        comment: 'Nice product',
-        storeLinks: [],
-      };
+      const result = await controller.create(mockProduct);
 
-      const result = await controller.create(dto);
-
-      expect(mockProductsService.create).toHaveBeenCalledWith(dto);
+      expect(mockProductsService.create).toHaveBeenCalledWith(mockProduct);
       expect(result).toEqual({
         id: 'product-id',
         message: 'Product created successfully',
@@ -71,24 +57,24 @@ describe('ProductsController', () => {
 
   describe('findAll', () => {
     it('should return all products', async () => {
-      mockProductsService.findAll.mockResolvedValue([mockProduct]);
+      mockProductsService.findAll.mockResolvedValue([mockProductResponse]);
 
       const result = await controller.findAll();
 
       expect(mockProductsService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockProduct]);
+      expect(result).toEqual([mockProductResponse]);
     });
   });
 
   describe('findOne', () => {
     it('should return product by id', async () => {
-      mockProductsService.findOne.mockResolvedValue(mockProduct);
+      mockProductsService.findOne.mockResolvedValue(mockProductResponse);
 
       const params: MongoIdParamDto = { id: 'product-id' };
       const result = await controller.findOne(params);
 
       expect(mockProductsService.findOne).toHaveBeenCalledWith('product-id');
-      expect(result).toEqual(mockProduct);
+      expect(result).toEqual(mockProductResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -102,7 +88,7 @@ describe('ProductsController', () => {
 
   describe('update', () => {
     it('should update a product and return id + message', async () => {
-      mockProductsService.update.mockResolvedValue(mockProduct);
+      mockProductsService.update.mockResolvedValue(mockProductResponse);
 
       const params: MongoIdParamDto = { id: 'product-id' };
       const dto: UpdateProductDto = { name: 'Updated Lipstick' };
@@ -122,7 +108,9 @@ describe('ProductsController', () => {
 
   describe('updateStoreLinks', () => {
     it('should update store links and return id + message', async () => {
-      mockProductsService.updateStoreLinks.mockResolvedValue(mockProduct);
+      mockProductsService.updateStoreLinks.mockResolvedValue(
+        mockProductResponse,
+      );
 
       const params: MongoIdParamDto = { id: 'product-id' };
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
@@ -142,7 +130,7 @@ describe('ProductsController', () => {
 
   describe('remove', () => {
     it('should delete a product and return id + message', async () => {
-      mockProductsService.remove.mockResolvedValue(mockProduct);
+      mockProductsService.remove.mockResolvedValue(mockProductResponse);
 
       const params: MongoIdParamDto = { id: 'product-id' };
       const result = await controller.remove(params);

@@ -8,6 +8,7 @@ import { CreateMakeupBagDto } from 'src/modules/makeup-bags/dto/create-makeup-ba
 import { CreateProductDto } from 'src/modules/products/dto/create-product.dto';
 import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-questionnaire.dto';
 import { CreateStageDto } from 'src/modules/stages/dto/create-stage.dto';
+import { CreateStoreDto } from 'src/modules/stores/dto/create-store.dto';
 import { CreateToolDto } from 'src/modules/tools/dto/create-tool.dto';
 import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 
@@ -18,6 +19,7 @@ export interface TestMakeupBag extends CreateMakeupBagDto {}
 export interface TestProduct extends CreateProductDto {}
 export interface TestQuestionnaire extends CreateQuestionnaireDto {}
 export interface TestStage extends CreateStageDto {}
+export interface TestStore extends CreateStoreDto {}
 export interface TestTool extends CreateToolDto {}
 export interface TestUser extends CreateUserDto {}
 
@@ -200,6 +202,21 @@ export class TestDataFactory {
       productIds,
       ...overrides,
     };
+  }
+
+  static createStore(overrides: Partial<TestStore> = {}): TestStore {
+    return {
+      name: 'Test Store',
+      ...overrides,
+    };
+  }
+
+  static createMultipleStores(count: number): TestStore[] {
+    return Array.from({ length: count }, (_, index) =>
+      this.createStore({
+        name: `Test Store ${index + 1}`,
+      }),
+    );
   }
 
   static createTool(

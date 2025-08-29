@@ -2,18 +2,15 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { NotFoundException } from '@nestjs/common';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './schemas/category.schema';
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
 
-  const mockCategory = {
-    _id: '507f1f77bcf86cd799439011',
-    name: 'basic',
-    type: 'makeup_bag',
-  };
+  const mockCategory = TestDataFactory.createCategory();
+  const mockCategories = TestDataFactory.createMultipleCategories(2);
 
   const mockCategoryModel = {
     create: jest.fn(),
@@ -38,57 +35,33 @@ describe('CategoriesService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a new category', async () => {
-      const createCategoryDto: CreateCategoryDto = {
-        name: 'basic',
-        type: 'makeup_bag',
-      };
+      mockCategoryModel.create.mockResolvedValue(mockCategory);
 
-      const createdCategory = { ...mockCategory, ...createCategoryDto };
-      mockCategoryModel.create.mockResolvedValue(createdCategory);
+      const result = await service.create(mockCategory);
 
-      const result = await service.create(createCategoryDto);
-
-      expect(mockCategoryModel.create).toHaveBeenCalledWith(createCategoryDto);
-      expect(result).toEqual(createdCategory);
+      expect(mockCategoryModel.create).toHaveBeenCalledWith(mockCategory);
+      expect(result).toEqual(mockCategory);
     });
 
     it('should handle creation errors', async () => {
-      const createCategoryDto: CreateCategoryDto = {
-        name: 'basic',
-        type: 'makeup_bag',
-      };
-
       const error = new Error('Database error');
       mockCategoryModel.create.mockRejectedValue(error);
 
-      await expect(service.create(createCategoryDto)).rejects.toThrow(error);
-      expect(mockCategoryModel.create).toHaveBeenCalledWith(createCategoryDto);
+      await expect(service.create(mockCategory)).rejects.toThrow(error);
+      expect(mockCategoryModel.create).toHaveBeenCalledWith(mockCategory);
     });
   });
 
   describe('findAll', () => {
     it('should return all categories when categories exist', async () => {
-      const categories = [
-        mockCategory,
-        {
-          _id: '507f1f77bcf86cd799439012',
-          name: 'luxury',
-          type: 'makeup_bag',
-        },
-      ];
-
-      mockCategoryModel.find.mockResolvedValue(categories);
+      mockCategoryModel.find.mockResolvedValue(mockCategories);
 
       const result = await service.findAll();
 
       expect(mockCategoryModel.find).toHaveBeenCalledWith();
-      expect(result).toEqual(categories);
+      expect(result).toEqual(mockCategories);
     });
 
     it('should throw NotFoundException when no categories exist', async () => {

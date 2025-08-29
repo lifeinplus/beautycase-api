@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { NotFoundException } from '@nestjs/common';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
-import { CreateLessonDto } from './dto/create-lesson.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateLessonProductsDto } from './dto/update-lesson-products.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { LessonsController } from './lessons.controller';
@@ -11,14 +11,11 @@ import { LessonsService } from './lessons.service';
 describe('LessonsController', () => {
   let controller: LessonsController;
 
-  const mockLesson = {
+  const mockLesson = TestDataFactory.createLesson();
+
+  const mockLessonResponse = {
+    ...mockLesson,
     id: 'lesson-id',
-    title: 'Makeup Basics',
-    shortDescription: 'Learn the basics',
-    videoUrl: 'http://example.com/video.mp4',
-    fullDescription: 'Full lesson content',
-    productIds: [],
-    clientIds: [],
   };
 
   const mockLessonsService = {
@@ -44,24 +41,13 @@ describe('LessonsController', () => {
     controller = module.get<LessonsController>(LessonsController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a lesson and return id + message', async () => {
-      const dto: CreateLessonDto = {
-        title: 'Makeup Basics',
-        shortDescription: 'Learn the basics',
-        videoUrl: 'http://example.com/video.mp4',
-        fullDescription: 'Full lesson content',
-      } as any;
+      mockLessonsService.create.mockResolvedValue(mockLessonResponse as any);
 
-      mockLessonsService.create.mockResolvedValue(mockLesson as any);
+      const result = await controller.create(mockLesson);
 
-      const result = await controller.create(dto);
-
-      expect(mockLessonsService.create).toHaveBeenCalledWith(dto);
+      expect(mockLessonsService.create).toHaveBeenCalledWith(mockLesson);
       expect(result).toEqual({
         id: 'lesson-id',
         message: 'Lesson created successfully',
@@ -71,24 +57,24 @@ describe('LessonsController', () => {
 
   describe('findAll', () => {
     it('should return all lessons', async () => {
-      mockLessonsService.findAll.mockResolvedValue([mockLesson]);
+      mockLessonsService.findAll.mockResolvedValue([mockLessonResponse]);
 
       const result = await controller.findAll();
 
       expect(mockLessonsService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockLesson]);
+      expect(result).toEqual([mockLessonResponse]);
     });
   });
 
   describe('findOne', () => {
     it('should return lesson by id', async () => {
-      mockLessonsService.findOne.mockResolvedValue(mockLesson);
+      mockLessonsService.findOne.mockResolvedValue(mockLessonResponse);
 
       const params: MongoIdParamDto = { id: 'lesson-id' };
       const result = await controller.findOne(params);
 
       expect(mockLessonsService.findOne).toHaveBeenCalledWith('lesson-id');
-      expect(result).toEqual(mockLesson);
+      expect(result).toEqual(mockLessonResponse);
     });
 
     it('should throw NotFoundException if lesson not found', async () => {
@@ -102,7 +88,7 @@ describe('LessonsController', () => {
 
   describe('update', () => {
     it('should update lesson and return id + message', async () => {
-      mockLessonsService.update.mockResolvedValue(mockLesson);
+      mockLessonsService.update.mockResolvedValue(mockLessonResponse);
 
       const params: MongoIdParamDto = { id: 'lesson-id' };
       const dto: UpdateLessonDto = { title: 'Updated Lesson' };
@@ -119,7 +105,7 @@ describe('LessonsController', () => {
 
   describe('updateProducts', () => {
     it('should update products and return id + message', async () => {
-      mockLessonsService.updateProducts.mockResolvedValue(mockLesson);
+      mockLessonsService.updateProducts.mockResolvedValue(mockLessonResponse);
 
       const params: MongoIdParamDto = { id: 'lesson-id' };
       const dto: UpdateLessonProductsDto = { productIds: ['p1', 'p2'] };
@@ -139,7 +125,7 @@ describe('LessonsController', () => {
 
   describe('remove', () => {
     it('should delete lesson and return id + message', async () => {
-      mockLessonsService.remove.mockResolvedValue(mockLesson);
+      mockLessonsService.remove.mockResolvedValue(mockLessonResponse);
 
       const params: MongoIdParamDto = { id: 'lesson-id' };
       const result = await controller.remove(params);

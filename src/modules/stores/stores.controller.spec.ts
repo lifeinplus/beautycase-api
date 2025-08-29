@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
-import { CreateStoreDto } from './dto/create-store.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { StoresController } from './stores.controller';
 import { StoresService } from './stores.service';
@@ -9,11 +9,12 @@ describe('StoresController', () => {
   let controller: StoresController;
   let service: StoresService;
 
-  const mockStore = {
+  const mockStore = TestDataFactory.createStore();
+  const mockStores = TestDataFactory.createMultipleStores(2);
+
+  const mockStoreResponse = {
+    ...mockStore,
     id: '507f1f77bcf86cd799439011',
-    name: 'Test Store',
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockStoresService = {
@@ -42,46 +43,30 @@ describe('StoresController', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a store successfully', async () => {
-      const dto: CreateStoreDto = {
-        name: 'New Store',
-      };
+      mockStoresService.create.mockResolvedValue(mockStoreResponse);
 
-      mockStoresService.create.mockResolvedValue(mockStore);
+      const result = await controller.create(mockStore);
 
-      const result = await controller.create(dto);
-
-      expect(service.create).toHaveBeenCalledWith(dto);
+      expect(service.create).toHaveBeenCalledWith(mockStore);
       expect(result).toEqual({
-        id: mockStore.id,
+        id: mockStoreResponse.id,
         message: 'Store created successfully',
       });
     });
 
     it('should handle service errors during creation', async () => {
-      const dto: CreateStoreDto = {
-        name: 'New Store',
-      };
-
       const error = new Error('Database error');
       mockStoresService.create.mockRejectedValue(error);
 
-      await expect(controller.create(dto)).rejects.toThrow(error);
-      expect(service.create).toHaveBeenCalledWith(dto);
+      await expect(controller.create(mockStore)).rejects.toThrow(error);
+      expect(service.create).toHaveBeenCalledWith(mockStore);
     });
   });
 
   describe('findAll', () => {
     it('should return all stores', async () => {
-      const mockStores = [
-        mockStore,
-        { ...mockStore, id: '507f1f77bcf86cd799439012' },
-      ];
       mockStoresService.findAll.mockResolvedValue(mockStores);
 
       const result = await controller.findAll();
@@ -110,12 +95,12 @@ describe('StoresController', () => {
 
   describe('update', () => {
     it('should update a store successfully', async () => {
-      const params: MongoIdParamDto = { id: mockStore.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
 
-      const updatedStore = { ...mockStore, ...dto };
+      const updatedStore = { ...mockStoreResponse, ...dto };
       mockStoresService.update.mockResolvedValue(updatedStore);
 
       const result = await controller.update(params, dto);
@@ -128,7 +113,7 @@ describe('StoresController', () => {
     });
 
     it('should handle service errors during update', async () => {
-      const params: MongoIdParamDto = { id: mockStore.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
@@ -141,12 +126,12 @@ describe('StoresController', () => {
     });
 
     it('should handle partial updates', async () => {
-      const params: MongoIdParamDto = { id: mockStore.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const dto: UpdateStoreDto = {
         name: 'Updated Store Only',
       };
 
-      const updatedStore = { ...mockStore, name: dto.name };
+      const updatedStore = { ...mockStoreResponse, name: dto.name };
       mockStoresService.update.mockResolvedValue(updatedStore);
 
       const result = await controller.update(params, dto);
@@ -161,20 +146,20 @@ describe('StoresController', () => {
 
   describe('remove', () => {
     it('should delete a store successfully', async () => {
-      const params: MongoIdParamDto = { id: mockStore.id };
-      mockStoresService.remove.mockResolvedValue(mockStore);
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
+      mockStoresService.remove.mockResolvedValue(mockStoreResponse);
 
       const result = await controller.remove(params);
 
       expect(service.remove).toHaveBeenCalledWith(params.id);
       expect(result).toEqual({
-        id: mockStore.id,
+        id: mockStoreResponse.id,
         message: 'Store deleted successfully',
       });
     });
 
     it('should handle service errors during deletion', async () => {
-      const params: MongoIdParamDto = { id: mockStore.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const error = new Error('Store not found');
       mockStoresService.remove.mockRejectedValue(error);
 

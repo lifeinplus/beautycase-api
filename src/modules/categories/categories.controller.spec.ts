@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -8,6 +10,9 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 describe('CategoriesController', () => {
   let controller: CategoriesController;
   let service: CategoriesService;
+
+  const mockCategory = TestDataFactory.createCategory();
+  const mockCategories = TestDataFactory.createMultipleCategories(2);
 
   const mockCategoriesService = {
     create: jest.fn(),
@@ -33,30 +38,18 @@ describe('CategoriesController', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
-    const createCategoryDto: CreateCategoryDto = {
-      name: 'Test Category',
-      type: 'test-type',
-    };
-
     const mockCreatedCategory = {
+      ...mockCategory,
       id: '123e4567-e89b-12d3-a456-426614174000',
-      name: 'Test Category',
-      type: 'test-type',
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
     it('should create a category successfully', async () => {
       mockCategoriesService.create.mockResolvedValue(mockCreatedCategory);
 
-      const result = await controller.create(createCategoryDto);
+      const result = await controller.create(mockCategory);
 
-      expect(service.create).toHaveBeenCalledWith(createCategoryDto);
+      expect(service.create).toHaveBeenCalledWith(mockCategory);
       expect(service.create).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
         id: mockCreatedCategory.id,
@@ -68,18 +61,18 @@ describe('CategoriesController', () => {
       const error = new Error('Database connection failed');
       mockCategoriesService.create.mockRejectedValue(error);
 
-      await expect(controller.create(createCategoryDto)).rejects.toThrow(
+      await expect(controller.create(mockCategory)).rejects.toThrow(
         'Database connection failed',
       );
-      expect(service.create).toHaveBeenCalledWith(createCategoryDto);
+      expect(service.create).toHaveBeenCalledWith(mockCategory);
       expect(service.create).toHaveBeenCalledTimes(1);
     });
 
     it('should handle service returning null/undefined', async () => {
       mockCategoriesService.create.mockResolvedValue(null);
 
-      await expect(controller.create(createCategoryDto)).rejects.toThrow();
-      expect(service.create).toHaveBeenCalledWith(createCategoryDto);
+      await expect(controller.create(mockCategory)).rejects.toThrow();
+      expect(service.create).toHaveBeenCalledWith(mockCategory);
     });
 
     it('should pass through validation errors from DTO', async () => {
@@ -94,23 +87,6 @@ describe('CategoriesController', () => {
   });
 
   describe('findAll', () => {
-    const mockCategories = [
-      {
-        id: '123e4567-e89b-12d3-a456-426614174000',
-        name: 'Category 1',
-        type: 'type-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: '123e4567-e89b-12d3-a456-426614174001',
-        name: 'Category 2',
-        type: 'type-2',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-
     it('should return all categories', async () => {
       mockCategoriesService.findAll.mockResolvedValue(mockCategories);
 
@@ -137,6 +113,7 @@ describe('CategoriesController', () => {
       await expect(controller.findAll()).rejects.toThrow(
         'Database query failed',
       );
+
       expect(service.findAll).toHaveBeenCalledTimes(1);
     });
   });
@@ -164,12 +141,7 @@ describe('CategoriesController', () => {
       const serviceError = new Error('Service unavailable');
       mockCategoriesService.create.mockRejectedValue(serviceError);
 
-      const createDto: CreateCategoryDto = {
-        name: 'Test',
-        type: 'test',
-      };
-
-      await expect(controller.create(createDto)).rejects.toThrow(
+      await expect(controller.create(mockCategory)).rejects.toThrow(
         'Service unavailable',
       );
     });

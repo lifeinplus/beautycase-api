@@ -1,9 +1,9 @@
+import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
+
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBagsService } from './makeup-bags.service';
 import { MakeupBag, MakeupBagDocument } from './schemas/makeup-bag.schema';
@@ -16,19 +16,22 @@ describe('MakeupBagsService', () => {
   let service: MakeupBagsService;
   let mockMakeupBagModel: MockModel<MakeupBagDocument>;
 
-  const mockMakeupBag = {
-    _id: 'makeupbag-id',
-    categoryId: 'cat-id',
-    clientId: 'client-id',
-    stageIds: ['stage-id'],
-    toolIds: ['tool-id'],
-    save: jest.fn(),
-  } as any;
+  const mockMakeupBag = TestDataFactory.createMakeupBag(
+    'cat-id',
+    'client-id',
+    ['stage-id'],
+    ['tool-id'],
+  );
+
+  const mockMakeupBagResponse = {
+    ...mockMakeupBag,
+    id: 'makeupbag-id',
+  };
 
   beforeEach(async () => {
     mockMakeupBagModel = jest.fn(() => ({
-      ...mockMakeupBag,
-      save: jest.fn().mockResolvedValue(mockMakeupBag),
+      ...mockMakeupBagResponse,
+      save: jest.fn().mockResolvedValue(mockMakeupBagResponse),
     })) as any;
 
     mockMakeupBagModel.create = jest.fn();
@@ -50,24 +53,16 @@ describe('MakeupBagsService', () => {
     service = module.get<MakeupBagsService>(MakeupBagsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a makeup bag', async () => {
-      const dto: CreateMakeupBagDto = {
-        categoryId: 'cat-id',
-        clientId: 'client-id',
-        stageIds: ['stage-id'],
-        toolIds: ['tool-id'],
-      };
-      (mockMakeupBagModel.create as jest.Mock).mockResolvedValue(mockMakeupBag);
+      (mockMakeupBagModel.create as jest.Mock).mockResolvedValue(
+        mockMakeupBagResponse,
+      );
 
-      const result = await service.create(dto);
+      const result = await service.create(mockMakeupBag);
 
-      expect(mockMakeupBagModel.create).toHaveBeenCalledWith(dto);
-      expect(result).toEqual(mockMakeupBag);
+      expect(mockMakeupBagModel.create).toHaveBeenCalledWith(mockMakeupBag);
+      expect(result).toEqual(mockMakeupBagResponse);
     });
   });
 
@@ -75,12 +70,12 @@ describe('MakeupBagsService', () => {
     it('should return all makeup bags', async () => {
       (mockMakeupBagModel.find as jest.Mock).mockReturnValue({
         select: jest.fn().mockReturnValue({
-          populate: jest.fn().mockResolvedValue([mockMakeupBag]),
+          populate: jest.fn().mockResolvedValue([mockMakeupBagResponse]),
         }),
       });
 
       const result = await service.findAll();
-      expect(result).toEqual([mockMakeupBag]);
+      expect(result).toEqual([mockMakeupBagResponse]);
     });
 
     it('should throw NotFoundException if none found', async () => {
@@ -97,11 +92,11 @@ describe('MakeupBagsService', () => {
   describe('findOne', () => {
     it('should return makeup bag by id', async () => {
       (mockMakeupBagModel.findById as jest.Mock).mockReturnValue({
-        populate: jest.fn().mockResolvedValue(mockMakeupBag),
+        populate: jest.fn().mockResolvedValue(mockMakeupBagResponse),
       });
 
       const result = await service.findOne('makeupbag-id');
-      expect(result).toEqual(mockMakeupBag);
+      expect(result).toEqual(mockMakeupBagResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -118,11 +113,11 @@ describe('MakeupBagsService', () => {
   describe('findOneWithClientId', () => {
     it('should return makeup bag with only clientId', async () => {
       (mockMakeupBagModel.findById as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue(mockMakeupBag),
+        select: jest.fn().mockResolvedValue(mockMakeupBagResponse),
       });
 
       const result = await service.findOneWithClientId('makeupbag-id');
-      expect(result).toEqual(mockMakeupBag);
+      expect(result).toEqual(mockMakeupBagResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -140,19 +135,19 @@ describe('MakeupBagsService', () => {
     it('should return makeup bags by client id', async () => {
       (mockMakeupBagModel.find as jest.Mock).mockReturnValue({
         select: jest.fn().mockReturnValue({
-          populate: jest.fn().mockResolvedValue([mockMakeupBag]),
+          populate: jest.fn().mockResolvedValue([mockMakeupBagResponse]),
         }),
       });
 
       const result = await service.findByClientId('client-id');
-      expect(result).toEqual([mockMakeupBag]);
+      expect(result).toEqual([mockMakeupBagResponse]);
     });
   });
 
   describe('update', () => {
     it('should update makeup bag', async () => {
       (mockMakeupBagModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockMakeupBag,
+        mockMakeupBagResponse,
       );
 
       const dto: UpdateMakeupBagDto = { stageIds: ['new-stage'] };
@@ -163,7 +158,7 @@ describe('MakeupBagsService', () => {
         dto,
         { new: true, runValidators: true },
       );
-      expect(result).toEqual(mockMakeupBag);
+      expect(result).toEqual(mockMakeupBagResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -180,11 +175,11 @@ describe('MakeupBagsService', () => {
   describe('remove', () => {
     it('should delete makeup bag', async () => {
       (mockMakeupBagModel.findByIdAndDelete as jest.Mock).mockResolvedValue(
-        mockMakeupBag,
+        mockMakeupBagResponse,
       );
 
       const result = await service.remove('makeupbag-id');
-      expect(result).toEqual(mockMakeupBag);
+      expect(result).toEqual(mockMakeupBagResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {

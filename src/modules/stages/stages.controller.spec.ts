@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
-import { CreateStageDto } from './dto/create-stage.dto';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStageProductsDto } from './dto/update-stage-products.dto';
 import { UpdateStageDto } from './dto/update-stage.dto';
 import { StagesController } from './stages.controller';
@@ -10,14 +10,11 @@ import { StagesService } from './stages.service';
 describe('StagesController', () => {
   let controller: StagesController;
 
-  const mockStage = {
+  const mockStage = TestDataFactory.createStage();
+
+  const mockStageResponse = {
+    ...mockStage,
     id: 'stage-id',
-    title: 'Morning routine',
-    subtitle: 'Soft and natural',
-    imageUrl: 'http://example.com/image.jpg',
-    comment: 'Stage comment',
-    steps: ['Step 1'],
-    productIds: ['product-id'],
   };
 
   const mockStagesService = {
@@ -44,26 +41,13 @@ describe('StagesController', () => {
     controller = module.get<StagesController>(StagesController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a stage and return id + message', async () => {
-      mockStagesService.create.mockResolvedValue(mockStage as any);
+      mockStagesService.create.mockResolvedValue(mockStageResponse as any);
 
-      const dto: CreateStageDto = {
-        title: 'Morning routine',
-        subtitle: 'Soft and natural',
-        imageUrl: 'http://example.com/image.jpg',
-        comment: 'Stage comment',
-        steps: ['Step 1'],
-        productIds: ['product-id'],
-      };
+      const result = await controller.create(mockStage);
 
-      const result = await controller.create(dto);
-
-      expect(mockStagesService.create).toHaveBeenCalledWith(dto);
+      expect(mockStagesService.create).toHaveBeenCalledWith(mockStage);
       expect(result).toEqual({
         id: 'stage-id',
         message: 'Stage created successfully',
@@ -73,7 +57,7 @@ describe('StagesController', () => {
 
   describe('duplicate', () => {
     it('should duplicate a stage and return id + message', async () => {
-      mockStagesService.duplicate.mockResolvedValue(mockStage);
+      mockStagesService.duplicate.mockResolvedValue(mockStageResponse);
 
       const params: MongoIdParamDto = { id: 'stage-id' };
       const result = await controller.duplicate(params);
@@ -88,24 +72,24 @@ describe('StagesController', () => {
 
   describe('findAll', () => {
     it('should return all stages', async () => {
-      mockStagesService.findAll.mockResolvedValue([mockStage]);
+      mockStagesService.findAll.mockResolvedValue([mockStageResponse]);
 
       const result = await controller.findAll();
 
       expect(mockStagesService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockStage]);
+      expect(result).toEqual([mockStageResponse]);
     });
   });
 
   describe('findOne', () => {
     it('should return a stage by id', async () => {
-      mockStagesService.findOne.mockResolvedValue(mockStage);
+      mockStagesService.findOne.mockResolvedValue(mockStageResponse);
 
       const params: MongoIdParamDto = { id: 'stage-id' };
       const result = await controller.findOne(params);
 
       expect(mockStagesService.findOne).toHaveBeenCalledWith('stage-id');
-      expect(result).toEqual(mockStage);
+      expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -119,7 +103,7 @@ describe('StagesController', () => {
 
   describe('update', () => {
     it('should update a stage and return id + message', async () => {
-      mockStagesService.update.mockResolvedValue(mockStage);
+      mockStagesService.update.mockResolvedValue(mockStageResponse);
 
       const params: MongoIdParamDto = { id: 'stage-id' };
       const dto: UpdateStageDto = { title: 'Updated title' };
@@ -136,7 +120,7 @@ describe('StagesController', () => {
 
   describe('updateProducts', () => {
     it('should update stage products and return id + message', async () => {
-      mockStagesService.updateProducts.mockResolvedValue(mockStage);
+      mockStagesService.updateProducts.mockResolvedValue(mockStageResponse);
 
       const params: MongoIdParamDto = { id: 'stage-id' };
       const dto: UpdateStageProductsDto = { productIds: ['p1', 'p2'] };
@@ -156,7 +140,7 @@ describe('StagesController', () => {
 
   describe('remove', () => {
     it('should delete a stage and return id + message', async () => {
-      mockStagesService.remove.mockResolvedValue(mockStage);
+      mockStagesService.remove.mockResolvedValue(mockStageResponse);
 
       const params: MongoIdParamDto = { id: 'stage-id' };
       const result = await controller.remove(params);

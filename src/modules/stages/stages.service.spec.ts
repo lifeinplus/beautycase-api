@@ -4,8 +4,8 @@ import { Model } from 'mongoose';
 
 import { NotFoundException } from '@nestjs/common';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { ImageService } from '../shared/image.service';
-import { CreateStageDto } from './dto/create-stage.dto';
 import { UpdateStageProductsDto } from './dto/update-stage-products.dto';
 import { UpdateStageDto } from './dto/update-stage.dto';
 import { Stage, StageDocument } from './schemas/stage.schema';
@@ -20,22 +20,18 @@ describe('StagesService', () => {
   let mockStageModel: MockModel<StageDocument>;
   let mockImageService: jest.Mocked<ImageService>;
 
-  const mockStage = {
+  const mockStage = TestDataFactory.createStage();
+
+  const mockStageResponse = {
+    ...mockStage,
     _id: 'stage-id',
-    title: 'Morning routine',
-    subtitle: 'Soft and natural',
-    imageId: 'img-id',
-    imageUrl: 'http://example.com/image.jpg',
-    comment: 'Stage comment',
-    steps: ['Step 1', 'Step 2'],
-    productIds: ['product-id'],
     save: jest.fn(),
-  } as any;
+  };
 
   beforeEach(async () => {
     mockStageModel = jest.fn(() => ({
-      ...mockStage,
-      save: jest.fn().mockResolvedValue(mockStage),
+      ...mockStageResponse,
+      save: jest.fn().mockResolvedValue(mockStageResponse),
     })) as any;
 
     mockStageModel.find = jest.fn();
@@ -66,45 +62,33 @@ describe('StagesService', () => {
     service = module.get<StagesService>(StagesService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a stage and upload image', async () => {
-      const dto: CreateStageDto = {
-        title: 'Morning routine',
-        subtitle: 'Soft and natural',
-        imageUrl: 'http://example.com/image.jpg',
-        comment: 'Stage comment',
-        steps: ['Step 1'],
-        productIds: ['product-id'],
-      };
-
-      const result = await service.create(dto);
+      const result = await service.create(mockStage);
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: 'stage-id' }),
-        { folder: UploadFolder.STAGES, secureUrl: dto.imageUrl },
+        expect.objectContaining({ _id: mockStageResponse._id }),
+        { folder: UploadFolder.STAGES, secureUrl: mockStage.imageUrl },
       );
-      expect(result).toEqual(mockStage);
+
+      expect(result).toEqual(mockStageResponse);
     });
   });
 
   describe('duplicate', () => {
     it('should duplicate a stage', async () => {
       (mockStageModel.findById as jest.Mock).mockResolvedValue({
-        toObject: () => mockStage,
-        title: mockStage.title,
+        toObject: () => mockStageResponse,
+        title: mockStageResponse.title,
       });
 
-      const saveMock = jest.fn().mockResolvedValue(mockStage);
+      const saveMock = jest.fn().mockResolvedValue(mockStageResponse);
       (mockStageModel as any).mockImplementation(() => ({ save: saveMock }));
 
       const result = await service.duplicate('stage-id');
 
       expect(mockStageModel.findById).toHaveBeenCalledWith('stage-id');
-      expect(result).toEqual(mockStage);
+      expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -119,11 +103,11 @@ describe('StagesService', () => {
   describe('findAll', () => {
     it('should return all stages', async () => {
       (mockStageModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue([mockStage]),
+        select: jest.fn().mockResolvedValue([mockStageResponse]),
       });
 
       const result = await service.findAll();
-      expect(result).toEqual([mockStage]);
+      expect(result).toEqual([mockStageResponse]);
     });
 
     it('should throw NotFoundException if none found', async () => {
@@ -138,11 +122,11 @@ describe('StagesService', () => {
   describe('findOne', () => {
     it('should return stage by id', async () => {
       (mockStageModel.findById as jest.Mock).mockReturnValue({
-        populate: jest.fn().mockResolvedValue(mockStage),
+        populate: jest.fn().mockResolvedValue(mockStageResponse),
       });
 
       const result = await service.findOne('stage-id');
-      expect(result).toEqual(mockStage);
+      expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -159,21 +143,21 @@ describe('StagesService', () => {
   describe('update', () => {
     it('should update a stage and update image if provided', async () => {
       (mockStageModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockStage,
+        mockStageResponse,
       );
 
       const dto: UpdateStageDto = { imageUrl: 'http://example.com/new.jpg' };
       const result = await service.update('stage-id', dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
-        mockStage,
+        mockStageResponse,
         {
           folder: UploadFolder.STAGES,
           secureUrl: dto.imageUrl,
           destroyOnReplace: false,
         },
       );
-      expect(result).toEqual(mockStage);
+      expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -188,13 +172,13 @@ describe('StagesService', () => {
   describe('updateProducts', () => {
     it('should update stage products', async () => {
       (mockStageModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockStage,
+        mockStageResponse,
       );
 
       const dto: UpdateStageProductsDto = { productIds: ['p1', 'p2'] };
       const result = await service.updateProducts('stage-id', dto);
 
-      expect(result).toEqual(mockStage);
+      expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -209,11 +193,11 @@ describe('StagesService', () => {
   describe('remove', () => {
     it('should delete a stage', async () => {
       (mockStageModel.findByIdAndDelete as jest.Mock).mockResolvedValue(
-        mockStage,
+        mockStageResponse,
       );
 
       const result = await service.remove('stage-id');
-      expect(result).toEqual(mockStage);
+      expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {

@@ -1,20 +1,18 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { TestDataFactory } from 'test/factories/test-data.factory';
 import { LessonsService } from './lessons.service';
 import { Lesson } from './schemas/lesson.schema';
 
 describe('LessonsService', () => {
   let service: LessonsService;
 
-  const mockLesson = {
-    _id: 'lesson-id',
-    title: 'Makeup Basics',
-    shortDescription: 'Learn the basics of makeup application.',
-    videoUrl: 'http://example.com/video.mp4',
-    fullDescription: 'This is a detailed makeup tutorial.',
-    productIds: [],
-    clientIds: [],
+  const mockLesson = TestDataFactory.createLesson();
+
+  const mockLessonResponse = {
+    ...mockLesson,
+    id: 'lesson-id',
   };
 
   const mockLessonModel = {
@@ -39,30 +37,28 @@ describe('LessonsService', () => {
     service = module.get<LessonsService>(LessonsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
   describe('create', () => {
     it('should create a lesson', async () => {
-      (mockLessonModel.create as jest.Mock).mockResolvedValue(mockLesson);
+      (mockLessonModel.create as jest.Mock).mockResolvedValue(
+        mockLessonResponse,
+      );
 
-      const result = await service.create(mockLesson as any);
+      const result = await service.create(mockLessonResponse as any);
 
-      expect(mockLessonModel.create).toHaveBeenCalledWith(mockLesson);
-      expect(result).toEqual(mockLesson);
+      expect(mockLessonModel.create).toHaveBeenCalledWith(mockLessonResponse);
+      expect(result).toEqual(mockLessonResponse);
     });
   });
 
   describe('findAll', () => {
     it('should return all lessons', async () => {
       (mockLessonModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue([mockLesson]),
+        select: jest.fn().mockResolvedValue([mockLessonResponse]),
       });
 
       const result = await service.findAll();
 
-      expect(result).toEqual([mockLesson]);
+      expect(result).toEqual([mockLessonResponse]);
     });
 
     it('should throw NotFoundException if no lessons found', async () => {
@@ -77,13 +73,13 @@ describe('LessonsService', () => {
   describe('findOne', () => {
     it('should return a lesson with populated products', async () => {
       (mockLessonModel.findById as jest.Mock).mockReturnValue({
-        populate: jest.fn().mockResolvedValue(mockLesson),
+        populate: jest.fn().mockResolvedValue(mockLessonResponse),
       });
 
       const result = await service.findOne('lesson-id');
 
       expect(mockLessonModel.findById).toHaveBeenCalledWith('lesson-id');
-      expect(result).toEqual(mockLesson);
+      expect(result).toEqual(mockLessonResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -100,13 +96,13 @@ describe('LessonsService', () => {
   describe('findOneWithClientId', () => {
     it('should return a lesson with clientIds only', async () => {
       (mockLessonModel.findById as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue(mockLesson),
+        select: jest.fn().mockResolvedValue(mockLessonResponse),
       });
 
       const result = await service.findOneWithClientId('lesson-id');
 
       expect(mockLessonModel.findById).toHaveBeenCalledWith('lesson-id');
-      expect(result).toEqual(mockLesson);
+      expect(result).toEqual(mockLessonResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -123,7 +119,7 @@ describe('LessonsService', () => {
   describe('getByClientId', () => {
     it('should return lessons by clientId', async () => {
       (mockLessonModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue([mockLesson]),
+        select: jest.fn().mockResolvedValue([mockLessonResponse]),
       });
 
       const result = await service.getByClientId('client-id');
@@ -131,14 +127,14 @@ describe('LessonsService', () => {
       expect(mockLessonModel.find).toHaveBeenCalledWith({
         clientIds: 'client-id',
       });
-      expect(result).toEqual([mockLesson]);
+      expect(result).toEqual([mockLessonResponse]);
     });
   });
 
   describe('update', () => {
     it('should update a lesson', async () => {
       (mockLessonModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockLesson,
+        mockLessonResponse,
       );
 
       const result = await service.update('lesson-id', {
@@ -150,7 +146,7 @@ describe('LessonsService', () => {
         { title: 'Updated' },
         { new: true, runValidators: true },
       );
-      expect(result).toEqual(mockLesson);
+      expect(result).toEqual(mockLessonResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -167,19 +163,19 @@ describe('LessonsService', () => {
       const dto = { productIds: ['p1', 'p2'] } as any;
       const spy = jest
         .spyOn(service, 'update')
-        .mockResolvedValue(mockLesson as any);
+        .mockResolvedValue(mockLessonResponse as any);
 
       const result = await service.updateProducts('lesson-id', dto);
 
       expect(spy).toHaveBeenCalledWith('lesson-id', dto);
-      expect(result).toEqual(mockLesson);
+      expect(result).toEqual(mockLessonResponse);
     });
   });
 
   describe('remove', () => {
     it('should delete a lesson', async () => {
       (mockLessonModel.findByIdAndDelete as jest.Mock).mockResolvedValue(
-        mockLesson,
+        mockLessonResponse,
       );
 
       const result = await service.remove('lesson-id');
@@ -187,7 +183,7 @@ describe('LessonsService', () => {
       expect(mockLessonModel.findByIdAndDelete).toHaveBeenCalledWith(
         'lesson-id',
       );
-      expect(result).toEqual(mockLesson);
+      expect(result).toEqual(mockLessonResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
