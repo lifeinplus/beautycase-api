@@ -10,6 +10,7 @@ import {
   TestProduct,
   TestQuestionnaire,
   TestStage,
+  TestStore,
   TestTool,
 } from 'test/factories/test-data.factory';
 
@@ -59,6 +60,11 @@ export interface QuestionnaireResources {
 export interface StageResources {
   id: string;
   data: TestStage;
+}
+
+export interface StoreResources {
+  id: string;
+  data: TestStore;
 }
 
 export interface ToolResources {
@@ -347,6 +353,45 @@ export class ResourceHelper {
     }
 
     return stages;
+  }
+
+  static async createStore(
+    app: INestApplication,
+    adminToken: string,
+  ): Promise<StoreResources> {
+    const data = TestDataFactory.createStore();
+
+    const response = await request(app.getHttpServer())
+      .post('/stores')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(data)
+      .expect(HttpStatus.CREATED);
+
+    return {
+      id: response.body.id,
+      data,
+    };
+  }
+
+  static async createMultipleStores(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+  ): Promise<StoreResources[]> {
+    const stores: StoreResources[] = [];
+    const storesData = TestDataFactory.createMultipleStores(count);
+
+    for (const data of storesData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/stores')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      stores.push({ id: body.id, data });
+    }
+
+    return stores;
   }
 
   static async createTool(
