@@ -270,6 +270,28 @@ export class ResourceHelper {
     };
   }
 
+  static async createMultipleProducts(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+    brandId: string,
+  ): Promise<ProductResources[]> {
+    const products: ProductResources[] = [];
+    const productsData = TestDataFactory.createMultipleProducts(count, brandId);
+
+    for (const data of productsData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      products.push({ id: body.id, data });
+    }
+
+    return products;
+  }
+
   static async createQuestionnaire(
     app: INestApplication,
   ): Promise<QuestionnaireResources> {
@@ -289,9 +311,9 @@ export class ResourceHelper {
   static async createStage(
     app: INestApplication,
     adminToken: string,
-    brandIds: string[],
+    productIds: string[],
   ): Promise<StageResources> {
-    const data = TestDataFactory.createStage(brandIds);
+    const data = TestDataFactory.createStage(productIds);
 
     const response = await request(app.getHttpServer())
       .post('/stages')
@@ -303,6 +325,28 @@ export class ResourceHelper {
       id: response.body.id,
       data,
     };
+  }
+
+  static async createMultipleStages(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+    productIds: string[],
+  ): Promise<StageResources[]> {
+    const stages: StageResources[] = [];
+    const stagesData = TestDataFactory.createMultipleStages(count, productIds);
+
+    for (const data of stagesData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/stages')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      stages.push({ id: body.id, data });
+    }
+
+    return stages;
   }
 
   static async createTool(

@@ -146,6 +146,14 @@ export class TestDataFactory {
     };
   }
 
+  static createMultipleProducts(count: number, brandId: string): TestProduct[] {
+    return Array.from({ length: count }, (_, index) =>
+      this.createProduct(brandId, {
+        name: `Test Product ${index + 1}`,
+      }),
+    );
+  }
+
   static createQuestionnaire(
     overrides: Partial<TestQuestionnaire> = {},
   ): TestQuestionnaire {
@@ -202,6 +210,17 @@ export class TestDataFactory {
       productIds,
       ...overrides,
     };
+  }
+
+  static createMultipleStages(
+    count: number,
+    productIds: string[],
+  ): TestStage[] {
+    return Array.from({ length: count }, (_, index) =>
+      this.createStage(productIds, {
+        title: `Test Stage ${index + 1}`,
+      }),
+    );
   }
 
   static createStore(overrides: Partial<TestStore> = {}): TestStore {
