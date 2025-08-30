@@ -10,20 +10,21 @@ import {
   TestProduct,
   TestQuestionnaire,
   TestStage,
+  TestStore,
   TestTool,
 } from 'test/factories/test-data.factory';
 
-export interface TestResources {
+export interface TestLessonResources {
+  brandId: string;
+  productId: string;
+}
+
+export interface TestMakeupBagResources {
   brandId: string;
   categoryId: string;
   productIds: string[];
   stageId: string;
   toolId: string;
-}
-
-export interface TestLessonResources {
-  brandId: string;
-  productId: string;
 }
 
 export interface BrandResources {
@@ -61,6 +62,11 @@ export interface StageResources {
   data: TestStage;
 }
 
+export interface StoreResources {
+  id: string;
+  data: TestStore;
+}
+
 export interface ToolResources {
   id: string;
   data: TestTool;
@@ -80,10 +86,10 @@ export class ResourceHelper {
     };
   }
 
-  static async setupBasicResources(
+  static async setupMakeupBagResources(
     app: INestApplication,
     adminToken: string,
-  ): Promise<TestResources> {
+  ): Promise<TestMakeupBagResources> {
     const category = await this.createCategory(app, adminToken);
     const brand = await this.createBrand(app, adminToken);
     const product = await this.createProduct(app, adminToken, brand.id);
@@ -347,6 +353,45 @@ export class ResourceHelper {
     }
 
     return stages;
+  }
+
+  static async createStore(
+    app: INestApplication,
+    adminToken: string,
+  ): Promise<StoreResources> {
+    const data = TestDataFactory.createStore();
+
+    const response = await request(app.getHttpServer())
+      .post('/stores')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(data)
+      .expect(HttpStatus.CREATED);
+
+    return {
+      id: response.body.id,
+      data,
+    };
+  }
+
+  static async createMultipleStores(
+    app: INestApplication,
+    adminToken: string,
+    count: number,
+  ): Promise<StoreResources[]> {
+    const stores: StoreResources[] = [];
+    const storesData = TestDataFactory.createMultipleStores(count);
+
+    for (const data of storesData) {
+      const { body } = await request(app.getHttpServer())
+        .post('/stores')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(data)
+        .expect(HttpStatus.CREATED);
+
+      stores.push({ id: body.id, data });
+    }
+
+    return stores;
   }
 
   static async createTool(

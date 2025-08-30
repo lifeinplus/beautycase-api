@@ -29,7 +29,7 @@ describe('Lessons (e2e)', () => {
   let connection: Connection;
 
   let tokens: AuthTokens;
-  let lessonResources: TestLessonResources;
+  let resources: TestLessonResources;
   let lessonId: string;
 
   beforeAll(async () => {
@@ -57,7 +57,7 @@ describe('Lessons (e2e)', () => {
 
     tokens = await AuthHelper.setupAuthTokens(app);
 
-    lessonResources = await ResourceHelper.setupLessonResources(
+    resources = await ResourceHelper.setupLessonResources(
       app,
       tokens.adminToken,
     );
@@ -74,10 +74,7 @@ describe('Lessons (e2e)', () => {
 
   describe('POST /lessons', () => {
     const createLessonDto = () =>
-      TestDataFactory.createLesson(
-        [lessonResources.productId],
-        [tokens.clientId],
-      );
+      TestDataFactory.createLesson([resources.productId], [tokens.clientId]);
 
     it('should create a lesson as admin', async () => {
       const response = await request(app.getHttpServer())
@@ -193,7 +190,7 @@ describe('Lessons (e2e)', () => {
         app,
         tokens.adminToken,
         2,
-        [lessonResources.productId],
+        [resources.productId],
         [tokens.clientId],
       );
     });
@@ -228,7 +225,7 @@ describe('Lessons (e2e)', () => {
 
     beforeEach(async () => {
       const { id } = await ResourceHelper.createLesson(app, tokens.adminToken, [
-        lessonResources.productId,
+        resources.productId,
       ]);
 
       lessonId = id;
@@ -236,7 +233,7 @@ describe('Lessons (e2e)', () => {
       const clientLesson = await ResourceHelper.createLesson(
         app,
         tokens.adminToken,
-        [lessonResources.productId],
+        [resources.productId],
         [tokens.clientId],
       );
 
@@ -311,7 +308,7 @@ describe('Lessons (e2e)', () => {
       const { id } = await ResourceHelper.createLesson(
         app,
         tokens.adminToken,
-        [lessonResources.productId],
+        [resources.productId],
         [tokens.clientId],
       );
 
@@ -413,7 +410,7 @@ describe('Lessons (e2e)', () => {
       const { id } = await ResourceHelper.createLesson(
         app,
         tokens.adminToken,
-        [lessonResources.productId],
+        [resources.productId],
         [tokens.clientId],
       );
 
@@ -508,7 +505,7 @@ describe('Lessons (e2e)', () => {
       const { id } = await ResourceHelper.createLesson(
         app,
         tokens.adminToken,
-        [lessonResources.productId],
+        [resources.productId],
         [tokens.clientId],
       );
 
@@ -584,7 +581,7 @@ describe('Lessons (e2e)', () => {
       const { id } = await ResourceHelper.createLesson(
         app,
         tokens.adminToken,
-        [lessonResources.productId],
+        [resources.productId],
         [tokens.clientId],
       );
 

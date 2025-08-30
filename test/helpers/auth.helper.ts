@@ -7,7 +7,9 @@ import { TestDataFactory, TestUser } from 'test/factories/test-data.factory';
 
 export interface AuthTokens {
   adminToken: string;
+  adminId: string;
   muaToken: string;
+  muaId: string;
   clientToken: string;
   clientId: string;
 }
@@ -27,6 +29,7 @@ export class AuthHelper {
       .send(adminUser.data)
       .expect(HttpStatus.OK);
     tokens.adminToken = adminLogin.body.accessToken;
+    tokens.adminId = adminLogin.body.userId;
 
     const muaUser = await this.createMuaUser(app);
     const muaLogin = await request(app.getHttpServer())
@@ -34,6 +37,7 @@ export class AuthHelper {
       .send(muaUser.data)
       .expect(HttpStatus.OK);
     tokens.muaToken = muaLogin.body.accessToken;
+    tokens.muaId = muaLogin.body.userId;
 
     const clientUser = await this.createClientUser(app);
     const clientLogin = await request(app.getHttpServer())
@@ -68,6 +72,27 @@ export class AuthHelper {
     });
 
     return { id, data: clientUser };
+  }
+
+  static async createMultipleClientUsers(
+    app: INestApplication,
+    count: number,
+  ): Promise<UserResources[]> {
+    const usersService = app.get<UsersService>(UsersService);
+
+    const clientUsers: UserResources[] = [];
+    const clientUsersData = TestDataFactory.createMultipleClientUsers(count);
+
+    for (const data of clientUsersData) {
+      const { id } = await usersService.create({
+        ...data,
+        password: await bcrypt.hash(data.password, 10),
+      });
+
+      clientUsers.push({ id, data });
+    }
+
+    return clientUsers;
   }
 
   static async createMuaUser(app: INestApplication): Promise<UserResources> {

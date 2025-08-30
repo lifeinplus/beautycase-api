@@ -21,14 +21,17 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
-import { ResourceHelper, TestResources } from 'test/helpers/resource.helper';
+import {
+  ResourceHelper,
+  TestMakeupBagResources,
+} from 'test/helpers/resource.helper';
 
 describe('MakeupBags (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
 
   let tokens: AuthTokens;
-  let resources: TestResources;
+  let resources: TestMakeupBagResources;
   let makeupBagId: string;
 
   beforeAll(async () => {
@@ -58,7 +61,8 @@ describe('MakeupBags (e2e)', () => {
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
-    resources = await ResourceHelper.setupBasicResources(
+
+    resources = await ResourceHelper.setupMakeupBagResources(
       app,
       tokens.adminToken,
     );

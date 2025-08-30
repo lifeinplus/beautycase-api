@@ -51,6 +51,14 @@ export class TestDataFactory {
     };
   }
 
+  static createMultipleClientUsers(count: number): TestUser[] {
+    return Array.from({ length: count }, (_, index) =>
+      this.createClientUser({
+        username: `client${index + 1}`,
+      }),
+    );
+  }
+
   static createBrand(overrides: Partial<TestBrand> = {}): TestBrand {
     return {
       name: 'Test Brand',
