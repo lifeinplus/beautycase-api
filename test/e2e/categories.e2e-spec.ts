@@ -71,15 +71,12 @@ describe('Categories (e2e)', () => {
         expect(response.body.message).toBe('Category created successfully');
       });
 
-      it('should allow mua users to create categories', async () => {
-        const response = await request(app.getHttpServer())
+      it('should reject creation by mua role', async () => {
+        await request(app.getHttpServer())
           .post('/categories')
           .set('Authorization', `Bearer ${tokens.muaToken}`)
           .send(mockCategory)
-          .expect(HttpStatus.CREATED);
-
-        expect(response.body).toHaveProperty('id');
-        expect(response.body.message).toBe('Category created successfully');
+          .expect(HttpStatus.FORBIDDEN);
       });
 
       it('should reject creation by client role', async () => {
@@ -292,17 +289,11 @@ describe('Categories (e2e)', () => {
       ]);
     });
 
-    it('should maintain data consistency across different user roles', async () => {
+    it('should maintain data consistency', async () => {
       await request(app.getHttpServer())
         .post('/categories')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send(mockCategory)
-        .expect(HttpStatus.CREATED);
-
-      await request(app.getHttpServer())
-        .post('/categories')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send({ ...mockCategory, name: 'luxury' })
         .expect(HttpStatus.CREATED);
 
       const adminResponse = await request(app.getHttpServer())
@@ -310,14 +301,7 @@ describe('Categories (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
-      const muaResponse = await request(app.getHttpServer())
-        .get('/categories')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .expect(HttpStatus.OK);
-
-      expect(adminResponse.body).toHaveLength(2);
-      expect(muaResponse.body).toHaveLength(2);
-      expect(adminResponse.body).toEqual(muaResponse.body);
+      expect(adminResponse.body).toHaveLength(1);
     });
   });
 

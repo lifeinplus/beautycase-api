@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category, CategoryDocument } from './schemas/category.schema';
 
 @Injectable()
@@ -17,12 +18,35 @@ export class CategoriesService {
   }
 
   async findAll(): Promise<CategoryDocument[]> {
-    const categories = await this.categoryModel.find();
+    const categories = await this.categoryModel.find().sort('type name');
 
     if (!categories.length) {
       throw new NotFoundException('Categories not found');
     }
 
     return categories;
+  }
+
+  async update(id: string, dto: UpdateCategoryDto): Promise<CategoryDocument> {
+    const category = await this.categoryModel.findByIdAndUpdate(id, dto, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    return category;
+  }
+
+  async remove(id: string): Promise<CategoryDocument> {
+    const category = await this.categoryModel.findByIdAndDelete(id);
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    return category;
   }
 }
