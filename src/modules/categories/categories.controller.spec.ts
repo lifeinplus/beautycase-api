@@ -24,6 +24,7 @@ describe('CategoriesController', () => {
   const mockCategoriesService = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findProducts: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
   };
@@ -122,6 +123,42 @@ describe('CategoriesController', () => {
       );
 
       expect(service.findAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findProducts', () => {
+    it('should return all product categories', async () => {
+      const mockProductCategories = [
+        { id: 'p1', name: 'Makeup', type: 'product' },
+        { id: 'p2', name: 'Skincare', type: 'product' },
+      ];
+      mockCategoriesService.findProducts.mockResolvedValue(
+        mockProductCategories,
+      );
+
+      const result = await controller.findProducts();
+
+      expect(service.findProducts).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockProductCategories);
+    });
+
+    it('should return empty array if no product categories exist', async () => {
+      mockCategoriesService.findProducts.mockResolvedValue([]);
+
+      const result = await controller.findProducts();
+
+      expect(service.findProducts).toHaveBeenCalledTimes(1);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle service errors when finding product categories', async () => {
+      const error = new Error('Database query failed');
+      mockCategoriesService.findProducts.mockRejectedValue(error);
+
+      await expect(controller.findProducts()).rejects.toThrow(
+        'Database query failed',
+      );
+      expect(service.findProducts).toHaveBeenCalledTimes(1);
     });
   });
 

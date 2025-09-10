@@ -9,6 +9,7 @@ export type ProductDocument = HydratedDocument<Product>;
   toJSON: {
     transform: (_, ret: any) => {
       delete ret.brandId;
+      delete ret.categoryId;
       return ret;
     },
     virtuals: true,
@@ -18,6 +19,9 @@ export type ProductDocument = HydratedDocument<Product>;
 export class Product {
   @Prop({ type: Types.ObjectId, ref: 'Brand', required: true })
   brandId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Category' })
+  categoryId: Types.ObjectId;
 
   @Prop({ required: true })
   name: string;
@@ -42,4 +46,8 @@ export const ProductSchema = SchemaFactory.createForClass(Product);
 
 ProductSchema.virtual('brand').get(function () {
   return this.brandId;
+});
+
+ProductSchema.virtual('category').get(function () {
+  return this.categoryId;
 });

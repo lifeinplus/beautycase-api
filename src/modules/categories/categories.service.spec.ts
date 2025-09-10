@@ -21,6 +21,7 @@ describe('CategoriesService', () => {
   const mockCategoryModel = {
     create: jest.fn(),
     find: jest.fn(),
+    findOne: jest.fn(),
     findByIdAndUpdate: jest.fn(),
     findByIdAndDelete: jest.fn(),
   };
@@ -88,6 +89,67 @@ describe('CategoriesService', () => {
 
       expect(mockCategoryModel.find).toHaveBeenCalledWith();
       expect(mockQuery.sort).toHaveBeenCalledWith('type name');
+    });
+  });
+
+  describe('findByName', () => {
+    it('should return a category by name', async () => {
+      const categoryName = mockCategory.name;
+      mockCategoryModel.findOne = jest.fn().mockResolvedValue(mockCategory);
+
+      const result = await service.findByName(categoryName);
+
+      expect(mockCategoryModel.findOne).toHaveBeenCalledWith({
+        name: categoryName,
+      });
+      expect(result).toEqual(mockCategory);
+    });
+
+    it('should throw NotFoundException when category is not found', async () => {
+      const categoryName = 'Nonexistent';
+      mockCategoryModel.findOne = jest.fn().mockResolvedValue(null);
+
+      await expect(service.findByName(categoryName)).rejects.toThrow(
+        new NotFoundException(`Category "${categoryName}" not found`),
+      );
+      expect(mockCategoryModel.findOne).toHaveBeenCalledWith({
+        name: categoryName,
+      });
+    });
+  });
+
+  describe('findProducts', () => {
+    it('should return categories of type "product"', async () => {
+      const mockProductCategories = TestDataFactory.createMultipleCategories(
+        2,
+      ).map((c) => ({ ...c, type: 'product' }));
+
+      const mockQuery = {
+        sort: jest.fn().mockResolvedValue(mockProductCategories),
+      };
+
+      mockCategoryModel.find = jest.fn().mockReturnValue(mockQuery);
+
+      const result = await service.findProducts();
+
+      expect(mockCategoryModel.find).toHaveBeenCalledWith({ type: 'product' });
+      expect(mockQuery.sort).toHaveBeenCalledWith('name');
+      expect(result).toEqual(mockProductCategories);
+    });
+
+    it('should throw NotFoundException when no product categories are found', async () => {
+      const mockQuery = {
+        sort: jest.fn().mockResolvedValue([]),
+      };
+
+      mockCategoryModel.find = jest.fn().mockReturnValue(mockQuery);
+
+      await expect(service.findProducts()).rejects.toThrow(
+        new NotFoundException('Product categories not found'),
+      );
+
+      expect(mockCategoryModel.find).toHaveBeenCalledWith({ type: 'product' });
+      expect(mockQuery.sort).toHaveBeenCalledWith('name');
     });
   });
 

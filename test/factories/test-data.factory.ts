@@ -136,10 +136,12 @@ export class TestDataFactory {
 
   static createProduct(
     brandId: string,
+    categoryId: string,
     overrides: Partial<TestProduct> = {},
   ): TestProduct {
     return {
       brandId,
+      categoryId,
       name: 'Test Lipstick',
       imageUrl: 'https://example.com/lipstick.jpg',
       comment: 'A beautiful red lipstick perfect for evening wear',
@@ -154,9 +156,13 @@ export class TestDataFactory {
     };
   }
 
-  static createMultipleProducts(count: number, brandId: string): TestProduct[] {
+  static createMultipleProducts(
+    count: number,
+    brandId: string,
+    categoryId: string,
+  ): TestProduct[] {
     return Array.from({ length: count }, (_, index) =>
-      this.createProduct(brandId, {
+      this.createProduct(brandId, categoryId, {
         name: `Test Product ${index + 1}`,
       }),
     );

@@ -21,6 +21,7 @@ import {
 } from 'test/helpers/database.helper';
 import {
   BrandResources,
+  CategoryResources,
   ProductResources,
   ResourceHelper,
   StageResources,
@@ -32,6 +33,7 @@ describe('Stages (e2e)', () => {
 
   let tokens: AuthTokens;
   let brand: BrandResources;
+  let category: CategoryResources;
   let product: ProductResources;
   let stageId: string;
 
@@ -60,10 +62,12 @@ describe('Stages (e2e)', () => {
 
     tokens = await AuthHelper.setupAuthTokens(app);
     brand = await ResourceHelper.createBrand(app, tokens.adminToken);
+    category = await ResourceHelper.createCategory(app, tokens.adminToken);
     product = await ResourceHelper.createProduct(
       app,
       tokens.adminToken,
       brand.id,
+      category.id,
     );
   });
 
@@ -556,6 +560,7 @@ describe('Stages (e2e)', () => {
         tokens.adminToken,
         2,
         brand.id,
+        category.id,
       );
 
       productIds = products.map((p) => p.id);

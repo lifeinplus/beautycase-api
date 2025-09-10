@@ -18,7 +18,11 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
-import { BrandResources, ResourceHelper } from 'test/helpers/resource.helper';
+import {
+  BrandResources,
+  CategoryResources,
+  ResourceHelper,
+} from 'test/helpers/resource.helper';
 
 describe('Products (e2e)', () => {
   let app: INestApplication;
@@ -26,6 +30,7 @@ describe('Products (e2e)', () => {
 
   let tokens: AuthTokens;
   let brandResources: BrandResources;
+  let categoryResources: CategoryResources;
   let productId: string;
 
   beforeAll(async () => {
@@ -52,6 +57,10 @@ describe('Products (e2e)', () => {
 
     tokens = await AuthHelper.setupAuthTokens(app);
     brandResources = await ResourceHelper.createBrand(app, tokens.adminToken);
+    categoryResources = await ResourceHelper.createCategory(
+      app,
+      tokens.adminToken,
+    );
   });
 
   beforeEach(async () => {
@@ -65,7 +74,7 @@ describe('Products (e2e)', () => {
 
   describe('POST /products', () => {
     const createProductDto = () =>
-      TestDataFactory.createProduct(brandResources.id);
+      TestDataFactory.createProduct(brandResources.id, categoryResources.id);
 
     it('should create a product as admin', async () => {
       const response = await request(app.getHttpServer())
@@ -221,6 +230,7 @@ describe('Products (e2e)', () => {
         app,
         tokens.adminToken,
         brandResources.id,
+        categoryResources.id,
       );
     });
 
@@ -276,6 +286,7 @@ describe('Products (e2e)', () => {
         app,
         tokens.adminToken,
         brandResources.id,
+        categoryResources.id,
       );
 
       productId = id;
@@ -336,6 +347,7 @@ describe('Products (e2e)', () => {
         app,
         tokens.adminToken,
         brandResources.id,
+        categoryResources.id,
       );
 
       productId = id;
@@ -451,6 +463,7 @@ describe('Products (e2e)', () => {
         app,
         tokens.adminToken,
         brandResources.id,
+        categoryResources.id,
       );
 
       productId = id;
@@ -570,6 +583,7 @@ describe('Products (e2e)', () => {
         app,
         tokens.adminToken,
         brandResources.id,
+        categoryResources.id,
       );
 
       productId = id;
@@ -638,7 +652,7 @@ describe('Products (e2e)', () => {
 
   describe('Multiple Products Operations', () => {
     const createProductDto = () =>
-      TestDataFactory.createProduct(brandResources.id);
+      TestDataFactory.createProduct(brandResources.id, categoryResources.id);
 
     it('should handle multiple products correctly', async () => {
       const products = [

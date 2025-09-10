@@ -27,6 +27,28 @@ export class CategoriesService {
     return categories;
   }
 
+  async findByName(name: string): Promise<CategoryDocument> {
+    const category = await this.categoryModel.findOne({ name });
+
+    if (!category) {
+      throw new NotFoundException(`Category "${name}" not found`);
+    }
+
+    return category;
+  }
+
+  async findProducts(): Promise<CategoryDocument[]> {
+    const categories = await this.categoryModel
+      .find({ type: 'product' })
+      .sort('name');
+
+    if (!categories.length) {
+      throw new NotFoundException('Product categories not found');
+    }
+
+    return categories;
+  }
+
   async update(id: string, dto: UpdateCategoryDto): Promise<CategoryDocument> {
     const category = await this.categoryModel.findByIdAndUpdate(id, dto, {
       new: true,

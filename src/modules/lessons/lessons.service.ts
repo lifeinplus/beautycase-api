@@ -51,7 +51,7 @@ export class LessonsService {
     return lesson;
   }
 
-  getByClientId(clientId: string): Promise<LessonDocument[]> {
+  findByClientId(clientId: string): Promise<LessonDocument[]> {
     return this.lessonModel.find({ clientIds: clientId }).select('title');
   }
 

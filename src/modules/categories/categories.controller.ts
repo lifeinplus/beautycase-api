@@ -39,6 +39,12 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
+  @Get('products')
+  @Roles('admin', 'mua')
+  findProducts() {
+    return this.categoriesService.findProducts();
+  }
+
   @Put(':id')
   @Roles('admin')
   async update(
