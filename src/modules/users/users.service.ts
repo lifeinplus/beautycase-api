@@ -36,7 +36,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const lessons = await this.lessonsService.getByClientId(id);
+    const lessons = await this.lessonsService.findByClientId(id);
     const makeupBags = await this.makeupBagsService.findByClientId(id);
 
     return {

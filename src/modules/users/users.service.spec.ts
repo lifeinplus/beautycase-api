@@ -24,15 +24,15 @@ describe('UsersService', () => {
     findById: jest.fn(),
     findOne: jest.fn(),
     findByIdAndUpdate: jest.fn(),
-  } as any;
+  };
 
   const mockLessonsService = {
-    getByClientId: jest.fn(),
-  } as any;
+    findByClientId: jest.fn(),
+  };
 
   const mockMakeupBagsService = {
     findByClientId: jest.fn(),
-  } as any;
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -91,7 +91,7 @@ describe('UsersService', () => {
       mockUserModel.findById.mockReturnValue({
         select: jest.fn().mockResolvedValue(mockUserResponse),
       });
-      mockLessonsService.getByClientId.mockResolvedValue(['lesson1'] as any);
+      mockLessonsService.findByClientId.mockResolvedValue(['lesson1'] as any);
       mockMakeupBagsService.findByClientId.mockResolvedValue(['bag1'] as any);
 
       const result = await service.findOne('user-id');

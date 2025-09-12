@@ -11,7 +11,7 @@ import { ProductsService } from './products.service';
 describe('ProductsController', () => {
   let controller: ProductsController;
 
-  const mockProduct = TestDataFactory.createProduct('brand-id');
+  const mockProduct = TestDataFactory.createProduct('brand-id', 'category-id');
 
   const mockProductResponse = {
     ...mockProduct,
@@ -22,6 +22,8 @@ describe('ProductsController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
+    findByCategory: jest.fn(),
+    findWithoutCategory: jest.fn(),
     update: jest.fn(),
     updateStoreLinks: jest.fn(),
     remove: jest.fn(),
@@ -81,6 +83,50 @@ describe('ProductsController', () => {
       mockProductsService.findOne.mockRejectedValue(new NotFoundException());
 
       await expect(controller.findOne({ id: 'invalid-id' })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findWithoutCategory', () => {
+    it('should return uncategorized products', async () => {
+      const mockProducts = [mockProductResponse];
+      mockProductsService.findWithoutCategory.mockResolvedValue(mockProducts);
+
+      const result = await controller.findWithoutCategory();
+
+      expect(mockProductsService.findWithoutCategory).toHaveBeenCalled();
+      expect(result).toEqual(mockProducts);
+    });
+
+    it('should throw NotFoundException if no uncategorized products found', async () => {
+      mockProductsService.findWithoutCategory.mockRejectedValue(
+        new NotFoundException(),
+      );
+
+      await expect(controller.findWithoutCategory()).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findByCategory', () => {
+    it('should return products by category name', async () => {
+      const mockProducts = [mockProductResponse];
+      mockProductsService.findByCategory.mockResolvedValue(mockProducts);
+
+      const result = await controller.findByCategory('makeup');
+
+      expect(mockProductsService.findByCategory).toHaveBeenCalledWith('makeup');
+      expect(result).toEqual(mockProducts);
+    });
+
+    it('should throw NotFoundException if category not found', async () => {
+      mockProductsService.findByCategory.mockRejectedValue(
+        new NotFoundException(),
+      );
+
+      await expect(controller.findByCategory('invalid')).rejects.toThrow(
         NotFoundException,
       );
     });

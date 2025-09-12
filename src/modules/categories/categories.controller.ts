@@ -1,18 +1,29 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('categories')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'mua')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
+  @Roles('admin')
   async create(@Body() dto: CreateCategoryDto) {
     const category = await this.categoriesService.create(dto);
 
@@ -23,7 +34,39 @@ export class CategoriesController {
   }
 
   @Get()
+  @Roles('admin', 'mua')
   findAll() {
     return this.categoriesService.findAll();
+  }
+
+  @Get('products')
+  @Roles('admin', 'mua')
+  findProducts() {
+    return this.categoriesService.findProducts();
+  }
+
+  @Put(':id')
+  @Roles('admin')
+  async update(
+    @Param() params: MongoIdParamDto,
+    @Body() dto: UpdateCategoryDto,
+  ) {
+    const brand = await this.categoriesService.update(params.id, dto);
+
+    return {
+      id: brand.id,
+      message: 'Category updated successfully',
+    };
+  }
+
+  @Delete(':id')
+  @Roles('admin')
+  async remove(@Param() params: MongoIdParamDto) {
+    const category = await this.categoriesService.remove(params.id);
+
+    return {
+      id: category.id,
+      message: 'Category deleted successfully',
+    };
   }
 }

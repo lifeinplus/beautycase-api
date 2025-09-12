@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
+import { CategoriesService } from '../categories/categories.service';
 import { ImageService } from '../shared/image.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -14,6 +15,7 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
+    private readonly categoriesService: CategoriesService,
     private readonly imageService: ImageService,
   ) {}
 
@@ -41,13 +43,41 @@ export class ProductsService {
   }
 
   async findOne(id: string): Promise<ProductDocument> {
-    const product = await this.productModel.findById(id).populate('brandId');
+    const product = await this.productModel
+      .findById(id)
+      .populate(['brandId', 'categoryId']);
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
     return product;
+  }
+
+  async findByCategory(name: string): Promise<ProductDocument[]> {
+    const category = await this.categoriesService.findByName(name);
+
+    const products = await this.productModel
+      .find({ categoryId: category.id })
+      .select('imageUrl');
+
+    if (!products.length) {
+      throw new NotFoundException(`No products found for category ${name}`);
+    }
+
+    return products;
+  }
+
+  async findWithoutCategory(): Promise<ProductDocument[]> {
+    const products = await this.productModel
+      .find({ categoryId: { $exists: false } })
+      .select('imageUrl');
+
+    if (!products.length) {
+      throw new NotFoundException('No uncategorized products found');
+    }
+
+    return products;
   }
 
   async update(id: string, dto: UpdateProductDto): Promise<ProductDocument> {

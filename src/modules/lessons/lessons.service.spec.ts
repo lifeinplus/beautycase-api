@@ -122,7 +122,7 @@ describe('LessonsService', () => {
         select: jest.fn().mockResolvedValue([mockLessonResponse]),
       });
 
-      const result = await service.getByClientId('client-id');
+      const result = await service.findByClientId('client-id');
 
       expect(mockLessonModel.find).toHaveBeenCalledWith({
         clientIds: 'client-id',

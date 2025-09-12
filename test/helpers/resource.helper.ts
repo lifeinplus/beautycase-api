@@ -77,8 +77,14 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
   ): Promise<TestLessonResources> {
+    const category = await this.createCategory(app, adminToken);
     const brand = await this.createBrand(app, adminToken);
-    const product = await this.createProduct(app, adminToken, brand.id);
+    const product = await this.createProduct(
+      app,
+      adminToken,
+      brand.id,
+      category.id,
+    );
 
     return {
       brandId: brand.id,
@@ -92,7 +98,12 @@ export class ResourceHelper {
   ): Promise<TestMakeupBagResources> {
     const category = await this.createCategory(app, adminToken);
     const brand = await this.createBrand(app, adminToken);
-    const product = await this.createProduct(app, adminToken, brand.id);
+    const product = await this.createProduct(
+      app,
+      adminToken,
+      brand.id,
+      category.id,
+    );
     const stage = await this.createStage(app, adminToken, [brand.id]);
     const tool = await this.createTool(app, adminToken, brand.id);
 
@@ -261,8 +272,9 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     brandId: string,
+    categoryId: string,
   ): Promise<ProductResources> {
-    const data = TestDataFactory.createProduct(brandId);
+    const data = TestDataFactory.createProduct(brandId, categoryId);
 
     const response = await request(app.getHttpServer())
       .post('/products')
@@ -281,9 +293,14 @@ export class ResourceHelper {
     adminToken: string,
     count: number,
     brandId: string,
+    categoryId: string,
   ): Promise<ProductResources[]> {
     const products: ProductResources[] = [];
-    const productsData = TestDataFactory.createMultipleProducts(count, brandId);
+    const productsData = TestDataFactory.createMultipleProducts(
+      count,
+      brandId,
+      categoryId,
+    );
 
     for (const data of productsData) {
       const { body } = await request(app.getHttpServer())

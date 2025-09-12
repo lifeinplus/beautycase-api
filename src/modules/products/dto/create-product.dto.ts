@@ -18,6 +18,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   brandId: string;
 
+  @IsMongoId()
+  @IsOptional() // TODO: make it required in the future
+  categoryId: string;
+
   @IsString()
   @IsNotEmpty()
   @MinLength(1)

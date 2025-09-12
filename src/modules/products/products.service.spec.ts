@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { CategoriesService } from '../categories/categories.service';
 import { ImageService } from '../shared/image.service';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
@@ -19,7 +20,7 @@ describe('ProductsService', () => {
   let service: ProductsService;
   let mockProductModel: MockModel<ProductDocument>;
 
-  const mockProduct = TestDataFactory.createProduct('brand-id');
+  const mockProduct = TestDataFactory.createProduct('brand-id', 'category-id');
 
   const mockProductResponse = {
     ...mockProduct,
@@ -42,7 +43,7 @@ describe('ProductsService', () => {
     handleImageUpload: jest.fn(),
     handleImageUpdate: jest.fn(),
     handleImageDeletion: jest.fn(),
-  } as any;
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +52,10 @@ describe('ProductsService', () => {
         {
           provide: getModelToken(Product.name),
           useValue: mockProductModel,
+        },
+        {
+          provide: CategoriesService,
+          useValue: {},
         },
         {
           provide: ImageService,
@@ -111,6 +116,75 @@ describe('ProductsService', () => {
       });
 
       await expect(service.findOne('bad-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findByCategory', () => {
+    it('should return products for a given category', async () => {
+      const mockCategory = { id: 'category-id', name: 'makeup' };
+      const mockProducts = [mockProductResponse];
+
+      // mock CategoriesService
+      (service as any).categoriesService.findByName = jest
+        .fn()
+        .mockResolvedValue(mockCategory);
+
+      (mockProductModel.find as jest.Mock).mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockProducts),
+      });
+
+      const result = await service.findByCategory('makeup');
+
+      expect(
+        (service as any).categoriesService.findByName,
+      ).toHaveBeenCalledWith('makeup');
+      expect(mockProductModel.find).toHaveBeenCalledWith({
+        categoryId: mockCategory.id,
+      });
+      expect(result).toEqual(mockProducts);
+    });
+
+    it('should throw NotFoundException if no products for category', async () => {
+      const mockCategory = { id: 'category-id', name: 'makeup' };
+
+      (service as any).categoriesService.findByName = jest
+        .fn()
+        .mockResolvedValue(mockCategory);
+
+      (mockProductModel.find as jest.Mock).mockReturnValue({
+        select: jest.fn().mockResolvedValue([]),
+      });
+
+      await expect(service.findByCategory('makeup')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findWithoutCategory', () => {
+    it('should return uncategorized products', async () => {
+      const mockProducts = [mockProductResponse];
+
+      (mockProductModel.find as jest.Mock).mockReturnValue({
+        select: jest.fn().mockResolvedValue(mockProducts),
+      });
+
+      const result = await service.findWithoutCategory();
+
+      expect(mockProductModel.find).toHaveBeenCalledWith({
+        categoryId: { $exists: false },
+      });
+      expect(result).toEqual(mockProducts);
+    });
+
+    it('should throw NotFoundException if no uncategorized products', async () => {
+      (mockProductModel.find as jest.Mock).mockReturnValue({
+        select: jest.fn().mockResolvedValue([]),
+      });
+
+      await expect(service.findWithoutCategory()).rejects.toThrow(
         NotFoundException,
       );
     });
