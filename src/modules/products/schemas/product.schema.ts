@@ -20,7 +20,7 @@ export class Product {
   @Prop({ type: Types.ObjectId, ref: 'Brand', required: true })
   brandId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Category' })
+  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   categoryId: Types.ObjectId;
 
   @Prop({ required: true })

@@ -6,6 +6,10 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category, CategoryDocument } from './schemas/category.schema';
 
+export interface CategoryWithProductCount extends CategoryDocument {
+  productCount: number;
+}
+
 @Injectable()
 export class CategoriesService {
   constructor(
@@ -41,6 +45,39 @@ export class CategoriesService {
     const categories = await this.categoryModel
       .find({ type: 'product' })
       .sort('name');
+
+    if (!categories.length) {
+      throw new NotFoundException('Product categories not found');
+    }
+
+    return categories;
+  }
+
+  async findProductsWithCounts(): Promise<CategoryWithProductCount[]> {
+    const pipeline = [
+      { $match: { type: 'product' } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: 'categoryId',
+          as: 'products',
+        },
+      },
+      {
+        $addFields: {
+          productCount: { $size: '$products' },
+        },
+      },
+      {
+        $project: {
+          products: 0,
+        },
+      },
+      { $sort: { name: 1 as const } },
+    ];
+
+    const categories = await this.categoryModel.aggregate(pipeline);
 
     if (!categories.length) {
       throw new NotFoundException('Product categories not found');

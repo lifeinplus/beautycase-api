@@ -163,33 +163,6 @@ describe('ProductsService', () => {
     });
   });
 
-  describe('findWithoutCategory', () => {
-    it('should return uncategorized products', async () => {
-      const mockProducts = [mockProductResponse];
-
-      (mockProductModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue(mockProducts),
-      });
-
-      const result = await service.findWithoutCategory();
-
-      expect(mockProductModel.find).toHaveBeenCalledWith({
-        categoryId: { $exists: false },
-      });
-      expect(result).toEqual(mockProducts);
-    });
-
-    it('should throw NotFoundException if no uncategorized products', async () => {
-      (mockProductModel.find as jest.Mock).mockReturnValue({
-        select: jest.fn().mockResolvedValue([]),
-      });
-
-      await expect(service.findWithoutCategory()).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
   describe('update', () => {
     it('should update product and handle image if provided', async () => {
       (mockProductModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(

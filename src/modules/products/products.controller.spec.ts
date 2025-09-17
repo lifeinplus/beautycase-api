@@ -23,7 +23,6 @@ describe('ProductsController', () => {
     findAll: jest.fn(),
     findOne: jest.fn(),
     findByCategory: jest.fn(),
-    findWithoutCategory: jest.fn(),
     update: jest.fn(),
     updateStoreLinks: jest.fn(),
     remove: jest.fn(),
@@ -83,28 +82,6 @@ describe('ProductsController', () => {
       mockProductsService.findOne.mockRejectedValue(new NotFoundException());
 
       await expect(controller.findOne({ id: 'invalid-id' })).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
-  describe('findWithoutCategory', () => {
-    it('should return uncategorized products', async () => {
-      const mockProducts = [mockProductResponse];
-      mockProductsService.findWithoutCategory.mockResolvedValue(mockProducts);
-
-      const result = await controller.findWithoutCategory();
-
-      expect(mockProductsService.findWithoutCategory).toHaveBeenCalled();
-      expect(result).toEqual(mockProducts);
-    });
-
-    it('should throw NotFoundException if no uncategorized products found', async () => {
-      mockProductsService.findWithoutCategory.mockRejectedValue(
-        new NotFoundException(),
-      );
-
-      await expect(controller.findWithoutCategory()).rejects.toThrow(
         NotFoundException,
       );
     });

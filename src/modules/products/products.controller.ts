@@ -40,11 +40,6 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-  @Get('without-category')
-  findWithoutCategory() {
-    return this.productsService.findWithoutCategory();
-  }
-
   @Get(':id')
   @Roles()
   findOne(@Param() params: MongoIdParamDto) {

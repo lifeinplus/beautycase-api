@@ -45,6 +45,12 @@ export class CategoriesController {
     return this.categoriesService.findProducts();
   }
 
+  @Get('products/with-counts')
+  @Roles('admin', 'mua')
+  findProductsWithCounts() {
+    return this.categoriesService.findProductsWithCounts();
+  }
+
   @Put(':id')
   @Roles('admin')
   async update(
