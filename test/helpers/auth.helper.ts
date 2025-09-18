@@ -1,5 +1,6 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Types } from 'mongoose';
 import * as request from 'supertest';
 
 import { UsersService } from 'src/modules/users/users.service';
@@ -7,11 +8,11 @@ import { TestDataFactory, TestUser } from 'test/factories/test-data.factory';
 
 export interface AuthTokens {
   adminToken: string;
-  adminId: string;
+  adminId: Types.ObjectId;
   muaToken: string;
-  muaId: string;
+  muaId: Types.ObjectId;
   clientToken: string;
-  clientId: string;
+  clientId: Types.ObjectId;
 }
 
 export interface UserResources {

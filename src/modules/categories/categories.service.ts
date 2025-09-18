@@ -41,6 +41,18 @@ export class CategoriesService {
     return category;
   }
 
+  async findMakeupBags(): Promise<CategoryDocument[]> {
+    const categories = await this.categoryModel
+      .find({ type: 'makeup_bag' })
+      .sort('name');
+
+    if (!categories.length) {
+      throw new NotFoundException('MakeupBag categories not found');
+    }
+
+    return categories;
+  }
+
   async findProducts(): Promise<CategoryDocument[]> {
     const categories = await this.categoryModel
       .find({ type: 'product' })

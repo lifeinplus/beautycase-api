@@ -1,5 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
+
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
@@ -10,7 +12,8 @@ import { ToolsService } from './tools.service';
 describe('ToolsController', () => {
   let controller: ToolsController;
 
-  const mockTool = TestDataFactory.createTool('brand-id');
+  const mockBrandId = new Types.ObjectId();
+  const mockTool = TestDataFactory.createTool(mockBrandId);
 
   const mockToolResponse = {
     ...mockTool,

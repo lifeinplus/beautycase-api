@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
@@ -11,7 +12,13 @@ import { ProductsService } from './products.service';
 describe('ProductsController', () => {
   let controller: ProductsController;
 
-  const mockProduct = TestDataFactory.createProduct('brand-id', 'category-id');
+  const mockBrandId = new Types.ObjectId();
+  const mockCategoryId = new Types.ObjectId();
+
+  const mockProduct = TestDataFactory.createProduct(
+    mockBrandId,
+    mockCategoryId,
+  );
 
   const mockProductResponse = {
     ...mockProduct,

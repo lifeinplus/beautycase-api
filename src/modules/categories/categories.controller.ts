@@ -39,6 +39,12 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
+  @Get('makeup-bags')
+  @Roles('admin', 'mua')
+  findMakeupBags() {
+    return this.categoriesService.findMakeupBags();
+  }
+
   @Get('products')
   @Roles('admin', 'mua')
   findProducts() {

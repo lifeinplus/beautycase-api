@@ -1,4 +1,5 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
+import { Types } from 'mongoose';
 import * as request from 'supertest';
 
 import {
@@ -15,25 +16,25 @@ import {
 } from 'test/factories/test-data.factory';
 
 export interface TestLessonResources {
-  brandId: string;
+  brandId: Types.ObjectId;
   productId: string;
 }
 
 export interface TestMakeupBagResources {
-  brandId: string;
-  categoryId: string;
+  brandId: Types.ObjectId;
+  categoryId: Types.ObjectId;
   productIds: string[];
   stageId: string;
   toolId: string;
 }
 
 export interface BrandResources {
-  id: string;
+  id: Types.ObjectId;
   data: TestBrand;
 }
 
 export interface CategoryResources {
-  id: string;
+  id: Types.ObjectId;
   data: TestCategory;
 }
 
@@ -104,7 +105,7 @@ export class ResourceHelper {
       brand.id,
       category.id,
     );
-    const stage = await this.createStage(app, adminToken, [brand.id]);
+    const stage = await this.createStage(app, adminToken, [product.id]);
     const tool = await this.createTool(app, adminToken, brand.id);
 
     return {
@@ -198,7 +199,7 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     productIds: string[] = [],
-    clientIds: string[] = [],
+    clientIds: Types.ObjectId[] = [],
   ): Promise<LessonResources> {
     const data = TestDataFactory.createLesson(productIds, clientIds);
 
@@ -219,7 +220,7 @@ export class ResourceHelper {
     adminToken: string,
     count: number,
     productIds: string[] = [],
-    clientIds: string[] = [],
+    clientIds: Types.ObjectId[] = [],
   ): Promise<LessonResources[]> {
     const lessons: LessonResources[] = [];
     const lessonsData = TestDataFactory.createMultipleLessons(
@@ -244,8 +245,8 @@ export class ResourceHelper {
   static async createMakeupBag(
     app: INestApplication,
     adminToken: string,
-    categoryId: string,
-    clientId: string,
+    categoryId: Types.ObjectId,
+    clientId: Types.ObjectId,
     stageIds: string[] = [],
     toolIds: string[] = [],
   ): Promise<MakeupBagResources> {
@@ -271,8 +272,8 @@ export class ResourceHelper {
   static async createProduct(
     app: INestApplication,
     adminToken: string,
-    brandId: string,
-    categoryId: string,
+    brandId: Types.ObjectId,
+    categoryId: Types.ObjectId,
   ): Promise<ProductResources> {
     const data = TestDataFactory.createProduct(brandId, categoryId);
 
@@ -292,8 +293,8 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     count: number,
-    brandId: string,
-    categoryId: string,
+    brandId: Types.ObjectId,
+    categoryId: Types.ObjectId,
   ): Promise<ProductResources[]> {
     const products: ProductResources[] = [];
     const productsData = TestDataFactory.createMultipleProducts(
@@ -414,7 +415,7 @@ export class ResourceHelper {
   static async createTool(
     app: INestApplication,
     adminToken: string,
-    brandId: string,
+    brandId: Types.ObjectId,
   ): Promise<ToolResources> {
     const data = TestDataFactory.createTool(brandId);
 

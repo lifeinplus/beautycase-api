@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
@@ -16,9 +16,12 @@ describe('MakeupBagsService', () => {
   let service: MakeupBagsService;
   let mockMakeupBagModel: MockModel<MakeupBagDocument>;
 
+  const mockCategoryId = new Types.ObjectId();
+  const mockClientId = new Types.ObjectId();
+
   const mockMakeupBag = TestDataFactory.createMakeupBag(
-    'cat-id',
-    'client-id',
+    mockCategoryId,
+    mockClientId,
     ['stage-id'],
     ['tool-id'],
   );

@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
@@ -20,7 +20,13 @@ describe('ProductsService', () => {
   let service: ProductsService;
   let mockProductModel: MockModel<ProductDocument>;
 
-  const mockProduct = TestDataFactory.createProduct('brand-id', 'category-id');
+  const mockBrandId = new Types.ObjectId();
+  const mockCategoryId = new Types.ObjectId();
+
+  const mockProduct = TestDataFactory.createProduct(
+    mockBrandId,
+    mockCategoryId,
+  );
 
   const mockProductResponse = {
     ...mockProduct,
@@ -123,10 +129,9 @@ describe('ProductsService', () => {
 
   describe('findByCategory', () => {
     it('should return products for a given category', async () => {
-      const mockCategory = { id: 'category-id', name: 'makeup' };
+      const mockCategory = { _id: mockCategoryId, name: 'makeup' };
       const mockProducts = [mockProductResponse];
 
-      // mock CategoriesService
       (service as any).categoriesService.findByName = jest
         .fn()
         .mockResolvedValue(mockCategory);
@@ -141,7 +146,7 @@ describe('ProductsService', () => {
         (service as any).categoriesService.findByName,
       ).toHaveBeenCalledWith('makeup');
       expect(mockProductModel.find).toHaveBeenCalledWith({
-        categoryId: mockCategory.id,
+        categoryId: mockCategory._id,
       });
       expect(result).toEqual(mockProducts);
     });

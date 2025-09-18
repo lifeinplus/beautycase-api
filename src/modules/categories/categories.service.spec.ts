@@ -19,6 +19,7 @@ describe('CategoriesService', () => {
   };
 
   const mockCategoryModel = {
+    aggregate: jest.fn(),
     create: jest.fn(),
     find: jest.fn(),
     findOne: jest.fn(),
@@ -118,6 +119,45 @@ describe('CategoriesService', () => {
     });
   });
 
+  describe('findMakeupBags', () => {
+    it('should return categories of type "makeup_bag"', async () => {
+      const mockMakeupBagCategories = TestDataFactory.createMultipleCategories(
+        2,
+      ).map((c) => ({ ...c, type: 'makeup_bag' }));
+
+      const mockQuery = {
+        sort: jest.fn().mockResolvedValue(mockMakeupBagCategories),
+      };
+
+      mockCategoryModel.find = jest.fn().mockReturnValue(mockQuery);
+
+      const result = await service.findMakeupBags();
+
+      expect(mockCategoryModel.find).toHaveBeenCalledWith({
+        type: 'makeup_bag',
+      });
+      expect(mockQuery.sort).toHaveBeenCalledWith('name');
+      expect(result).toEqual(mockMakeupBagCategories);
+    });
+
+    it('should throw NotFoundException when no makeup_bag categories are found', async () => {
+      const mockQuery = {
+        sort: jest.fn().mockResolvedValue([]),
+      };
+
+      mockCategoryModel.find = jest.fn().mockReturnValue(mockQuery);
+
+      await expect(service.findMakeupBags()).rejects.toThrow(
+        new NotFoundException('MakeupBag categories not found'),
+      );
+
+      expect(mockCategoryModel.find).toHaveBeenCalledWith({
+        type: 'makeup_bag',
+      });
+      expect(mockQuery.sort).toHaveBeenCalledWith('name');
+    });
+  });
+
   describe('findProducts', () => {
     it('should return categories of type "product"', async () => {
       const mockProductCategories = TestDataFactory.createMultipleCategories(
@@ -150,6 +190,41 @@ describe('CategoriesService', () => {
 
       expect(mockCategoryModel.find).toHaveBeenCalledWith({ type: 'product' });
       expect(mockQuery.sort).toHaveBeenCalledWith('name');
+    });
+  });
+
+  describe('findProductsWithCounts', () => {
+    it('should return product categories with product counts', async () => {
+      const mockProductCategoriesWithCounts = [
+        { _id: '1', name: 'Category A', type: 'product', productCount: 2 },
+        { _id: '2', name: 'Category B', type: 'product', productCount: 0 },
+      ];
+
+      mockCategoryModel.aggregate = jest
+        .fn()
+        .mockResolvedValue(mockProductCategoriesWithCounts);
+
+      const result = await service.findProductsWithCounts();
+
+      expect(result).toEqual(mockProductCategoriesWithCounts);
+    });
+
+    it('should throw NotFoundException when no product categories with counts are found', async () => {
+      mockCategoryModel.aggregate = jest.fn().mockResolvedValue([]);
+
+      await expect(service.findProductsWithCounts()).rejects.toThrow(
+        new NotFoundException('Product categories not found'),
+      );
+
+      expect(mockCategoryModel.aggregate).toHaveBeenCalled();
+    });
+
+    it('should handle errors during aggregation', async () => {
+      const error = new Error('Aggregation error');
+      mockCategoryModel.aggregate = jest.fn().mockRejectedValue(error);
+
+      await expect(service.findProductsWithCounts()).rejects.toThrow(error);
+      expect(mockCategoryModel.aggregate).toHaveBeenCalled();
     });
   });
 

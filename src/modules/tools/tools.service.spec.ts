@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
@@ -19,7 +19,8 @@ describe('ToolsService', () => {
   let service: ToolsService;
   let mockToolModel: MockModel<ToolDocument>;
 
-  const mockTool = TestDataFactory.createTool('brand-id');
+  const mockBrandId = new Types.ObjectId();
+  const mockTool = TestDataFactory.createTool(mockBrandId);
 
   const mockToolResponse = {
     ...mockTool,
