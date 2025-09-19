@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -10,17 +9,19 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { Types } from 'mongoose';
 
+import { IsObjectId } from 'src/common/decorators/objectid.decorator';
 import { StoreLinkDto } from 'src/common/dto/store-link.dto';
 
 export class CreateProductDto {
-  @IsMongoId()
+  @IsObjectId()
   @IsNotEmpty()
-  brandId: string;
+  brandId: Types.ObjectId;
 
-  @IsMongoId()
-  @IsOptional() // TODO: make it required in the future
-  categoryId: string;
+  @IsObjectId()
+  @IsNotEmpty()
+  categoryId: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()

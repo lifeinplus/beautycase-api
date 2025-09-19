@@ -8,6 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateLessonDto {
   @IsString()
@@ -38,5 +39,5 @@ export class CreateLessonDto {
   @IsArray()
   @IsMongoId({ each: true })
   @Type(() => String)
-  clientIds?: string[];
+  clientIds?: Types.ObjectId[];
 }

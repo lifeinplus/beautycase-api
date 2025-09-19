@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
@@ -92,7 +93,7 @@ export class TestDataFactory {
 
   static createLesson(
     productIds: string[] = [],
-    clientIds: string[] = [],
+    clientIds: Types.ObjectId[] = [],
     overrides: Partial<TestLesson> = {},
   ): TestLesson {
     return {
@@ -109,7 +110,7 @@ export class TestDataFactory {
   static createMultipleLessons(
     count: number,
     productIds: string[] = [],
-    clientIds: string[] = [],
+    clientIds: Types.ObjectId[] = [],
   ): TestLesson[] {
     return Array.from({ length: count }, (_, index) =>
       this.createLesson(productIds, clientIds, {
@@ -119,8 +120,8 @@ export class TestDataFactory {
   }
 
   static createMakeupBag(
-    categoryId: string,
-    clientId: string,
+    categoryId: Types.ObjectId,
+    clientId: Types.ObjectId,
     stageIds: string[] = [],
     toolIds: string[] = [],
     overrides: Partial<TestMakeupBag> = {},
@@ -135,8 +136,8 @@ export class TestDataFactory {
   }
 
   static createProduct(
-    brandId: string,
-    categoryId: string,
+    brandId: Types.ObjectId,
+    categoryId: Types.ObjectId,
     overrides: Partial<TestProduct> = {},
   ): TestProduct {
     return {
@@ -158,8 +159,8 @@ export class TestDataFactory {
 
   static createMultipleProducts(
     count: number,
-    brandId: string,
-    categoryId: string,
+    brandId: Types.ObjectId,
+    categoryId: Types.ObjectId,
   ): TestProduct[] {
     return Array.from({ length: count }, (_, index) =>
       this.createProduct(brandId, categoryId, {
@@ -253,7 +254,7 @@ export class TestDataFactory {
   }
 
   static createTool(
-    brandId: string,
+    brandId: Types.ObjectId,
     overrides: Partial<TestTool> = {},
   ): TestTool {
     return {

@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
@@ -11,7 +12,13 @@ import { ProductsService } from './products.service';
 describe('ProductsController', () => {
   let controller: ProductsController;
 
-  const mockProduct = TestDataFactory.createProduct('brand-id', 'category-id');
+  const mockBrandId = new Types.ObjectId();
+  const mockCategoryId = new Types.ObjectId();
+
+  const mockProduct = TestDataFactory.createProduct(
+    mockBrandId,
+    mockCategoryId,
+  );
 
   const mockProductResponse = {
     ...mockProduct,
@@ -23,7 +30,6 @@ describe('ProductsController', () => {
     findAll: jest.fn(),
     findOne: jest.fn(),
     findByCategory: jest.fn(),
-    findWithoutCategory: jest.fn(),
     update: jest.fn(),
     updateStoreLinks: jest.fn(),
     remove: jest.fn(),
@@ -83,28 +89,6 @@ describe('ProductsController', () => {
       mockProductsService.findOne.mockRejectedValue(new NotFoundException());
 
       await expect(controller.findOne({ id: 'invalid-id' })).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
-  describe('findWithoutCategory', () => {
-    it('should return uncategorized products', async () => {
-      const mockProducts = [mockProductResponse];
-      mockProductsService.findWithoutCategory.mockResolvedValue(mockProducts);
-
-      const result = await controller.findWithoutCategory();
-
-      expect(mockProductsService.findWithoutCategory).toHaveBeenCalled();
-      expect(result).toEqual(mockProducts);
-    });
-
-    it('should throw NotFoundException if no uncategorized products found', async () => {
-      mockProductsService.findWithoutCategory.mockRejectedValue(
-        new NotFoundException(),
-      );
-
-      await expect(controller.findWithoutCategory()).rejects.toThrow(
         NotFoundException,
       );
     });

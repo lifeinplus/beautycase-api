@@ -39,10 +39,22 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
+  @Get('makeup-bags')
+  @Roles('admin', 'mua')
+  findMakeupBags() {
+    return this.categoriesService.findMakeupBags();
+  }
+
   @Get('products')
   @Roles('admin', 'mua')
   findProducts() {
     return this.categoriesService.findProducts();
+  }
+
+  @Get('products/with-counts')
+  @Roles('admin', 'mua')
+  findProductsWithCounts() {
+    return this.categoriesService.findProductsWithCounts();
   }
 
   @Put(':id')

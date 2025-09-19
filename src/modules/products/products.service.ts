@@ -58,23 +58,11 @@ export class ProductsService {
     const category = await this.categoriesService.findByName(name);
 
     const products = await this.productModel
-      .find({ categoryId: category.id })
+      .find({ categoryId: category._id })
       .select('imageUrl');
 
     if (!products.length) {
       throw new NotFoundException(`No products found for category ${name}`);
-    }
-
-    return products;
-  }
-
-  async findWithoutCategory(): Promise<ProductDocument[]> {
-    const products = await this.productModel
-      .find({ categoryId: { $exists: false } })
-      .select('imageUrl');
-
-    if (!products.length) {
-      throw new NotFoundException('No uncategorized products found');
     }
 
     return products;

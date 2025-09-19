@@ -208,6 +208,7 @@ describe('Products (e2e)', () => {
     it('should create product without optional fields', async () => {
       const minimalProduct = {
         brandId: '507f1f77bcf86cd799439011',
+        categoryId: '507f1f77bcf86cd799439012',
         name: 'Minimal Product',
         imageUrl: 'https://example.com/image.jpg',
         comment: 'Basic product',

@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection } from 'mongoose';
+import { Connection, Types } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
@@ -24,7 +24,7 @@ describe('Brands (e2e)', () => {
   let connection: Connection;
 
   let tokens: AuthTokens;
-  let brandId: string;
+  let brandId: Types.ObjectId;
   const mockBrand = TestDataFactory.createBrand();
 
   beforeAll(async () => {
