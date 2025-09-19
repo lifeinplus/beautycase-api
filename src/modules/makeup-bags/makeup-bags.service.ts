@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
@@ -72,7 +72,7 @@ export class MakeupBagsService {
 
   findByClientId(clientId: string): Promise<MakeupBagDocument[]> {
     return this.makeupBagModel
-      .find({ clientId })
+      .find({ clientId: new Types.ObjectId(clientId) })
       .select('categoryId')
       .populate('categoryId', 'name');
   }
