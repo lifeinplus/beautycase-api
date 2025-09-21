@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBagsController } from './makeup-bags.controller';
@@ -79,7 +79,7 @@ describe('MakeupBagsController', () => {
     it('should return makeup bag by id', async () => {
       mockMakeupBagsService.findOne.mockResolvedValue(mockMakeupBagResponse);
 
-      const params: MongoIdParamDto = { id: 'makeupbag-id' };
+      const params: ObjectIdParamDto = { id: 'makeupbag-id' };
       const result = await controller.findOne(params);
 
       expect(mockMakeupBagsService.findOne).toHaveBeenCalledWith(
@@ -101,7 +101,7 @@ describe('MakeupBagsController', () => {
     it('should update a makeup bag and return id + message', async () => {
       mockMakeupBagsService.update.mockResolvedValue(mockMakeupBagResponse);
 
-      const params: MongoIdParamDto = { id: 'makeupbag-id' };
+      const params: ObjectIdParamDto = { id: 'makeupbag-id' };
       const dto: UpdateMakeupBagDto = { stageIds: ['new-stage'] };
 
       const result = await controller.update(params, dto);
@@ -121,7 +121,7 @@ describe('MakeupBagsController', () => {
     it('should delete a makeup bag and return id + message', async () => {
       mockMakeupBagsService.remove.mockResolvedValue(mockMakeupBagResponse);
 
-      const params: MongoIdParamDto = { id: 'makeupbag-id' };
+      const params: ObjectIdParamDto = { id: 'makeupbag-id' };
       const result = await controller.remove(params);
 
       expect(mockMakeupBagsService.remove).toHaveBeenCalledWith('makeupbag-id');

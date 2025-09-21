@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { CategoriesService } from '../categories/categories.service';
@@ -42,7 +42,7 @@ export class ProductsService {
     return products;
   }
 
-  async findOne(id: string): Promise<ProductDocument> {
+  async findOne(id: Types.ObjectId): Promise<ProductDocument> {
     const product = await this.productModel
       .findById(id)
       .populate(['brandId', 'categoryId']);
@@ -68,7 +68,10 @@ export class ProductsService {
     return products;
   }
 
-  async update(id: string, dto: UpdateProductDto): Promise<ProductDocument> {
+  async update(
+    id: Types.ObjectId,
+    dto: UpdateProductDto,
+  ): Promise<ProductDocument> {
     const { imageUrl } = dto;
 
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
@@ -93,11 +96,10 @@ export class ProductsService {
   }
 
   async updateStoreLinks(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateStoreLinksDto,
   ): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
-      new: true,
       runValidators: true,
     });
 
@@ -108,7 +110,7 @@ export class ProductsService {
     return product;
   }
 
-  async remove(id: string): Promise<ProductDocument> {
+  async remove(id: Types.ObjectId): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndDelete(id);
 
     if (!product) {

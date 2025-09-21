@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
@@ -26,7 +26,10 @@ export class StoresService {
     return stores;
   }
 
-  async update(id: string, dto: UpdateStoreDto): Promise<StoreDocument> {
+  async update(
+    id: Types.ObjectId,
+    dto: UpdateStoreDto,
+  ): Promise<StoreDocument> {
     const store = await this.storeModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
@@ -39,7 +42,7 @@ export class StoresService {
     return store;
   }
 
-  async remove(id: string): Promise<StoreDocument> {
+  async remove(id: Types.ObjectId): Promise<StoreDocument> {
     const store = await this.storeModel.findByIdAndDelete(id);
 
     if (!store) {

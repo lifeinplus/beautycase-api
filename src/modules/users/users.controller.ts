@@ -1,7 +1,7 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UsersService } from './users.service';
@@ -19,7 +19,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param() params: MongoIdParamDto) {
+  findOne(@Param() params: ObjectIdParamDto) {
     return this.usersService.findOne(params.id);
   }
 }

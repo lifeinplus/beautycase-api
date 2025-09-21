@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { LessonsService } from '../lessons/lessons.service';
 import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
@@ -29,7 +29,7 @@ export class UsersService {
     return users;
   }
 
-  async findOne(id: string) {
+  async findOne(id: Types.ObjectId) {
     const user = await this.userModel.findById(id).select('role username');
 
     if (!user) {

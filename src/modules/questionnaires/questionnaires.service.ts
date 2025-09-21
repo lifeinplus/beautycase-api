@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
@@ -54,7 +54,7 @@ export class QuestionnairesService {
     return questionnaires;
   }
 
-  async findOne(id: string) {
+  async findOne(id: Types.ObjectId) {
     const questionnaire = await this.questionnaireModel.findById(id);
 
     if (!questionnaire) {

@@ -34,7 +34,7 @@ export class MakeupBagsService {
     return makeupBags;
   }
 
-  async findOne(id: string): Promise<MakeupBagDocument> {
+  async findOne(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).populate([
       { path: 'categoryId' },
       { path: 'clientId', select: 'username' },
@@ -60,7 +60,7 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  async findOneWithClientId(id: string): Promise<MakeupBagDocument> {
+  async findOneWithClientId(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).select('clientId');
 
     if (!makeupBag) {
@@ -70,7 +70,7 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  findByClientId(clientId: string): Promise<MakeupBagDocument[]> {
+  findByClientId(clientId: Types.ObjectId): Promise<MakeupBagDocument[]> {
     return this.makeupBagModel
       .find({ clientId: new Types.ObjectId(clientId) })
       .select('categoryId')
@@ -78,7 +78,7 @@ export class MakeupBagsService {
   }
 
   async update(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateMakeupBagDto,
   ): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndUpdate(id, dto, {
@@ -93,7 +93,7 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  async remove(id: string): Promise<MakeupBagDocument> {
+  async remove(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {

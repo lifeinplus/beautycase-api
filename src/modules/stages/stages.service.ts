@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
@@ -28,7 +28,7 @@ export class StagesService {
     return stage.save();
   }
 
-  async duplicate(id: string): Promise<StageDocument> {
+  async duplicate(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel.findById(id);
 
     if (!stage) {
@@ -58,7 +58,7 @@ export class StagesService {
     return stages;
   }
 
-  async findOne(id: string): Promise<StageDocument> {
+  async findOne(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel
       .findById(id)
       .populate('productIds', 'imageUrl');
@@ -70,7 +70,14 @@ export class StagesService {
     return stage;
   }
 
-  async update(id: string, dto: UpdateStageDto): Promise<StageDocument> {
+  async findByProductId(productId: Types.ObjectId): Promise<StageDocument[]> {
+    return this.stageModel.find({ productIds: productId }).select('title');
+  }
+
+  async update(
+    id: Types.ObjectId,
+    dto: UpdateStageDto,
+  ): Promise<StageDocument> {
     const { imageUrl } = dto;
 
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
@@ -96,7 +103,7 @@ export class StagesService {
   }
 
   async updateProducts(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateStageProductsDto,
   ): Promise<StageDocument> {
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
@@ -111,7 +118,7 @@ export class StagesService {
     return stage;
   }
 
-  async remove(id: string): Promise<StageDocument> {
+  async remove(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel.findByIdAndDelete(id);
 
     if (!stage) {

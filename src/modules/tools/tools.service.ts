@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
@@ -39,7 +39,7 @@ export class ToolsService {
     return tools;
   }
 
-  async findOne(id: string): Promise<ToolDocument> {
+  async findOne(id: Types.ObjectId): Promise<ToolDocument> {
     const tool = await this.toolModel.findById(id).populate('brandId');
 
     if (!tool) {
@@ -49,7 +49,7 @@ export class ToolsService {
     return tool;
   }
 
-  async update(id: string, dto: UpdateToolDto): Promise<ToolDocument> {
+  async update(id: Types.ObjectId, dto: UpdateToolDto): Promise<ToolDocument> {
     const { imageUrl } = dto;
 
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
@@ -74,7 +74,7 @@ export class ToolsService {
   }
 
   async updateStoreLinks(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateStoreLinksDto,
   ): Promise<ToolDocument> {
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
@@ -89,7 +89,7 @@ export class ToolsService {
     return tool;
   }
 
-  async remove(id: string): Promise<ToolDocument> {
+  async remove(id: Types.ObjectId): Promise<ToolDocument> {
     const tool = await this.toolModel.findByIdAndDelete(id);
 
     if (!tool) {

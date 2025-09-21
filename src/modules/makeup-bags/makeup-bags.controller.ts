@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
@@ -44,7 +44,7 @@ export class MakeupBagsController {
 
   @Get(':id')
   @UseGuards(MakeupBagAccessGuard)
-  findOne(@Param() params: MongoIdParamDto) {
+  findOne(@Param() params: ObjectIdParamDto) {
     return this.makeupBagsService.findOne(params.id);
   }
 
@@ -52,7 +52,7 @@ export class MakeupBagsController {
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
   async update(
-    @Param() params: MongoIdParamDto,
+    @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateMakeupBagDto,
   ) {
     const makeupBag = await this.makeupBagsService.update(params.id, dto);
@@ -66,7 +66,7 @@ export class MakeupBagsController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'mua')
-  async remove(@Param() params: MongoIdParamDto) {
+  async remove(@Param() params: ObjectIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);
 
     return {

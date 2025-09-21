@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { Types } from 'mongoose';
 import type { UserRequest } from 'src/common/types/user-request.interface';
 import { LessonsService } from '../lessons.service';
 
@@ -23,7 +24,9 @@ export class LessonAccessGuard implements CanActivate {
     }
 
     if (role === 'client') {
-      const lesson = await this.lessonsService.findOneWithClientId(id);
+      const lesson = await this.lessonsService.findOneWithClientId(
+        new Types.ObjectId(id),
+      );
 
       if (
         !lesson ||

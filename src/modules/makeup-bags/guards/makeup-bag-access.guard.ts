@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { Types } from 'mongoose';
 import type { UserRequest } from 'src/common/types/user-request.interface';
 import { MakeupBagsService } from '../makeup-bags.service';
 
@@ -23,7 +24,9 @@ export class MakeupBagAccessGuard implements CanActivate {
     }
 
     if (role === 'client') {
-      const makeupBag = await this.makeupBagsService.findOneWithClientId(id);
+      const makeupBag = await this.makeupBagsService.findOneWithClientId(
+        new Types.ObjectId(id),
+      );
 
       if (!makeupBag || !userId || makeupBag.clientId.toString() !== userId) {
         throw new NotFoundException('MakeupBag not found');

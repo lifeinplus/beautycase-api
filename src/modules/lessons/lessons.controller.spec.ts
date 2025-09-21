@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { NotFoundException } from '@nestjs/common';
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateLessonProductsDto } from './dto/update-lesson-products.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -70,7 +70,7 @@ describe('LessonsController', () => {
     it('should return lesson by id', async () => {
       mockLessonsService.findOne.mockResolvedValue(mockLessonResponse);
 
-      const params: MongoIdParamDto = { id: 'lesson-id' };
+      const params: ObjectIdParamDto = { id: 'lesson-id' };
       const result = await controller.findOne(params);
 
       expect(mockLessonsService.findOne).toHaveBeenCalledWith('lesson-id');
@@ -90,7 +90,7 @@ describe('LessonsController', () => {
     it('should update lesson and return id + message', async () => {
       mockLessonsService.update.mockResolvedValue(mockLessonResponse);
 
-      const params: MongoIdParamDto = { id: 'lesson-id' };
+      const params: ObjectIdParamDto = { id: 'lesson-id' };
       const dto: UpdateLessonDto = { title: 'Updated Lesson' };
 
       const result = await controller.update(params, dto);
@@ -107,7 +107,7 @@ describe('LessonsController', () => {
     it('should update products and return id + message', async () => {
       mockLessonsService.updateProducts.mockResolvedValue(mockLessonResponse);
 
-      const params: MongoIdParamDto = { id: 'lesson-id' };
+      const params: ObjectIdParamDto = { id: 'lesson-id' };
       const dto: UpdateLessonProductsDto = { productIds: ['p1', 'p2'] };
 
       const result = await controller.updateProducts(params, dto);
@@ -127,7 +127,7 @@ describe('LessonsController', () => {
     it('should delete lesson and return id + message', async () => {
       mockLessonsService.remove.mockResolvedValue(mockLessonResponse);
 
-      const params: MongoIdParamDto = { id: 'lesson-id' };
+      const params: ObjectIdParamDto = { id: 'lesson-id' };
       const result = await controller.remove(params);
 
       expect(mockLessonsService.remove).toHaveBeenCalledWith('lesson-id');

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { NotFoundException } from '@nestjs/common';
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -52,7 +52,7 @@ describe('UsersController', () => {
     it('should return a user by id', async () => {
       mockUsersService.findOne.mockResolvedValue(mockUserResponse);
 
-      const params: MongoIdParamDto = { id: 'user-id' };
+      const params: ObjectIdParamDto = { id: 'user-id' };
       const result = await controller.findOne(params);
 
       expect(mockUsersService.findOne).toHaveBeenCalledWith('user-id');
