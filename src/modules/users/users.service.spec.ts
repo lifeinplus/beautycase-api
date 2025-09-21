@@ -1,6 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
+
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { LessonsService } from '../lessons/lessons.service';
 import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
@@ -11,10 +13,12 @@ describe('UsersService', () => {
   let service: UsersService;
 
   const mockUser = TestDataFactory.createClientUser();
+  const mockUserId = new Types.ObjectId();
+  const mockBadUserId = new Types.ObjectId();
 
   const mockUserResponse = {
     ...mockUser,
-    _id: 'user-id',
+    _id: mockUserId,
     refreshTokens: ['token1'],
   };
 
@@ -94,9 +98,9 @@ describe('UsersService', () => {
       mockLessonsService.findByClientId.mockResolvedValue(['lesson1'] as any);
       mockMakeupBagsService.findByClientId.mockResolvedValue(['bag1'] as any);
 
-      const result = await service.findOne('user-id');
+      const result = await service.findOne(mockUserId);
 
-      expect(mockUserModel.findById).toHaveBeenCalledWith('user-id');
+      expect(mockUserModel.findById).toHaveBeenCalledWith(mockUserId);
       expect(result).toEqual({
         user: mockUserResponse,
         lessons: ['lesson1'],
@@ -109,7 +113,7 @@ describe('UsersService', () => {
         select: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findOne('bad-id')).rejects.toThrow(
+      await expect(service.findOne(mockBadUserId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -146,9 +150,12 @@ describe('UsersService', () => {
         refreshTokens: ['token2'],
       });
 
-      const result = await service.updateRefreshTokens('user-id', ['token2']);
+      const result = await service.updateRefreshTokens(
+        mockUserId.toHexString(),
+        ['token2'],
+      );
       expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        'user-id',
+        mockUserId.toHexString(),
         { refreshTokens: ['token2'] },
         { new: true },
       );

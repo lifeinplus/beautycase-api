@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { BrandsService } from './brands.service';
@@ -12,10 +13,11 @@ describe('BrandsService', () => {
 
   const mockBrand = TestDataFactory.createBrand();
   const mockBrands = TestDataFactory.createMultipleBrands(2);
+  const mockBrandId = new Types.ObjectId();
 
   const mockBrandResponse = {
     ...mockBrand,
-    _id: '507f1f77bcf86cd799439011',
+    _id: mockBrandId,
   };
 
   const mockBrandModel = {
@@ -94,7 +96,6 @@ describe('BrandsService', () => {
 
   describe('update', () => {
     it('should successfully update a brand', async () => {
-      const brandId = '507f1f77bcf86cd799439011';
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
@@ -102,10 +103,10 @@ describe('BrandsService', () => {
       const updatedBrand = { ...mockBrandResponse, ...dto };
       mockBrandModel.findByIdAndUpdate.mockResolvedValue(updatedBrand);
 
-      const result = await service.update(brandId, dto);
+      const result = await service.update(mockBrandId, dto);
 
       expect(mockBrandModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        brandId,
+        mockBrandId,
         dto,
         {
           new: true,
@@ -116,19 +117,18 @@ describe('BrandsService', () => {
     });
 
     it('should throw NotFoundException when brand to update is not found', async () => {
-      const brandId = '507f1f77bcf86cd799439011';
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
 
       mockBrandModel.findByIdAndUpdate.mockResolvedValue(null);
 
-      await expect(service.update(brandId, dto)).rejects.toThrow(
+      await expect(service.update(mockBrandId, dto)).rejects.toThrow(
         new NotFoundException('Brand not found'),
       );
 
       expect(mockBrandModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        brandId,
+        mockBrandId,
         dto,
         {
           new: true,
@@ -138,7 +138,6 @@ describe('BrandsService', () => {
     });
 
     it('should handle update errors', async () => {
-      const brandId = '507f1f77bcf86cd799439011';
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
@@ -146,41 +145,39 @@ describe('BrandsService', () => {
       const error = new Error('Database error');
       mockBrandModel.findByIdAndUpdate.mockRejectedValue(error);
 
-      await expect(service.update(brandId, dto)).rejects.toThrow(error);
+      await expect(service.update(mockBrandId, dto)).rejects.toThrow(error);
     });
   });
 
   describe('remove', () => {
     it('should successfully remove a brand', async () => {
-      const brandId = '507f1f77bcf86cd799439011';
-
       mockBrandModel.findByIdAndDelete.mockResolvedValue(mockBrandResponse);
 
-      const result = await service.remove(brandId);
+      const result = await service.remove(mockBrandId);
 
-      expect(mockBrandModel.findByIdAndDelete).toHaveBeenCalledWith(brandId);
+      expect(mockBrandModel.findByIdAndDelete).toHaveBeenCalledWith(
+        mockBrandId,
+      );
       expect(result).toEqual(mockBrandResponse);
     });
 
     it('should throw NotFoundException when brand to remove is not found', async () => {
-      const brandId = '507f1f77bcf86cd799439011';
-
       mockBrandModel.findByIdAndDelete.mockResolvedValue(null);
 
-      await expect(service.remove(brandId)).rejects.toThrow(
+      await expect(service.remove(mockBrandId)).rejects.toThrow(
         new NotFoundException('Brand not found'),
       );
 
-      expect(mockBrandModel.findByIdAndDelete).toHaveBeenCalledWith(brandId);
+      expect(mockBrandModel.findByIdAndDelete).toHaveBeenCalledWith(
+        mockBrandId,
+      );
     });
 
     it('should handle removal errors', async () => {
-      const brandId = '507f1f77bcf86cd799439011';
-
       const error = new Error('Database error');
       mockBrandModel.findByIdAndDelete.mockRejectedValue(error);
 
-      await expect(service.remove(brandId)).rejects.toThrow(error);
+      await expect(service.remove(mockBrandId)).rejects.toThrow(error);
     });
   });
 });

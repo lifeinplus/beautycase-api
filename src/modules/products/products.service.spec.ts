@@ -22,6 +22,8 @@ describe('ProductsService', () => {
 
   const mockBrandId = new Types.ObjectId();
   const mockCategoryId = new Types.ObjectId();
+  const mockProductId = new Types.ObjectId();
+  const mockBadProductId = new Types.ObjectId();
 
   const mockProduct = TestDataFactory.createProduct(
     mockBrandId,
@@ -30,7 +32,7 @@ describe('ProductsService', () => {
 
   const mockProductResponse = {
     ...mockProduct,
-    _id: 'product-id',
+    _id: mockProductId,
     imageId: 'image-id',
     save: jest.fn(),
   };
@@ -78,7 +80,7 @@ describe('ProductsService', () => {
       const result = await service.create(mockProduct);
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: 'product-id' }),
+        expect.objectContaining({ _id: mockProductId }),
         { folder: UploadFolder.PRODUCTS, secureUrl: mockProduct.imageUrl },
       );
       expect(result._id).toBe(mockProductResponse._id);
@@ -112,7 +114,7 @@ describe('ProductsService', () => {
         populate: jest.fn().mockResolvedValue(mockProductResponse),
       });
 
-      const result = await service.findOne('product-id');
+      const result = await service.findOne(mockProductId);
       expect(result).toEqual(mockProductResponse);
     });
 
@@ -121,7 +123,7 @@ describe('ProductsService', () => {
         populate: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findOne('bad-id')).rejects.toThrow(
+      await expect(service.findOne(mockBadProductId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -175,7 +177,7 @@ describe('ProductsService', () => {
       );
 
       const dto: UpdateProductDto = { imageUrl: 'http://example.com/new.jpg' };
-      const result = await service.update('product-id', dto);
+      const result = await service.update(mockProductId, dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
         mockProductResponse,
@@ -190,7 +192,7 @@ describe('ProductsService', () => {
     it('should throw NotFoundException if product not found', async () => {
       (mockProductModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.update('bad-id', {} as any)).rejects.toThrow(
+      await expect(service.update(mockBadProductId, {} as any)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -203,7 +205,7 @@ describe('ProductsService', () => {
       );
 
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
-      const result = await service.updateStoreLinks('product-id', dto);
+      const result = await service.updateStoreLinks(mockProductId, dto);
 
       expect(result).toEqual(mockProductResponse);
     });
@@ -212,7 +214,7 @@ describe('ProductsService', () => {
       (mockProductModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        service.updateStoreLinks('bad-id', { storeLinks: [] }),
+        service.updateStoreLinks(mockBadProductId, { storeLinks: [] }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -223,7 +225,7 @@ describe('ProductsService', () => {
         mockProductResponse,
       );
 
-      const result = await service.remove('product-id');
+      const result = await service.remove(mockProductId);
 
       expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
         mockProductResponse.imageId,
@@ -234,7 +236,9 @@ describe('ProductsService', () => {
     it('should throw NotFoundException if product not found', async () => {
       (mockProductModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.remove('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockBadProductId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

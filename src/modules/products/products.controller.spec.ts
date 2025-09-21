@@ -4,6 +4,8 @@ import { Types } from 'mongoose';
 
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { LessonsService } from '../lessons/lessons.service';
+import { StagesService } from '../stages/stages.service';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { ProductsController } from './products.controller';
@@ -14,6 +16,8 @@ describe('ProductsController', () => {
 
   const mockBrandId = new Types.ObjectId();
   const mockCategoryId = new Types.ObjectId();
+  const mockProductId = new Types.ObjectId();
+  const mockBadProductId = new Types.ObjectId();
 
   const mockProduct = TestDataFactory.createProduct(
     mockBrandId,
@@ -22,7 +26,7 @@ describe('ProductsController', () => {
 
   const mockProductResponse = {
     ...mockProduct,
-    id: 'product-id',
+    id: mockProductId,
   };
 
   const mockProductsService = {
@@ -43,6 +47,14 @@ describe('ProductsController', () => {
           provide: ProductsService,
           useValue: mockProductsService,
         },
+        {
+          provide: LessonsService,
+          useValue: {},
+        },
+        {
+          provide: StagesService,
+          useValue: {},
+        },
       ],
     }).compile();
 
@@ -57,7 +69,7 @@ describe('ProductsController', () => {
 
       expect(mockProductsService.create).toHaveBeenCalledWith(mockProduct);
       expect(result).toEqual({
-        id: 'product-id',
+        id: mockProductId,
         message: 'Product created successfully',
       });
     });
@@ -78,19 +90,19 @@ describe('ProductsController', () => {
     it('should return product by id', async () => {
       mockProductsService.findOne.mockResolvedValue(mockProductResponse);
 
-      const params: ObjectIdParamDto = { id: 'product-id' };
+      const params: ObjectIdParamDto = { id: mockProductId };
       const result = await controller.findOne(params);
 
-      expect(mockProductsService.findOne).toHaveBeenCalledWith('product-id');
+      expect(mockProductsService.findOne).toHaveBeenCalledWith(mockProductId);
       expect(result).toEqual(mockProductResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
       mockProductsService.findOne.mockRejectedValue(new NotFoundException());
 
-      await expect(controller.findOne({ id: 'invalid-id' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.findOne({ id: mockBadProductId }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -120,17 +132,17 @@ describe('ProductsController', () => {
     it('should update a product and return id + message', async () => {
       mockProductsService.update.mockResolvedValue(mockProductResponse);
 
-      const params: ObjectIdParamDto = { id: 'product-id' };
+      const params: ObjectIdParamDto = { id: mockProductId };
       const dto: UpdateProductDto = { name: 'Updated Lipstick' };
 
       const result = await controller.update(params, dto);
 
       expect(mockProductsService.update).toHaveBeenCalledWith(
-        'product-id',
+        mockProductId,
         dto,
       );
       expect(result).toEqual({
-        id: 'product-id',
+        id: mockProductId,
         message: 'Product updated successfully',
       });
     });
@@ -142,17 +154,17 @@ describe('ProductsController', () => {
         mockProductResponse,
       );
 
-      const params: ObjectIdParamDto = { id: 'product-id' };
+      const params: ObjectIdParamDto = { id: mockProductId };
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
 
       const result = await controller.updateStoreLinks(params, dto);
 
       expect(mockProductsService.updateStoreLinks).toHaveBeenCalledWith(
-        'product-id',
+        mockProductId,
         dto,
       );
       expect(result).toEqual({
-        id: 'product-id',
+        id: mockProductId,
         message: 'Product store links updated successfully',
       });
     });
@@ -162,12 +174,12 @@ describe('ProductsController', () => {
     it('should delete a product and return id + message', async () => {
       mockProductsService.remove.mockResolvedValue(mockProductResponse);
 
-      const params: ObjectIdParamDto = { id: 'product-id' };
+      const params: ObjectIdParamDto = { id: mockProductId };
       const result = await controller.remove(params);
 
-      expect(mockProductsService.remove).toHaveBeenCalledWith('product-id');
+      expect(mockProductsService.remove).toHaveBeenCalledWith(mockProductId);
       expect(result).toEqual({
-        id: 'product-id',
+        id: mockProductId,
         message: 'Product deleted successfully',
       });
     });

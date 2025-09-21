@@ -17,13 +17,13 @@ import {
 
 export interface TestLessonResources {
   brandId: Types.ObjectId;
-  productId: string;
+  productId: Types.ObjectId;
 }
 
 export interface TestMakeupBagResources {
   brandId: Types.ObjectId;
   categoryId: Types.ObjectId;
-  productIds: string[];
+  productIds: Types.ObjectId[];
   stageId: string;
   toolId: string;
 }
@@ -49,7 +49,7 @@ export interface MakeupBagResources {
 }
 
 export interface ProductResources {
-  id: string;
+  id: Types.ObjectId;
   data: TestProduct;
 }
 
@@ -198,7 +198,7 @@ export class ResourceHelper {
   static async createLesson(
     app: INestApplication,
     adminToken: string,
-    productIds: string[] = [],
+    productIds: Types.ObjectId[] = [],
     clientIds: Types.ObjectId[] = [],
   ): Promise<LessonResources> {
     const data = TestDataFactory.createLesson(productIds, clientIds);
@@ -219,7 +219,7 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     count: number,
-    productIds: string[] = [],
+    productIds: Types.ObjectId[] = [],
     clientIds: Types.ObjectId[] = [],
   ): Promise<LessonResources[]> {
     const lessons: LessonResources[] = [];
@@ -335,7 +335,7 @@ export class ResourceHelper {
   static async createStage(
     app: INestApplication,
     adminToken: string,
-    productIds: string[],
+    productIds: Types.ObjectId[],
   ): Promise<StageResources> {
     const data = TestDataFactory.createStage(productIds);
 
@@ -355,7 +355,7 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     count: number,
-    productIds: string[],
+    productIds: Types.ObjectId[],
   ): Promise<StageResources[]> {
     const stages: StageResources[] = [];
     const stagesData = TestDataFactory.createMultipleStages(count, productIds);

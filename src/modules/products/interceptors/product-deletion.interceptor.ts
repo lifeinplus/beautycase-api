@@ -5,7 +5,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { isValidObjectId, Types } from 'mongoose';
 import { Observable } from 'rxjs';
 
 import { LessonsService } from 'src/modules/lessons/lessons.service';
@@ -23,7 +23,13 @@ export class ProductDeletionInterceptor implements NestInterceptor {
     next: CallHandler,
   ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
-    const productId = Types.ObjectId.createFromHexString(request.params.id);
+    const { id } = request.params;
+
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid MongoDB ObjectId');
+    }
+
+    const productId = Types.ObjectId.createFromHexString(id);
 
     if (productId) {
       const [lessons, stages] = await Promise.all([

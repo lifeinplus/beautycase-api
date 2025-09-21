@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Store } from './schemas/store.schema';
@@ -11,10 +12,11 @@ describe('StoresService', () => {
 
   const mockStore = TestDataFactory.createStore();
   const mockStores = TestDataFactory.createMultipleStores(2);
+  const mockStoreId = new Types.ObjectId();
 
   const mockStoreResponse = {
     ...mockStore,
-    _id: '507f1f77bcf86cd799439011',
+    _id: mockStoreId,
   };
 
   const mockStoreModel = {
@@ -94,7 +96,6 @@ describe('StoresService', () => {
 
   describe('update', () => {
     it('should successfully update a store', async () => {
-      const storeId = '507f1f77bcf86cd799439011';
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
@@ -102,10 +103,10 @@ describe('StoresService', () => {
       const updatedStore = { ...mockStoreResponse, ...dto };
       mockStoreModel.findByIdAndUpdate.mockResolvedValue(updatedStore);
 
-      const result = await service.update(storeId, dto);
+      const result = await service.update(mockStoreId, dto);
 
       expect(mockStoreModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        storeId,
+        mockStoreId,
         dto,
         {
           new: true,
@@ -116,19 +117,18 @@ describe('StoresService', () => {
     });
 
     it('should throw NotFoundException when store to update is not found', async () => {
-      const storeId = '507f1f77bcf86cd799439011';
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
 
       mockStoreModel.findByIdAndUpdate.mockResolvedValue(null);
 
-      await expect(service.update(storeId, dto)).rejects.toThrow(
+      await expect(service.update(mockStoreId, dto)).rejects.toThrow(
         new NotFoundException('Store not found'),
       );
 
       expect(mockStoreModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        storeId,
+        mockStoreId,
         dto,
         {
           new: true,
@@ -138,7 +138,6 @@ describe('StoresService', () => {
     });
 
     it('should handle update errors', async () => {
-      const storeId = '507f1f77bcf86cd799439011';
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
@@ -146,41 +145,39 @@ describe('StoresService', () => {
       const error = new Error('Database error');
       mockStoreModel.findByIdAndUpdate.mockRejectedValue(error);
 
-      await expect(service.update(storeId, dto)).rejects.toThrow(error);
+      await expect(service.update(mockStoreId, dto)).rejects.toThrow(error);
     });
   });
 
   describe('remove', () => {
     it('should successfully remove a store', async () => {
-      const storeId = '507f1f77bcf86cd799439011';
-
       mockStoreModel.findByIdAndDelete.mockResolvedValue(mockStoreResponse);
 
-      const result = await service.remove(storeId);
+      const result = await service.remove(mockStoreId);
 
-      expect(mockStoreModel.findByIdAndDelete).toHaveBeenCalledWith(storeId);
+      expect(mockStoreModel.findByIdAndDelete).toHaveBeenCalledWith(
+        mockStoreId,
+      );
       expect(result).toEqual(mockStoreResponse);
     });
 
     it('should throw NotFoundException when store to remove is not found', async () => {
-      const storeId = '507f1f77bcf86cd799439011';
-
       mockStoreModel.findByIdAndDelete.mockResolvedValue(null);
 
-      await expect(service.remove(storeId)).rejects.toThrow(
+      await expect(service.remove(mockStoreId)).rejects.toThrow(
         new NotFoundException('Store not found'),
       );
 
-      expect(mockStoreModel.findByIdAndDelete).toHaveBeenCalledWith(storeId);
+      expect(mockStoreModel.findByIdAndDelete).toHaveBeenCalledWith(
+        mockStoreId,
+      );
     });
 
     it('should handle removal errors', async () => {
-      const storeId = '507f1f77bcf86cd799439011';
-
       const error = new Error('Database error');
       mockStoreModel.findByIdAndDelete.mockRejectedValue(error);
 
-      await expect(service.remove(storeId)).rejects.toThrow(error);
+      await expect(service.remove(mockStoreId)).rejects.toThrow(error);
     });
   });
 });

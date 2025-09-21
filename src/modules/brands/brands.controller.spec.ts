@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
@@ -11,10 +12,12 @@ describe('BrandsController', () => {
   let service: BrandsService;
 
   const mockBrand = TestDataFactory.createBrand();
+  const mockBrandId = new Types.ObjectId();
+  const mockInvalidBrandId = new Types.ObjectId();
 
   const mockBrandResponse = {
     ...mockBrand,
-    id: '507f1f77bcf86cd799439011',
+    id: mockBrandId,
   };
 
   const mockBrandsService = {
@@ -172,7 +175,7 @@ describe('BrandsController', () => {
     });
 
     it('should handle invalid MongoDB ObjectId', async () => {
-      const params: ObjectIdParamDto = { id: 'invalid-id' };
+      const params: ObjectIdParamDto = { id: mockInvalidBrandId };
       const error = new Error('Invalid ObjectId');
       mockBrandsService.remove.mockRejectedValue(error);
 

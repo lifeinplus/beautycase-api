@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { QuestionnairesController } from './questionnaires.controller';
 import { QuestionnairesService } from './questionnaires.service';
@@ -9,10 +10,12 @@ describe('QuestionnairesController', () => {
   let service: QuestionnairesService;
 
   const mockQuestionnaire = TestDataFactory.createQuestionnaire();
+  const mockQuestionnaireId = new Types.ObjectId();
+  const mockBadQuestionnaireId = new Types.ObjectId();
 
   const mockQuestionnaireResponse = {
     ...mockQuestionnaire,
-    id: '507f1f77bcf86cd799439011',
+    id: mockQuestionnaireId,
   };
 
   const mockQuestionnairesService = {
@@ -75,9 +78,9 @@ describe('QuestionnairesController', () => {
         mockQuestionnaireResponse,
       );
 
-      const result = await controller.findOne({ id: 'questionnaire-id' });
+      const result = await controller.findOne({ id: mockQuestionnaireId });
 
-      expect(service.findOne).toHaveBeenCalledWith('questionnaire-id');
+      expect(service.findOne).toHaveBeenCalledWith(mockQuestionnaireId);
       expect(result).toEqual(mockQuestionnaireResponse);
     });
 
@@ -86,9 +89,9 @@ describe('QuestionnairesController', () => {
         new NotFoundException(),
       );
 
-      await expect(controller.findOne({ id: 'not-found' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.findOne({ id: mockBadQuestionnaireId }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

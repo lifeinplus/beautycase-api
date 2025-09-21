@@ -21,10 +21,12 @@ describe('ToolsService', () => {
 
   const mockBrandId = new Types.ObjectId();
   const mockTool = TestDataFactory.createTool(mockBrandId);
+  const mockToolId = new Types.ObjectId();
+  const mockBadToolId = new Types.ObjectId();
 
   const mockToolResponse = {
     ...mockTool,
-    _id: 'tool-id',
+    _id: mockToolId,
     imageId: 'img-id',
     save: jest.fn(),
   };
@@ -68,7 +70,7 @@ describe('ToolsService', () => {
       const result = await service.create(mockTool);
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: 'tool-id' }),
+        expect.objectContaining({ _id: mockToolId }),
         { folder: UploadFolder.TOOLS, secureUrl: mockTool.imageUrl },
       );
       expect(result._id).toBe(mockToolResponse._id);
@@ -102,7 +104,7 @@ describe('ToolsService', () => {
         populate: jest.fn().mockResolvedValue(mockToolResponse),
       });
 
-      const result = await service.findOne('tool-id');
+      const result = await service.findOne(mockToolId);
       expect(result).toEqual(mockToolResponse);
     });
 
@@ -111,7 +113,7 @@ describe('ToolsService', () => {
         populate: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findOne('bad-id')).rejects.toThrow(
+      await expect(service.findOne(mockBadToolId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -124,7 +126,7 @@ describe('ToolsService', () => {
       );
 
       const dto: UpdateToolDto = { imageUrl: 'http://example.com/new.jpg' };
-      const result = await service.update('tool-id', dto);
+      const result = await service.update(mockToolId, dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
         mockToolResponse,
@@ -139,7 +141,7 @@ describe('ToolsService', () => {
     it('should throw NotFoundException if tool not found', async () => {
       (mockToolModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.update('bad-id', {} as any)).rejects.toThrow(
+      await expect(service.update(mockBadToolId, {} as any)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -152,7 +154,7 @@ describe('ToolsService', () => {
       );
 
       const dto: UpdateStoreLinksDto = { storeLinks: [] };
-      const result = await service.updateStoreLinks('tool-id', dto);
+      const result = await service.updateStoreLinks(mockToolId, dto);
 
       expect(result).toEqual(mockToolResponse);
     });
@@ -161,7 +163,7 @@ describe('ToolsService', () => {
       (mockToolModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        service.updateStoreLinks('bad-id', { storeLinks: [] }),
+        service.updateStoreLinks(mockBadToolId, { storeLinks: [] }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -172,7 +174,7 @@ describe('ToolsService', () => {
         mockToolResponse,
       );
 
-      const result = await service.remove('tool-id');
+      const result = await service.remove(mockToolId);
 
       expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
         mockToolResponse.imageId,
@@ -183,7 +185,9 @@ describe('ToolsService', () => {
     it('should throw NotFoundException if tool not found', async () => {
       (mockToolModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.remove('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockBadToolId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

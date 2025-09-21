@@ -33,7 +33,7 @@ export class Stage {
   @Prop([String])
   steps?: string[];
 
-  @Prop({ type: [Types.ObjectId], ref: 'Product', required: true })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }], required: true })
   productIds: Types.ObjectId[];
 }
 

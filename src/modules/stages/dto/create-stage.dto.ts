@@ -7,6 +7,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateStageDto {
   @IsString()
@@ -34,5 +35,5 @@ export class CreateStageDto {
 
   @IsArray()
   @IsMongoId({ each: true })
-  productIds: string[];
+  productIds: Types.ObjectId[];
 }

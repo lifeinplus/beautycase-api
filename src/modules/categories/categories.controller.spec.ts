@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { Types } from 'mongoose';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -15,10 +16,12 @@ describe('CategoriesController', () => {
 
   const mockCategory = TestDataFactory.createCategory();
   const mockCategories = TestDataFactory.createMultipleCategories(2);
+  const mockCategoryId = new Types.ObjectId();
+  const mockInvalidCategoryId = new Types.ObjectId();
 
   const mockCategoryResponse = {
     ...mockCategory,
-    id: '507f1f77bcf86cd799439011',
+    id: mockCategoryId,
   };
 
   const mockCategoriesService = {
@@ -315,7 +318,7 @@ describe('CategoriesController', () => {
     });
 
     it('should handle invalid MongoDB ObjectId', async () => {
-      const params: ObjectIdParamDto = { id: 'invalid-id' };
+      const params: ObjectIdParamDto = { id: mockInvalidCategoryId };
       const error = new Error('Invalid ObjectId');
       mockCategoriesService.remove.mockRejectedValue(error);
 
