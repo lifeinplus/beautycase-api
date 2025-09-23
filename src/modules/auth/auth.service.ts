@@ -33,13 +33,13 @@ export class AuthService {
     const foundUser = await this.usersService.findByUsername(dto.username);
 
     if (!foundUser) {
-      throw new UnauthorizedException('Username or password is incorrect');
+      throw new UnauthorizedException({ code: 'LOGIN_ERROR' });
     }
 
     const isMatch = await bcrypt.compare(dto.password, foundUser.password);
 
     if (!isMatch) {
-      throw new UnauthorizedException('Username or password is incorrect');
+      throw new UnauthorizedException({ code: 'LOGIN_ERROR' });
     }
 
     const accessToken = this.tokenService.signAccessToken({
@@ -186,7 +186,7 @@ export class AuthService {
     const existingUser = await this.usersService.findByUsername(username);
 
     if (existingUser) {
-      throw new ConflictException('Username already in use');
+      throw new ConflictException({ code: 'REGISTER_ERROR' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

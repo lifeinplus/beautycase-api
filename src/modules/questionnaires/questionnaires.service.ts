@@ -48,7 +48,7 @@ export class QuestionnairesService {
     const questionnaires = await this.questionnaireModel.find();
 
     if (!questionnaires.length) {
-      throw new NotFoundException('Questionnaires not found');
+      throw new NotFoundException({ code: 'QUESTIONNAIRES_NOT_FOUND' });
     }
 
     return questionnaires;
@@ -58,7 +58,7 @@ export class QuestionnairesService {
     const questionnaire = await this.questionnaireModel.findById(id);
 
     if (!questionnaire) {
-      throw new NotFoundException('Questionnaire not found');
+      throw new NotFoundException({ code: 'QUESTIONNAIRE_NOT_FOUND' });
     }
 
     return questionnaire;

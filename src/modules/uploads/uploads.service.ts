@@ -23,7 +23,10 @@ export class UploadsService {
     file?: Express.Multer.File,
   ): Promise<string> {
     if (!file) {
-      throw new BadRequestException('File upload failed');
+      throw new BadRequestException({
+        code: 'IMAGE_UPLOAD_FAILED',
+        message: 'No file provided for upload',
+      });
     }
 
     const fileStr = file.buffer.toString('base64');
@@ -47,7 +50,10 @@ export class UploadsService {
 
       return uploadResponse.secure_url;
     } catch (error) {
-      throw new BadRequestException('Failed to upload image to Cloudinary');
+      throw new BadRequestException({
+        code: 'IMAGE_UPLOAD_FAILED',
+        message: 'Failed to upload image to Cloudinary',
+      });
     }
   }
 
@@ -77,7 +83,10 @@ export class UploadsService {
 
       return uploadResponse.secure_url;
     } catch (error) {
-      throw new BadRequestException('Failed to upload image from URL');
+      throw new BadRequestException({
+        code: 'IMAGE_UPLOAD_FAILED',
+        message: 'Failed to upload image from URL',
+      });
     }
   }
 }

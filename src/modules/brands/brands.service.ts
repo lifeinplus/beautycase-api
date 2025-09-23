@@ -20,7 +20,7 @@ export class BrandsService {
     const brands = await this.brandModel.find().sort('name');
 
     if (!brands.length) {
-      throw new NotFoundException('Brands not found');
+      throw new NotFoundException({ code: 'BRANDS_NOT_FOUND' });
     }
 
     return brands;
@@ -36,7 +36,7 @@ export class BrandsService {
     });
 
     if (!brand) {
-      throw new NotFoundException('Brand not found');
+      throw new NotFoundException({ code: 'BRAND_NOT_FOUND' });
     }
 
     return brand;
@@ -46,7 +46,7 @@ export class BrandsService {
     const brand = await this.brandModel.findByIdAndDelete(id);
 
     if (!brand) {
-      throw new NotFoundException('Brand not found');
+      throw new NotFoundException({ code: 'BRAND_NOT_FOUND' });
     }
 
     return brand;

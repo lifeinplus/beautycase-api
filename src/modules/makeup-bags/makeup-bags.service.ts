@@ -28,7 +28,7 @@ export class MakeupBagsService {
       ]);
 
     if (!makeupBags.length) {
-      throw new NotFoundException('MakeupBags not found');
+      throw new NotFoundException({ code: 'MAKEUP_BAGS_NOT_FOUND' });
     }
 
     return makeupBags;
@@ -54,7 +54,7 @@ export class MakeupBagsService {
     ]);
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
     }
 
     return makeupBag;
@@ -64,7 +64,7 @@ export class MakeupBagsService {
     const makeupBag = await this.makeupBagModel.findById(id).select('clientId');
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
     }
 
     return makeupBag;
@@ -87,7 +87,7 @@ export class MakeupBagsService {
     });
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
     }
 
     return makeupBag;
@@ -97,7 +97,7 @@ export class MakeupBagsService {
     const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
     }
 
     return makeupBag;

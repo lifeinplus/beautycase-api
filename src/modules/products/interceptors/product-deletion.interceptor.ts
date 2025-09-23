@@ -26,7 +26,7 @@ export class ProductDeletionInterceptor implements NestInterceptor {
     const { id } = request.params;
 
     if (!isValidObjectId(id)) {
-      throw new BadRequestException('Invalid MongoDB ObjectId');
+      throw new BadRequestException({ code: 'INVALID_OBJECT_ID' });
     }
 
     const productId = Types.ObjectId.createFromHexString(id);
@@ -38,14 +38,13 @@ export class ProductDeletionInterceptor implements NestInterceptor {
       ]);
 
       if (stages.length > 0 || lessons.length > 0) {
-        const lessonTitles = lessons.map((l) => l.title).join(', ');
-        const stageTitles = stages.map((s) => s.title).join(', ');
-
-        throw new BadRequestException(
-          `Cannot delete product. It is currently used in: 
-          ${lessonTitles ? 'Lessons: ' + lessonTitles : ''}
-          ${stageTitles ? 'Stages: ' + stageTitles : ''}`,
-        );
+        throw new BadRequestException({
+          code: 'PRODUCT_IN_USE',
+          details: {
+            lessons: lessons.map((l) => ({ id: l.id, title: l.title })),
+            stages: stages.map((s) => ({ id: s.id, title: s.title })),
+          },
+        });
       }
     }
 

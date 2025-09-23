@@ -36,7 +36,7 @@ export class ProductsService {
     const products = await this.productModel.find().select('imageUrl');
 
     if (!products.length) {
-      throw new NotFoundException('Products not found');
+      throw new NotFoundException({ code: 'PRODUCTS_NOT_FOUND' });
     }
 
     return products;
@@ -48,7 +48,7 @@ export class ProductsService {
       .populate(['brandId', 'categoryId']);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: 'PRODUCT_NOT_FOUND' });
     }
 
     return product;
@@ -62,7 +62,10 @@ export class ProductsService {
       .select('imageUrl');
 
     if (!products.length) {
-      throw new NotFoundException(`No products found for category ${name}`);
+      throw new NotFoundException({
+        code: 'PRODUCTS_NOT_FOUND',
+        message: `No products found for category ${name}`,
+      });
     }
 
     return products;
@@ -80,7 +83,7 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: 'PRODUCT_NOT_FOUND' });
     }
 
     if (imageUrl) {
@@ -104,7 +107,7 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: 'PRODUCT_NOT_FOUND' });
     }
 
     return product;
@@ -114,7 +117,7 @@ export class ProductsService {
     const product = await this.productModel.findByIdAndDelete(id);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: 'PRODUCT_NOT_FOUND' });
     }
 
     if (product.imageId) {

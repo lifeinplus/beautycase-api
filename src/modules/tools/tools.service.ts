@@ -33,7 +33,7 @@ export class ToolsService {
     const tools = await this.toolModel.find().select('imageUrl');
 
     if (!tools.length) {
-      throw new NotFoundException('Tools not found');
+      throw new NotFoundException({ code: 'TOOLS_NOT_FOUND' });
     }
 
     return tools;
@@ -43,7 +43,7 @@ export class ToolsService {
     const tool = await this.toolModel.findById(id).populate('brandId');
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: 'TOOL_NOT_FOUND' });
     }
 
     return tool;
@@ -58,7 +58,7 @@ export class ToolsService {
     });
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: 'TOOL_NOT_FOUND' });
     }
 
     if (imageUrl) {
@@ -83,7 +83,7 @@ export class ToolsService {
     });
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: 'TOOL_NOT_FOUND' });
     }
 
     return tool;
@@ -93,7 +93,7 @@ export class ToolsService {
     const tool = await this.toolModel.findByIdAndDelete(id);
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: 'TOOL_NOT_FOUND' });
     }
 
     if (tool.imageId) {

@@ -20,7 +20,7 @@ export class StoresService {
     const stores = await this.storeModel.find().sort('name');
 
     if (!stores.length) {
-      throw new NotFoundException('Stores not found');
+      throw new NotFoundException({ code: 'STORES_NOT_FOUND' });
     }
 
     return stores;
@@ -36,7 +36,7 @@ export class StoresService {
     });
 
     if (!store) {
-      throw new NotFoundException('Store not found');
+      throw new NotFoundException({ code: 'STORE_NOT_FOUND' });
     }
 
     return store;
@@ -46,7 +46,7 @@ export class StoresService {
     const store = await this.storeModel.findByIdAndDelete(id);
 
     if (!store) {
-      throw new NotFoundException('Store not found');
+      throw new NotFoundException({ code: 'STORE_NOT_FOUND' });
     }
 
     return store;

@@ -23,7 +23,7 @@ export class UsersService {
     const users = await this.userModel.find().select('_id username');
 
     if (!users.length) {
-      throw new NotFoundException('Users not found');
+      throw new NotFoundException({ code: 'USERS_NOT_FOUND' });
     }
 
     return users;
@@ -33,7 +33,7 @@ export class UsersService {
     const user = await this.userModel.findById(id).select('role username');
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({ code: 'USER_NOT_FOUND' });
     }
 
     const lessons = await this.lessonsService.findByClientId(id);

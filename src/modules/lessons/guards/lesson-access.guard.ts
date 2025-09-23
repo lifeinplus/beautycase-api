@@ -33,7 +33,7 @@ export class LessonAccessGuard implements CanActivate {
         !userId ||
         !lesson.clientIds?.some((id) => id.toString() === userId)
       ) {
-        throw new NotFoundException('Lesson not found');
+        throw new NotFoundException({ code: 'LESSONS_NOT_FOUND' });
       }
     }
 

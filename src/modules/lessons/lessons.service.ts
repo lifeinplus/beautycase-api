@@ -23,7 +23,7 @@ export class LessonsService {
       .select('-fullDescription -productIds');
 
     if (!lessons.length) {
-      throw new NotFoundException('Lessons not found');
+      throw new NotFoundException({ code: 'LESSONS_NOT_FOUND' });
     }
 
     return lessons;
@@ -35,7 +35,7 @@ export class LessonsService {
       .populate('productIds', 'imageUrl');
 
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
     }
 
     return lesson;
@@ -45,7 +45,7 @@ export class LessonsService {
     const lesson = await this.lessonModel.findById(id).select('clientIds');
 
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
     }
 
     return lesson;
@@ -69,7 +69,7 @@ export class LessonsService {
     });
 
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
     }
 
     return lesson;
@@ -86,7 +86,7 @@ export class LessonsService {
     const lesson = await this.lessonModel.findByIdAndDelete(id);
 
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
     }
 
     return lesson;

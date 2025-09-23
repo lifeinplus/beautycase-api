@@ -25,7 +25,7 @@ export class CategoriesService {
     const categories = await this.categoryModel.find().sort('type name');
 
     if (!categories.length) {
-      throw new NotFoundException('Categories not found');
+      throw new NotFoundException({ code: 'CATEGORIES_NOT_FOUND' });
     }
 
     return categories;
@@ -35,7 +35,10 @@ export class CategoriesService {
     const category = await this.categoryModel.findOne({ name });
 
     if (!category) {
-      throw new NotFoundException(`Category "${name}" not found`);
+      throw new NotFoundException({
+        code: 'CATEGORY_NOT_FOUND',
+        message: `Category "${name}" not found`,
+      });
     }
 
     return category;
@@ -47,7 +50,10 @@ export class CategoriesService {
       .sort('name');
 
     if (!categories.length) {
-      throw new NotFoundException('MakeupBag categories not found');
+      throw new NotFoundException({
+        code: 'CATEGORIES_NOT_FOUND',
+        message: 'MakeupBag categories not found',
+      });
     }
 
     return categories;
@@ -59,7 +65,10 @@ export class CategoriesService {
       .sort('name');
 
     if (!categories.length) {
-      throw new NotFoundException('Product categories not found');
+      throw new NotFoundException({
+        code: 'CATEGORIES_NOT_FOUND',
+        message: 'Product categories not found',
+      });
     }
 
     return categories;
@@ -92,7 +101,10 @@ export class CategoriesService {
     const categories = await this.categoryModel.aggregate(pipeline);
 
     if (!categories.length) {
-      throw new NotFoundException('Product categories not found');
+      throw new NotFoundException({
+        code: 'CATEGORIES_NOT_FOUND',
+        message: 'Product categories not found',
+      });
     }
 
     return categories;
@@ -108,7 +120,7 @@ export class CategoriesService {
     });
 
     if (!category) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException({ code: 'CATEGORY_NOT_FOUND' });
     }
 
     return category;
@@ -118,7 +130,7 @@ export class CategoriesService {
     const category = await this.categoryModel.findByIdAndDelete(id);
 
     if (!category) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException({ code: 'CATEGORY_NOT_FOUND' });
     }
 
     return category;

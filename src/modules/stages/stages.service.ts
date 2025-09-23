@@ -32,7 +32,7 @@ export class StagesService {
     const stage = await this.stageModel.findById(id);
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
     }
 
     const duplicated = new this.stageModel({
@@ -52,7 +52,7 @@ export class StagesService {
       .select('createdAt imageUrl subtitle title');
 
     if (!stages.length) {
-      throw new NotFoundException('Stages not found');
+      throw new NotFoundException({ code: 'STAGES_NOT_FOUND' });
     }
 
     return stages;
@@ -64,7 +64,7 @@ export class StagesService {
       .populate('productIds', 'imageUrl');
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
     }
 
     return stage;
@@ -86,7 +86,7 @@ export class StagesService {
     });
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
     }
 
     if (imageUrl) {
@@ -112,7 +112,7 @@ export class StagesService {
     });
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
     }
 
     return stage;
@@ -122,7 +122,7 @@ export class StagesService {
     const stage = await this.stageModel.findByIdAndDelete(id);
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
     }
 
     return stage;

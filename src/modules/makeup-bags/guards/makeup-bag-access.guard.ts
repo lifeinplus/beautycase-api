@@ -29,7 +29,7 @@ export class MakeupBagAccessGuard implements CanActivate {
       );
 
       if (!makeupBag || !userId || makeupBag.clientId.toString() !== userId) {
-        throw new NotFoundException('MakeupBag not found');
+        throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
       }
     }
 
