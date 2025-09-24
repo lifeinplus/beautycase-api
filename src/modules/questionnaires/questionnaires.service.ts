@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateQuestionnaireDto } from './dto/create-questionnaire.dto';
@@ -48,7 +49,7 @@ export class QuestionnairesService {
     const questionnaires = await this.questionnaireModel.find();
 
     if (!questionnaires.length) {
-      throw new NotFoundException({ code: 'QUESTIONNAIRES_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
     }
 
     return questionnaires;
@@ -58,7 +59,7 @@ export class QuestionnairesService {
     const questionnaire = await this.questionnaireModel.findById(id);
 
     if (!questionnaire) {
-      throw new NotFoundException({ code: 'QUESTIONNAIRE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
     }
 
     return questionnaire;

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonProductsDto } from './dto/update-lesson-products.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
@@ -23,7 +24,7 @@ export class LessonsService {
       .select('-fullDescription -productIds');
 
     if (!lessons.length) {
-      throw new NotFoundException({ code: 'LESSONS_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.LESSONS_NOT_FOUND });
     }
 
     return lessons;
@@ -35,7 +36,7 @@ export class LessonsService {
       .populate('productIds', 'imageUrl');
 
     if (!lesson) {
-      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
     }
 
     return lesson;
@@ -45,7 +46,7 @@ export class LessonsService {
     const lesson = await this.lessonModel.findById(id).select('clientIds');
 
     if (!lesson) {
-      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
     }
 
     return lesson;
@@ -69,7 +70,7 @@ export class LessonsService {
     });
 
     if (!lesson) {
-      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
     }
 
     return lesson;
@@ -86,7 +87,7 @@ export class LessonsService {
     const lesson = await this.lessonModel.findByIdAndDelete(id);
 
     if (!lesson) {
-      throw new NotFoundException({ code: 'LESSON_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
     }
 
     return lesson;

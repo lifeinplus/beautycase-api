@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { Brand, BrandDocument } from './schemas/brand.schema';
@@ -20,7 +21,7 @@ export class BrandsService {
     const brands = await this.brandModel.find().sort('name');
 
     if (!brands.length) {
-      throw new NotFoundException({ code: 'BRANDS_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.BRANDS_NOT_FOUND });
     }
 
     return brands;
@@ -36,7 +37,7 @@ export class BrandsService {
     });
 
     if (!brand) {
-      throw new NotFoundException({ code: 'BRAND_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.BRAND_NOT_FOUND });
     }
 
     return brand;
@@ -46,7 +47,7 @@ export class BrandsService {
     const brand = await this.brandModel.findByIdAndDelete(id);
 
     if (!brand) {
-      throw new NotFoundException({ code: 'BRAND_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.BRAND_NOT_FOUND });
     }
 
     return brand;

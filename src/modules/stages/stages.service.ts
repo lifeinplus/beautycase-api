@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateStageDto } from './dto/create-stage.dto';
@@ -32,7 +33,7 @@ export class StagesService {
     const stage = await this.stageModel.findById(id);
 
     if (!stage) {
-      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     const duplicated = new this.stageModel({
@@ -52,7 +53,7 @@ export class StagesService {
       .select('createdAt imageUrl subtitle title');
 
     if (!stages.length) {
-      throw new NotFoundException({ code: 'STAGES_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STAGES_NOT_FOUND });
     }
 
     return stages;
@@ -64,7 +65,7 @@ export class StagesService {
       .populate('productIds', 'imageUrl');
 
     if (!stage) {
-      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     return stage;
@@ -86,7 +87,7 @@ export class StagesService {
     });
 
     if (!stage) {
-      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     if (imageUrl) {
@@ -112,7 +113,7 @@ export class StagesService {
     });
 
     if (!stage) {
-      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     return stage;
@@ -122,7 +123,7 @@ export class StagesService {
     const stage = await this.stageModel.findByIdAndDelete(id);
 
     if (!stage) {
-      throw new NotFoundException({ code: 'STAGE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     return stage;

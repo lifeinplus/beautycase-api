@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Store, StoreDocument } from './schemas/store.schema';
@@ -20,7 +21,7 @@ export class StoresService {
     const stores = await this.storeModel.find().sort('name');
 
     if (!stores.length) {
-      throw new NotFoundException({ code: 'STORES_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STORES_NOT_FOUND });
     }
 
     return stores;
@@ -36,7 +37,7 @@ export class StoresService {
     });
 
     if (!store) {
-      throw new NotFoundException({ code: 'STORE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STORE_NOT_FOUND });
     }
 
     return store;
@@ -46,7 +47,7 @@ export class StoresService {
     const store = await this.storeModel.findByIdAndDelete(id);
 
     if (!store) {
-      throw new NotFoundException({ code: 'STORE_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.STORE_NOT_FOUND });
     }
 
     return store;

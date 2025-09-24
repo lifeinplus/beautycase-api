@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBag, MakeupBagDocument } from './schemas/makeup-bag.schema';
@@ -28,7 +29,7 @@ export class MakeupBagsService {
       ]);
 
     if (!makeupBags.length) {
-      throw new NotFoundException({ code: 'MAKEUP_BAGS_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAGS_NOT_FOUND });
     }
 
     return makeupBags;
@@ -54,7 +55,7 @@ export class MakeupBagsService {
     ]);
 
     if (!makeupBag) {
-      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;
@@ -64,7 +65,7 @@ export class MakeupBagsService {
     const makeupBag = await this.makeupBagModel.findById(id).select('clientId');
 
     if (!makeupBag) {
-      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;
@@ -87,7 +88,7 @@ export class MakeupBagsService {
     });
 
     if (!makeupBag) {
-      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;
@@ -97,7 +98,7 @@ export class MakeupBagsService {
     const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {
-      throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;

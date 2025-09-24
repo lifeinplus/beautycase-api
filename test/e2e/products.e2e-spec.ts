@@ -658,7 +658,7 @@ describe('Products (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
 
-      expect(response.body.message).toContain('Lessons:');
+      expect(response.body.code).toBe('PRODUCT_IN_USE');
     });
 
     it('should return 400 if product is used in stages', async () => {
@@ -669,7 +669,7 @@ describe('Products (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
 
-      expect(response.body.message).toContain('Stages:');
+      expect(response.body.code).toBe('PRODUCT_IN_USE');
     });
   });
 

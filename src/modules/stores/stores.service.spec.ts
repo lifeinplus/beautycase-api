@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Store } from './schemas/store.schema';
@@ -86,7 +87,7 @@ describe('StoresService', () => {
       mockStoreModel.find.mockReturnValue(mockQuery);
 
       await expect(service.findAll()).rejects.toThrow(
-        new NotFoundException('Stores not found'),
+        new NotFoundException({ code: ErrorCode.STORES_NOT_FOUND }),
       );
 
       expect(mockStoreModel.find).toHaveBeenCalledWith();
@@ -124,7 +125,7 @@ describe('StoresService', () => {
       mockStoreModel.findByIdAndUpdate.mockResolvedValue(null);
 
       await expect(service.update(mockStoreId, dto)).rejects.toThrow(
-        new NotFoundException('Store not found'),
+        new NotFoundException({ code: ErrorCode.STORE_NOT_FOUND }),
       );
 
       expect(mockStoreModel.findByIdAndUpdate).toHaveBeenCalledWith(
@@ -165,7 +166,7 @@ describe('StoresService', () => {
       mockStoreModel.findByIdAndDelete.mockResolvedValue(null);
 
       await expect(service.remove(mockStoreId)).rejects.toThrow(
-        new NotFoundException('Store not found'),
+        new NotFoundException({ code: ErrorCode.STORE_NOT_FOUND }),
       );
 
       expect(mockStoreModel.findByIdAndDelete).toHaveBeenCalledWith(

@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { CategoriesService } from './categories.service';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -87,7 +88,7 @@ describe('CategoriesService', () => {
       mockCategoryModel.find.mockReturnValue(mockQuery);
 
       await expect(service.findAll()).rejects.toThrow(
-        new NotFoundException('Categories not found'),
+        new NotFoundException({ code: ErrorCode.CATEGORIES_NOT_FOUND }),
       );
 
       expect(mockCategoryModel.find).toHaveBeenCalledWith();
@@ -260,7 +261,7 @@ describe('CategoriesService', () => {
       mockCategoryModel.findByIdAndUpdate.mockResolvedValue(null);
 
       await expect(service.update(mockCategoryId, dto)).rejects.toThrow(
-        new NotFoundException('Category not found'),
+        new NotFoundException({ code: ErrorCode.CATEGORY_NOT_FOUND }),
       );
 
       expect(mockCategoryModel.findByIdAndUpdate).toHaveBeenCalledWith(
@@ -303,7 +304,7 @@ describe('CategoriesService', () => {
       mockCategoryModel.findByIdAndDelete.mockResolvedValue(null);
 
       await expect(service.remove(mockCategoryId)).rejects.toThrow(
-        new NotFoundException('Category not found'),
+        new NotFoundException({ code: ErrorCode.CATEGORY_NOT_FOUND }),
       );
 
       expect(mockCategoryModel.findByIdAndDelete).toHaveBeenCalledWith(

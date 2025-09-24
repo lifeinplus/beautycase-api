@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiOptions } from 'cloudinary';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TempUploadsService } from 'src/modules/shared/temp-uploads.service';
 
@@ -24,7 +25,7 @@ export class UploadsService {
   ): Promise<string> {
     if (!file) {
       throw new BadRequestException({
-        code: 'IMAGE_UPLOAD_FAILED',
+        code: ErrorCode.IMAGE_UPLOAD_FAILED,
         message: 'No file provided for upload',
       });
     }
@@ -51,7 +52,7 @@ export class UploadsService {
       return uploadResponse.secure_url;
     } catch (error) {
       throw new BadRequestException({
-        code: 'IMAGE_UPLOAD_FAILED',
+        code: ErrorCode.IMAGE_UPLOAD_FAILED,
         message: 'Failed to upload image to Cloudinary',
       });
     }
@@ -84,7 +85,7 @@ export class UploadsService {
       return uploadResponse.secure_url;
     } catch (error) {
       throw new BadRequestException({
-        code: 'IMAGE_UPLOAD_FAILED',
+        code: ErrorCode.IMAGE_UPLOAD_FAILED,
         message: 'Failed to upload image from URL',
       });
     }

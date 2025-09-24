@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { Types } from 'mongoose';
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import type { UserRequest } from 'src/common/types/user-request.interface';
 import { MakeupBagsService } from '../makeup-bags.service';
 
@@ -29,7 +30,7 @@ export class MakeupBagAccessGuard implements CanActivate {
       );
 
       if (!makeupBag || !userId || makeupBag.clientId.toString() !== userId) {
-        throw new NotFoundException({ code: 'MAKEUP_BAG_NOT_FOUND' });
+        throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
       }
     }
 

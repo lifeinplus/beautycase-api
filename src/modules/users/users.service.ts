@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { LessonsService } from '../lessons/lessons.service';
 import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -23,7 +24,7 @@ export class UsersService {
     const users = await this.userModel.find().select('_id username');
 
     if (!users.length) {
-      throw new NotFoundException({ code: 'USERS_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
     }
 
     return users;
@@ -33,7 +34,7 @@ export class UsersService {
     const user = await this.userModel.findById(id).select('role username');
 
     if (!user) {
-      throw new NotFoundException({ code: 'USER_NOT_FOUND' });
+      throw new NotFoundException({ code: ErrorCode.USER_NOT_FOUND });
     }
 
     const lessons = await this.lessonsService.findByClientId(id);

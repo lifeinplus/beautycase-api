@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { BrandsService } from './brands.service';
 import { UpdateBrandDto } from './dto/update-brand.dto';
@@ -86,7 +87,7 @@ describe('BrandsService', () => {
       mockBrandModel.find.mockReturnValue(mockQuery);
 
       await expect(service.findAll()).rejects.toThrow(
-        new NotFoundException('Brands not found'),
+        new NotFoundException({ code: ErrorCode.BRANDS_NOT_FOUND }),
       );
 
       expect(mockBrandModel.find).toHaveBeenCalledWith();
@@ -124,7 +125,7 @@ describe('BrandsService', () => {
       mockBrandModel.findByIdAndUpdate.mockResolvedValue(null);
 
       await expect(service.update(mockBrandId, dto)).rejects.toThrow(
-        new NotFoundException('Brand not found'),
+        new NotFoundException({ code: ErrorCode.BRAND_NOT_FOUND }),
       );
 
       expect(mockBrandModel.findByIdAndUpdate).toHaveBeenCalledWith(
@@ -165,7 +166,7 @@ describe('BrandsService', () => {
       mockBrandModel.findByIdAndDelete.mockResolvedValue(null);
 
       await expect(service.remove(mockBrandId)).rejects.toThrow(
-        new NotFoundException('Brand not found'),
+        new NotFoundException({ code: ErrorCode.BRAND_NOT_FOUND }),
       );
 
       expect(mockBrandModel.findByIdAndDelete).toHaveBeenCalledWith(

@@ -8,8 +8,10 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+import { ErrorCode } from '../enums/error-code.enum';
+
 interface ErrorData {
-  code: string;
+  code: ErrorCode;
   details?: any;
   message?: string;
 }
@@ -64,16 +66,16 @@ export class AppExceptionFilter implements ExceptionFilter {
       const name = exception.name;
 
       let errorData: ErrorData = {
-        code: 'UNKNOWN_ERROR',
+        code: ErrorCode.UNKNOWN_ERROR,
       };
 
       if (typeof res === 'string') {
-        errorData = { code: 'ERROR_MESSAGE', message: res };
+        errorData = { code: ErrorCode.ERROR_MESSAGE, message: res };
       } else if (typeof res === 'object' && res !== null) {
         if ('code' in res) {
           errorData = res as ErrorData;
         } else if ('message' in res && typeof res.message === 'string') {
-          errorData = { code: 'ERROR_MESSAGE', message: res.message };
+          errorData = { code: ErrorCode.ERROR_MESSAGE, message: res.message };
         }
       }
 
