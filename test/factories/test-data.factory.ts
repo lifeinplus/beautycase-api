@@ -122,8 +122,8 @@ export class TestDataFactory {
   static createMakeupBag(
     categoryId: Types.ObjectId,
     clientId: Types.ObjectId,
-    stageIds: string[] = [],
-    toolIds: string[] = [],
+    stageIds: Types.ObjectId[] = [],
+    toolIds: Types.ObjectId[] = [],
     overrides: Partial<TestMakeupBag> = {},
   ): TestMakeupBag {
     return {

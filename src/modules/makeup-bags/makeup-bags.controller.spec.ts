@@ -15,12 +15,14 @@ describe('MakeupBagsController', () => {
   const mockClientId = new Types.ObjectId();
   const mockMakeupBagId = new Types.ObjectId();
   const mockBadMakeupBagId = new Types.ObjectId();
+  const mockStageId = new Types.ObjectId();
+  const mockToolId = new Types.ObjectId();
 
   const mockMakeupBag = TestDataFactory.createMakeupBag(
     mockCategoryId,
     mockClientId,
-    ['stage-id'],
-    ['tool-id'],
+    [mockStageId],
+    [mockToolId],
   );
 
   const mockMakeupBagResponse = {
@@ -104,7 +106,7 @@ describe('MakeupBagsController', () => {
       mockMakeupBagsService.update.mockResolvedValue(mockMakeupBagResponse);
 
       const params: ObjectIdParamDto = { id: mockMakeupBagId };
-      const dto: UpdateMakeupBagDto = { stageIds: ['new-stage'] };
+      const dto: UpdateMakeupBagDto = { stageIds: [mockStageId] };
 
       const result = await controller.update(params, dto);
 

@@ -72,8 +72,16 @@ export class MakeupBagsService {
   }
 
   findByClientId(clientId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+    // TODO: is it safe to delete new Types.ObjectId?
     return this.makeupBagModel
       .find({ clientId: new Types.ObjectId(clientId) })
+      .select('categoryId')
+      .populate('categoryId', 'name');
+  }
+
+  async findByToolId(toolId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+    return this.makeupBagModel
+      .find({ toolIds: toolId })
       .select('categoryId')
       .populate('categoryId', 'name');
   }

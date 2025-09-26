@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -17,6 +18,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateToolDto } from './dto/create-tool.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
+import { ToolDeletionInterceptor } from './interceptors/tool-deletion.interceptor';
 import { ToolsService } from './tools.service';
 
 @Controller('tools')
@@ -70,6 +72,7 @@ export class ToolsController {
   }
 
   @Delete(':id')
+  @UseInterceptors(ToolDeletionInterceptor)
   async remove(@Param() params: ObjectIdParamDto) {
     const tool = await this.toolsService.remove(params.id);
 

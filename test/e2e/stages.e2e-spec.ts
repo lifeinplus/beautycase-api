@@ -34,7 +34,7 @@ describe('Stages (e2e)', () => {
   let brand: BrandResources;
   let category: CategoryResources;
   let product: ProductResources;
-  let stageId: string;
+  let stageId: Types.ObjectId;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({

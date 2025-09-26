@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { MakeupBagsService } from '../makeup-bags/makeup-bags.service';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
 import { ToolsController } from './tools.controller';
@@ -38,6 +39,10 @@ describe('ToolsController', () => {
         {
           provide: ToolsService,
           useValue: mockToolsService,
+        },
+        {
+          provide: MakeupBagsService,
+          useValue: {},
         },
       ],
     }).compile();
