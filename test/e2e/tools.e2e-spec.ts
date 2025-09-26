@@ -2,12 +2,14 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection } from 'mongoose';
+import { Connection, Types } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { BrandsModule } from 'src/modules/brands/brands.module';
+import { CategoriesModule } from 'src/modules/categories/categories.module';
+import { ProductsModule } from 'src/modules/products/products.module';
 import { UpdateStoreLinksDto } from 'src/modules/tools/dto/update-store-links.dto';
 import { UpdateToolDto } from 'src/modules/tools/dto/update-tool.dto';
 import { ToolsModule } from 'src/modules/tools/tools.module';
@@ -18,15 +20,18 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
-import { BrandResources, ResourceHelper } from 'test/helpers/resource.helper';
+import {
+  ResourceHelper,
+  TestToolResources,
+} from 'test/helpers/resource.helper';
 
 describe('Tools (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
 
   let tokens: AuthTokens;
-  let brandResources: BrandResources;
-  let toolId: string;
+  let resources: TestToolResources;
+  let toolId: Types.ObjectId;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -39,6 +44,8 @@ describe('Tools (e2e)', () => {
         TestDatabaseModule,
         AuthModule,
         BrandsModule,
+        CategoriesModule,
+        ProductsModule,
         ToolsModule,
         UsersModule,
       ],
@@ -51,7 +58,8 @@ describe('Tools (e2e)', () => {
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
-    brandResources = await ResourceHelper.createBrand(app, tokens.adminToken);
+
+    resources = await ResourceHelper.setupToolResources(app, tokens.adminToken);
   });
 
   beforeEach(async () => {
@@ -64,7 +72,7 @@ describe('Tools (e2e)', () => {
   });
 
   describe('POST /tools', () => {
-    const createToolDto = () => TestDataFactory.createTool(brandResources.id);
+    const createToolDto = () => TestDataFactory.createTool(resources.brandId);
 
     it('should create a tool as admin', async () => {
       const response = await request(app.getHttpServer())
@@ -219,7 +227,7 @@ describe('Tools (e2e)', () => {
       await ResourceHelper.createTool(
         app,
         tokens.adminToken,
-        brandResources.id,
+        resources.brandId,
       );
     });
 
@@ -274,7 +282,7 @@ describe('Tools (e2e)', () => {
       const { id, data } = await ResourceHelper.createTool(
         app,
         tokens.adminToken,
-        brandResources.id,
+        resources.brandId,
       );
 
       toolId = id;
@@ -333,7 +341,7 @@ describe('Tools (e2e)', () => {
       const { id } = await ResourceHelper.createTool(
         app,
         tokens.adminToken,
-        brandResources.id,
+        resources.brandId,
       );
 
       toolId = id;
@@ -448,7 +456,7 @@ describe('Tools (e2e)', () => {
       const { id } = await ResourceHelper.createTool(
         app,
         tokens.adminToken,
-        brandResources.id,
+        resources.brandId,
       );
 
       toolId = id;
@@ -567,7 +575,7 @@ describe('Tools (e2e)', () => {
       const { id } = await ResourceHelper.createTool(
         app,
         tokens.adminToken,
-        brandResources.id,
+        resources.brandId,
       );
 
       toolId = id;
@@ -632,10 +640,28 @@ describe('Tools (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
+
+    it('should return 400 if tool is used in makeup bags', async () => {
+      await ResourceHelper.createMakeupBag(
+        app,
+        tokens.adminToken,
+        resources.categoryId,
+        tokens.clientId,
+        [resources.stageId],
+        [toolId],
+      );
+
+      const response = await request(app.getHttpServer())
+        .delete(`/tools/${toolId}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.code).toContain('TOOL_IN_USE');
+    });
   });
 
   describe('Multiple Tools Operations', () => {
-    const createToolDto = () => TestDataFactory.createTool(brandResources.id);
+    const createToolDto = () => TestDataFactory.createTool(resources.brandId);
 
     it('should handle multiple tools correctly', async () => {
       const tools = [

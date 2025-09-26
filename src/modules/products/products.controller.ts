@@ -8,15 +8,17 @@ import {
   Post,
   Put,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
+import { ProductDeletionInterceptor } from './interceptors/product-deletion.interceptor';
 import { ProductsService } from './products.service';
 
 @Controller('products')
@@ -42,7 +44,7 @@ export class ProductsController {
 
   @Get(':id')
   @Roles()
-  findOne(@Param() params: MongoIdParamDto) {
+  findOne(@Param() params: ObjectIdParamDto) {
     return this.productsService.findOne(params.id);
   }
 
@@ -53,7 +55,7 @@ export class ProductsController {
 
   @Put(':id')
   async update(
-    @Param() params: MongoIdParamDto,
+    @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateProductDto,
   ) {
     const product = await this.productsService.update(params.id, dto);
@@ -66,7 +68,7 @@ export class ProductsController {
 
   @Patch(':id/store-links')
   async updateStoreLinks(
-    @Param() params: MongoIdParamDto,
+    @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const product = await this.productsService.updateStoreLinks(params.id, dto);
@@ -78,7 +80,8 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  async remove(@Param() params: MongoIdParamDto) {
+  @UseInterceptors(ProductDeletionInterceptor)
+  async remove(@Param() params: ObjectIdParamDto) {
     const product = await this.productsService.remove(params.id);
 
     return {

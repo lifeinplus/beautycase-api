@@ -99,7 +99,7 @@ describe('Auth (e2e)', () => {
         .send(duplicatedDto)
         .expect(HttpStatus.CONFLICT);
 
-      expect(response.body.message).toBe('Username already in use');
+      expect(response.body.code).toBe('REGISTER_ERROR');
     });
 
     it('should reject registration with invalid data', async () => {
@@ -161,7 +161,7 @@ describe('Auth (e2e)', () => {
         .send(loginDto)
         .expect(HttpStatus.UNAUTHORIZED);
 
-      expect(response.body.message).toBe('Username or password is incorrect');
+      expect(response.body.code).toBe('LOGIN_ERROR');
     });
 
     it('should reject login with invalid password', async () => {
@@ -175,7 +175,7 @@ describe('Auth (e2e)', () => {
         .send(loginDto)
         .expect(HttpStatus.UNAUTHORIZED);
 
-      expect(response.body.message).toBe('Username or password is incorrect');
+      expect(response.body.code).toBe('LOGIN_ERROR');
     });
 
     it('should clear existing refresh token on login', async () => {

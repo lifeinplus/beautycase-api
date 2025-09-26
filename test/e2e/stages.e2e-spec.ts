@@ -2,14 +2,13 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection } from 'mongoose';
+import { Connection, Types } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { BrandsModule } from 'src/modules/brands/brands.module';
 import { ProductsModule } from 'src/modules/products/products.module';
-import { CreateStageDto } from 'src/modules/stages/dto/create-stage.dto';
 import { UpdateStageDto } from 'src/modules/stages/dto/update-stage.dto';
 import { StagesModule } from 'src/modules/stages/stages.module';
 import { UsersModule } from 'src/modules/users/users.module';
@@ -35,7 +34,7 @@ describe('Stages (e2e)', () => {
   let brand: BrandResources;
   let category: CategoryResources;
   let product: ProductResources;
-  let stageId: string;
+  let stageId: Types.ObjectId;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -139,7 +138,7 @@ describe('Stages (e2e)', () => {
     });
 
     it('should validate required fields', async () => {
-      const invalidDto: CreateStageDto = {
+      const invalidDto: any = {
         title: 'A', // Too short (min 3)
         subtitle: 'Short', // Too short (min 10)
         imageUrl: 'invalid-url',
@@ -546,7 +545,7 @@ describe('Stages (e2e)', () => {
   });
 
   describe('PATCH /stages/:id/products', () => {
-    let productIds: string[];
+    let productIds: Types.ObjectId[];
 
     beforeEach(async () => {
       const { id } = await ResourceHelper.createStage(app, tokens.adminToken, [

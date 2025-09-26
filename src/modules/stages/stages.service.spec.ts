@@ -1,6 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { NotFoundException } from '@nestjs/common';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
@@ -21,10 +21,12 @@ describe('StagesService', () => {
   let mockImageService: jest.Mocked<ImageService>;
 
   const mockStage = TestDataFactory.createStage();
+  const mockStageId = new Types.ObjectId();
+  const mockBadStageId = new Types.ObjectId();
 
   const mockStageResponse = {
     ...mockStage,
-    _id: 'stage-id',
+    _id: mockStageId,
     save: jest.fn(),
   };
 
@@ -85,16 +87,16 @@ describe('StagesService', () => {
       const saveMock = jest.fn().mockResolvedValue(mockStageResponse);
       (mockStageModel as any).mockImplementation(() => ({ save: saveMock }));
 
-      const result = await service.duplicate('stage-id');
+      const result = await service.duplicate(mockStageId);
 
-      expect(mockStageModel.findById).toHaveBeenCalledWith('stage-id');
+      expect(mockStageModel.findById).toHaveBeenCalledWith(mockStageId);
       expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
       (mockStageModel.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.duplicate('bad-id')).rejects.toThrow(
+      await expect(service.duplicate(mockBadStageId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -125,7 +127,7 @@ describe('StagesService', () => {
         populate: jest.fn().mockResolvedValue(mockStageResponse),
       });
 
-      const result = await service.findOne('stage-id');
+      const result = await service.findOne(mockStageId);
       expect(result).toEqual(mockStageResponse);
     });
 
@@ -134,7 +136,7 @@ describe('StagesService', () => {
         populate: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findOne('bad-id')).rejects.toThrow(
+      await expect(service.findOne(mockBadStageId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -147,7 +149,7 @@ describe('StagesService', () => {
       );
 
       const dto: UpdateStageDto = { imageUrl: 'http://example.com/new.jpg' };
-      const result = await service.update('stage-id', dto);
+      const result = await service.update(mockStageId, dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
         mockStageResponse,
@@ -163,7 +165,7 @@ describe('StagesService', () => {
     it('should throw NotFoundException if not found', async () => {
       (mockStageModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.update('bad-id', {} as any)).rejects.toThrow(
+      await expect(service.update(mockBadStageId, {} as any)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -176,7 +178,7 @@ describe('StagesService', () => {
       );
 
       const dto: UpdateStageProductsDto = { productIds: ['p1', 'p2'] };
-      const result = await service.updateProducts('stage-id', dto);
+      const result = await service.updateProducts(mockStageId, dto);
 
       expect(result).toEqual(mockStageResponse);
     });
@@ -185,7 +187,7 @@ describe('StagesService', () => {
       (mockStageModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        service.updateProducts('bad-id', { productIds: [] }),
+        service.updateProducts(mockBadStageId, { productIds: [] }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -196,14 +198,16 @@ describe('StagesService', () => {
         mockStageResponse,
       );
 
-      const result = await service.remove('stage-id');
+      const result = await service.remove(mockStageId);
       expect(result).toEqual(mockStageResponse);
     });
 
     it('should throw NotFoundException if not found', async () => {
       (mockStageModel.findByIdAndDelete as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.remove('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockBadStageId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

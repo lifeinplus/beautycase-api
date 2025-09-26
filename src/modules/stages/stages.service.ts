@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateStageDto } from './dto/create-stage.dto';
@@ -28,11 +29,11 @@ export class StagesService {
     return stage.save();
   }
 
-  async duplicate(id: string): Promise<StageDocument> {
+  async duplicate(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel.findById(id);
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     const duplicated = new this.stageModel({
@@ -52,25 +53,32 @@ export class StagesService {
       .select('createdAt imageUrl subtitle title');
 
     if (!stages.length) {
-      throw new NotFoundException('Stages not found');
+      throw new NotFoundException({ code: ErrorCode.STAGES_NOT_FOUND });
     }
 
     return stages;
   }
 
-  async findOne(id: string): Promise<StageDocument> {
+  async findOne(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel
       .findById(id)
       .populate('productIds', 'imageUrl');
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     return stage;
   }
 
-  async update(id: string, dto: UpdateStageDto): Promise<StageDocument> {
+  async findByProductId(productId: Types.ObjectId): Promise<StageDocument[]> {
+    return this.stageModel.find({ productIds: productId }).select('title');
+  }
+
+  async update(
+    id: Types.ObjectId,
+    dto: UpdateStageDto,
+  ): Promise<StageDocument> {
     const { imageUrl } = dto;
 
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
@@ -79,7 +87,7 @@ export class StagesService {
     });
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     if (imageUrl) {
@@ -96,7 +104,7 @@ export class StagesService {
   }
 
   async updateProducts(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateStageProductsDto,
   ): Promise<StageDocument> {
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
@@ -105,17 +113,17 @@ export class StagesService {
     });
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     return stage;
   }
 
-  async remove(id: string): Promise<StageDocument> {
+  async remove(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel.findByIdAndDelete(id);
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
     return stage;

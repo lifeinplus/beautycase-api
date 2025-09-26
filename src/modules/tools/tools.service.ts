@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateToolDto } from './dto/create-tool.dto';
@@ -33,23 +34,23 @@ export class ToolsService {
     const tools = await this.toolModel.find().select('imageUrl');
 
     if (!tools.length) {
-      throw new NotFoundException('Tools not found');
+      throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
     }
 
     return tools;
   }
 
-  async findOne(id: string): Promise<ToolDocument> {
+  async findOne(id: Types.ObjectId): Promise<ToolDocument> {
     const tool = await this.toolModel.findById(id).populate('brandId');
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: ErrorCode.TOOL_NOT_FOUND });
     }
 
     return tool;
   }
 
-  async update(id: string, dto: UpdateToolDto): Promise<ToolDocument> {
+  async update(id: Types.ObjectId, dto: UpdateToolDto): Promise<ToolDocument> {
     const { imageUrl } = dto;
 
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
@@ -58,7 +59,7 @@ export class ToolsService {
     });
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: ErrorCode.TOOL_NOT_FOUND });
     }
 
     if (imageUrl) {
@@ -74,7 +75,7 @@ export class ToolsService {
   }
 
   async updateStoreLinks(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateStoreLinksDto,
   ): Promise<ToolDocument> {
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
@@ -83,17 +84,17 @@ export class ToolsService {
     });
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: ErrorCode.TOOL_NOT_FOUND });
     }
 
     return tool;
   }
 
-  async remove(id: string): Promise<ToolDocument> {
+  async remove(id: Types.ObjectId): Promise<ToolDocument> {
     const tool = await this.toolModel.findByIdAndDelete(id);
 
     if (!tool) {
-      throw new NotFoundException('Tool not found');
+      throw new NotFoundException({ code: ErrorCode.TOOL_NOT_FOUND });
     }
 
     if (tool.imageId) {

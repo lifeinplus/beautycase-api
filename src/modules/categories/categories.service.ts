@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category, CategoryDocument } from './schemas/category.schema';
@@ -25,7 +26,7 @@ export class CategoriesService {
     const categories = await this.categoryModel.find().sort('type name');
 
     if (!categories.length) {
-      throw new NotFoundException('Categories not found');
+      throw new NotFoundException({ code: ErrorCode.CATEGORIES_NOT_FOUND });
     }
 
     return categories;
@@ -35,7 +36,10 @@ export class CategoriesService {
     const category = await this.categoryModel.findOne({ name });
 
     if (!category) {
-      throw new NotFoundException(`Category "${name}" not found`);
+      throw new NotFoundException({
+        code: ErrorCode.CATEGORY_NOT_FOUND,
+        message: `Category "${name}" not found`,
+      });
     }
 
     return category;
@@ -47,7 +51,10 @@ export class CategoriesService {
       .sort('name');
 
     if (!categories.length) {
-      throw new NotFoundException('MakeupBag categories not found');
+      throw new NotFoundException({
+        code: ErrorCode.CATEGORIES_NOT_FOUND,
+        message: 'MakeupBag categories not found',
+      });
     }
 
     return categories;
@@ -59,7 +66,10 @@ export class CategoriesService {
       .sort('name');
 
     if (!categories.length) {
-      throw new NotFoundException('Product categories not found');
+      throw new NotFoundException({
+        code: ErrorCode.CATEGORIES_NOT_FOUND,
+        message: 'Product categories not found',
+      });
     }
 
     return categories;
@@ -92,30 +102,36 @@ export class CategoriesService {
     const categories = await this.categoryModel.aggregate(pipeline);
 
     if (!categories.length) {
-      throw new NotFoundException('Product categories not found');
+      throw new NotFoundException({
+        code: ErrorCode.CATEGORIES_NOT_FOUND,
+        message: 'Product categories not found',
+      });
     }
 
     return categories;
   }
 
-  async update(id: string, dto: UpdateCategoryDto): Promise<CategoryDocument> {
+  async update(
+    id: Types.ObjectId,
+    dto: UpdateCategoryDto,
+  ): Promise<CategoryDocument> {
     const category = await this.categoryModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
     });
 
     if (!category) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException({ code: ErrorCode.CATEGORY_NOT_FOUND });
     }
 
     return category;
   }
 
-  async remove(id: string): Promise<CategoryDocument> {
+  async remove(id: Types.ObjectId): Promise<CategoryDocument> {
     const category = await this.categoryModel.findByIdAndDelete(id);
 
     if (!category) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException({ code: ErrorCode.CATEGORY_NOT_FOUND });
     }
 
     return category;

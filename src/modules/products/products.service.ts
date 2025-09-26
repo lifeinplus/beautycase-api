@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { CategoriesService } from '../categories/categories.service';
 import { ImageService } from '../shared/image.service';
@@ -36,19 +37,19 @@ export class ProductsService {
     const products = await this.productModel.find().select('imageUrl');
 
     if (!products.length) {
-      throw new NotFoundException('Products not found');
+      throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
     }
 
     return products;
   }
 
-  async findOne(id: string): Promise<ProductDocument> {
+  async findOne(id: Types.ObjectId): Promise<ProductDocument> {
     const product = await this.productModel
       .findById(id)
       .populate(['brandId', 'categoryId']);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
     }
 
     return product;
@@ -62,13 +63,19 @@ export class ProductsService {
       .select('imageUrl');
 
     if (!products.length) {
-      throw new NotFoundException(`No products found for category ${name}`);
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCTS_NOT_FOUND,
+        message: `No products found for category ${name}`,
+      });
     }
 
     return products;
   }
 
-  async update(id: string, dto: UpdateProductDto): Promise<ProductDocument> {
+  async update(
+    id: Types.ObjectId,
+    dto: UpdateProductDto,
+  ): Promise<ProductDocument> {
     const { imageUrl } = dto;
 
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
@@ -77,7 +84,7 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
     }
 
     if (imageUrl) {
@@ -93,26 +100,25 @@ export class ProductsService {
   }
 
   async updateStoreLinks(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateStoreLinksDto,
   ): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
-      new: true,
       runValidators: true,
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
     }
 
     return product;
   }
 
-  async remove(id: string): Promise<ProductDocument> {
+  async remove(id: Types.ObjectId): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndDelete(id);
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
     }
 
     if (product.imageId) {

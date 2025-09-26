@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary, UploadApiOptions } from 'cloudinary';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TempUploadsService } from 'src/modules/shared/temp-uploads.service';
 
@@ -23,7 +24,10 @@ export class UploadsService {
     file?: Express.Multer.File,
   ): Promise<string> {
     if (!file) {
-      throw new BadRequestException('File upload failed');
+      throw new BadRequestException({
+        code: ErrorCode.IMAGE_UPLOAD_FAILED,
+        message: 'No file provided for upload',
+      });
     }
 
     const fileStr = file.buffer.toString('base64');
@@ -47,7 +51,10 @@ export class UploadsService {
 
       return uploadResponse.secure_url;
     } catch (error) {
-      throw new BadRequestException('Failed to upload image to Cloudinary');
+      throw new BadRequestException({
+        code: ErrorCode.IMAGE_UPLOAD_FAILED,
+        message: 'Failed to upload image to Cloudinary',
+      });
     }
   }
 
@@ -77,7 +84,10 @@ export class UploadsService {
 
       return uploadResponse.secure_url;
     } catch (error) {
-      throw new BadRequestException('Failed to upload image from URL');
+      throw new BadRequestException({
+        code: ErrorCode.IMAGE_UPLOAD_FAILED,
+        message: 'Failed to upload image from URL',
+      });
     }
   }
 }

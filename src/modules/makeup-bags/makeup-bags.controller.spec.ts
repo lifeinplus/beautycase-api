@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBagsController } from './makeup-bags.controller';
@@ -13,17 +13,21 @@ describe('MakeupBagsController', () => {
 
   const mockCategoryId = new Types.ObjectId();
   const mockClientId = new Types.ObjectId();
+  const mockMakeupBagId = new Types.ObjectId();
+  const mockBadMakeupBagId = new Types.ObjectId();
+  const mockStageId = new Types.ObjectId();
+  const mockToolId = new Types.ObjectId();
 
   const mockMakeupBag = TestDataFactory.createMakeupBag(
     mockCategoryId,
     mockClientId,
-    ['stage-id'],
-    ['tool-id'],
+    [mockStageId],
+    [mockToolId],
   );
 
   const mockMakeupBagResponse = {
     ...mockMakeupBag,
-    id: 'makeupbag-id',
+    id: mockMakeupBagId,
   };
 
   const mockMakeupBagsService = {
@@ -58,7 +62,7 @@ describe('MakeupBagsController', () => {
 
       expect(mockMakeupBagsService.create).toHaveBeenCalledWith(mockMakeupBag);
       expect(result).toEqual({
-        id: 'makeupbag-id',
+        id: mockMakeupBagId,
         message: 'MakeupBag created successfully',
       });
     });
@@ -79,11 +83,11 @@ describe('MakeupBagsController', () => {
     it('should return makeup bag by id', async () => {
       mockMakeupBagsService.findOne.mockResolvedValue(mockMakeupBagResponse);
 
-      const params: MongoIdParamDto = { id: 'makeupbag-id' };
+      const params: ObjectIdParamDto = { id: mockMakeupBagId };
       const result = await controller.findOne(params);
 
       expect(mockMakeupBagsService.findOne).toHaveBeenCalledWith(
-        'makeupbag-id',
+        mockMakeupBagId,
       );
       expect(result).toEqual(mockMakeupBagResponse);
     });
@@ -91,9 +95,9 @@ describe('MakeupBagsController', () => {
     it('should throw NotFoundException if not found', async () => {
       mockMakeupBagsService.findOne.mockRejectedValue(new NotFoundException());
 
-      await expect(controller.findOne({ id: 'bad-id' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        controller.findOne({ id: mockBadMakeupBagId }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -101,17 +105,17 @@ describe('MakeupBagsController', () => {
     it('should update a makeup bag and return id + message', async () => {
       mockMakeupBagsService.update.mockResolvedValue(mockMakeupBagResponse);
 
-      const params: MongoIdParamDto = { id: 'makeupbag-id' };
-      const dto: UpdateMakeupBagDto = { stageIds: ['new-stage'] };
+      const params: ObjectIdParamDto = { id: mockMakeupBagId };
+      const dto: UpdateMakeupBagDto = { stageIds: [mockStageId] };
 
       const result = await controller.update(params, dto);
 
       expect(mockMakeupBagsService.update).toHaveBeenCalledWith(
-        'makeupbag-id',
+        mockMakeupBagId,
         dto,
       );
       expect(result).toEqual({
-        id: 'makeupbag-id',
+        id: mockMakeupBagId,
         message: 'MakeupBag updated successfully',
       });
     });
@@ -121,12 +125,14 @@ describe('MakeupBagsController', () => {
     it('should delete a makeup bag and return id + message', async () => {
       mockMakeupBagsService.remove.mockResolvedValue(mockMakeupBagResponse);
 
-      const params: MongoIdParamDto = { id: 'makeupbag-id' };
+      const params: ObjectIdParamDto = { id: mockMakeupBagId };
       const result = await controller.remove(params);
 
-      expect(mockMakeupBagsService.remove).toHaveBeenCalledWith('makeupbag-id');
+      expect(mockMakeupBagsService.remove).toHaveBeenCalledWith(
+        mockMakeupBagId,
+      );
       expect(result).toEqual({
-        id: 'makeupbag-id',
+        id: mockMakeupBagId,
         message: 'MakeupBag deleted successfully',
       });
     });

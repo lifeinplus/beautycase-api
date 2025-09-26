@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBag, MakeupBagDocument } from './schemas/makeup-bag.schema';
@@ -28,13 +29,13 @@ export class MakeupBagsService {
       ]);
 
     if (!makeupBags.length) {
-      throw new NotFoundException('MakeupBags not found');
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAGS_NOT_FOUND });
     }
 
     return makeupBags;
   }
 
-  async findOne(id: string): Promise<MakeupBagDocument> {
+  async findOne(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).populate([
       { path: 'categoryId' },
       { path: 'clientId', select: 'username' },
@@ -54,31 +55,39 @@ export class MakeupBagsService {
     ]);
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;
   }
 
-  async findOneWithClientId(id: string): Promise<MakeupBagDocument> {
+  async findOneWithClientId(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).select('clientId');
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;
   }
 
-  findByClientId(clientId: string): Promise<MakeupBagDocument[]> {
+  findByClientId(clientId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+    // TODO: is it safe to delete new Types.ObjectId?
     return this.makeupBagModel
       .find({ clientId: new Types.ObjectId(clientId) })
       .select('categoryId')
       .populate('categoryId', 'name');
   }
 
+  async findByToolId(toolId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+    return this.makeupBagModel
+      .find({ toolIds: toolId })
+      .select('categoryId')
+      .populate('categoryId', 'name');
+  }
+
   async update(
-    id: string,
+    id: Types.ObjectId,
     dto: UpdateMakeupBagDto,
   ): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndUpdate(id, dto, {
@@ -87,17 +96,17 @@ export class MakeupBagsService {
     });
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;
   }
 
-  async remove(id: string): Promise<MakeupBagDocument> {
+  async remove(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {
-      throw new NotFoundException('MakeupBag not found');
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
     }
 
     return makeupBag;

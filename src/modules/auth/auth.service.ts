@@ -7,6 +7,7 @@ import {
 import { TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -33,13 +34,13 @@ export class AuthService {
     const foundUser = await this.usersService.findByUsername(dto.username);
 
     if (!foundUser) {
-      throw new UnauthorizedException('Username or password is incorrect');
+      throw new UnauthorizedException({ code: ErrorCode.LOGIN_ERROR });
     }
 
     const isMatch = await bcrypt.compare(dto.password, foundUser.password);
 
     if (!isMatch) {
-      throw new UnauthorizedException('Username or password is incorrect');
+      throw new UnauthorizedException({ code: ErrorCode.LOGIN_ERROR });
     }
 
     const accessToken = this.tokenService.signAccessToken({
@@ -186,7 +187,7 @@ export class AuthService {
     const existingUser = await this.usersService.findByUsername(username);
 
     if (existingUser) {
-      throw new ConflictException('Username already in use');
+      throw new ConflictException({ code: ErrorCode.REGISTER_ERROR });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

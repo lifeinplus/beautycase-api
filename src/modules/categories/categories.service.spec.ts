@@ -1,7 +1,9 @@
+import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 
-import { NotFoundException } from '@nestjs/common';
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { CategoriesService } from './categories.service';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -12,10 +14,11 @@ describe('CategoriesService', () => {
 
   const mockCategory = TestDataFactory.createCategory();
   const mockCategories = TestDataFactory.createMultipleCategories(2);
+  const mockCategoryId = new Types.ObjectId();
 
   const mockCategoryResponse = {
     ...mockCategory,
-    _id: '507f1f77bcf86cd799439011',
+    _id: mockCategoryId,
   };
 
   const mockCategoryModel = {
@@ -85,7 +88,7 @@ describe('CategoriesService', () => {
       mockCategoryModel.find.mockReturnValue(mockQuery);
 
       await expect(service.findAll()).rejects.toThrow(
-        new NotFoundException('Categories not found'),
+        new NotFoundException({ code: ErrorCode.CATEGORIES_NOT_FOUND }),
       );
 
       expect(mockCategoryModel.find).toHaveBeenCalledWith();
@@ -230,7 +233,6 @@ describe('CategoriesService', () => {
 
   describe('update', () => {
     it('should successfully update a category', async () => {
-      const categoryId = '507f1f77bcf86cd799439011';
       const dto: UpdateCategoryDto = {
         name: 'Updated Category',
       };
@@ -238,10 +240,10 @@ describe('CategoriesService', () => {
       const updatedCategory = { ...mockCategoryResponse, ...dto };
       mockCategoryModel.findByIdAndUpdate.mockResolvedValue(updatedCategory);
 
-      const result = await service.update(categoryId, dto);
+      const result = await service.update(mockCategoryId, dto);
 
       expect(mockCategoryModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        categoryId,
+        mockCategoryId,
         dto,
         {
           new: true,
@@ -252,19 +254,18 @@ describe('CategoriesService', () => {
     });
 
     it('should throw NotFoundException when category to update is not found', async () => {
-      const categoryId = '507f1f77bcf86cd799439011';
       const dto: UpdateCategoryDto = {
         name: 'Updated Category',
       };
 
       mockCategoryModel.findByIdAndUpdate.mockResolvedValue(null);
 
-      await expect(service.update(categoryId, dto)).rejects.toThrow(
-        new NotFoundException('Category not found'),
+      await expect(service.update(mockCategoryId, dto)).rejects.toThrow(
+        new NotFoundException({ code: ErrorCode.CATEGORY_NOT_FOUND }),
       );
 
       expect(mockCategoryModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        categoryId,
+        mockCategoryId,
         dto,
         {
           new: true,
@@ -274,7 +275,6 @@ describe('CategoriesService', () => {
     });
 
     it('should handle update errors', async () => {
-      const categoryId = '507f1f77bcf86cd799439011';
       const dto: UpdateCategoryDto = {
         name: 'Updated Category',
       };
@@ -282,47 +282,41 @@ describe('CategoriesService', () => {
       const error = new Error('Database error');
       mockCategoryModel.findByIdAndUpdate.mockRejectedValue(error);
 
-      await expect(service.update(categoryId, dto)).rejects.toThrow(error);
+      await expect(service.update(mockCategoryId, dto)).rejects.toThrow(error);
     });
   });
 
   describe('remove', () => {
     it('should successfully remove a category', async () => {
-      const categoryId = '507f1f77bcf86cd799439011';
-
       mockCategoryModel.findByIdAndDelete.mockResolvedValue(
         mockCategoryResponse,
       );
 
-      const result = await service.remove(categoryId);
+      const result = await service.remove(mockCategoryId);
 
       expect(mockCategoryModel.findByIdAndDelete).toHaveBeenCalledWith(
-        categoryId,
+        mockCategoryId,
       );
       expect(result).toEqual(mockCategoryResponse);
     });
 
     it('should throw NotFoundException when category to remove is not found', async () => {
-      const categoryId = '507f1f77bcf86cd799439011';
-
       mockCategoryModel.findByIdAndDelete.mockResolvedValue(null);
 
-      await expect(service.remove(categoryId)).rejects.toThrow(
-        new NotFoundException('Category not found'),
+      await expect(service.remove(mockCategoryId)).rejects.toThrow(
+        new NotFoundException({ code: ErrorCode.CATEGORY_NOT_FOUND }),
       );
 
       expect(mockCategoryModel.findByIdAndDelete).toHaveBeenCalledWith(
-        categoryId,
+        mockCategoryId,
       );
     });
 
     it('should handle removal errors', async () => {
-      const categoryId = '507f1f77bcf86cd799439011';
-
       const error = new Error('Database error');
       mockCategoryModel.findByIdAndDelete.mockRejectedValue(error);
 
-      await expect(service.remove(categoryId)).rejects.toThrow(error);
+      await expect(service.remove(mockCategoryId)).rejects.toThrow(error);
     });
   });
 });

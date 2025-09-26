@@ -14,9 +14,9 @@ export class CreateMakeupBagDto {
 
   @IsArray()
   @IsMongoId({ each: true })
-  stageIds: string[];
+  stageIds: Types.ObjectId[];
 
   @IsArray()
   @IsMongoId({ each: true })
-  toolIds: string[];
+  toolIds: Types.ObjectId[];
 }

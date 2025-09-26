@@ -33,7 +33,7 @@ export class CreateLessonDto {
   @IsArray()
   @IsMongoId({ each: true })
   @Type(() => String)
-  productIds?: string[];
+  productIds?: Types.ObjectId[];
 
   @IsOptional()
   @IsArray()

@@ -18,17 +18,21 @@ describe('MakeupBagsService', () => {
 
   const mockCategoryId = new Types.ObjectId();
   const mockClientId = new Types.ObjectId();
+  const mockMakeupBagId = new Types.ObjectId();
+  const mockBadMakeupBagId = new Types.ObjectId();
+  const mockStageId = new Types.ObjectId();
+  const mockToolId = new Types.ObjectId();
 
   const mockMakeupBag = TestDataFactory.createMakeupBag(
     mockCategoryId,
     mockClientId,
-    ['stage-id'],
-    ['tool-id'],
+    [mockStageId],
+    [mockToolId],
   );
 
   const mockMakeupBagResponse = {
     ...mockMakeupBag,
-    id: 'makeupbag-id',
+    id: mockMakeupBagId,
   };
 
   beforeEach(async () => {
@@ -98,7 +102,7 @@ describe('MakeupBagsService', () => {
         populate: jest.fn().mockResolvedValue(mockMakeupBagResponse),
       });
 
-      const result = await service.findOne('makeupbag-id');
+      const result = await service.findOne(mockMakeupBagId);
       expect(result).toEqual(mockMakeupBagResponse);
     });
 
@@ -107,7 +111,7 @@ describe('MakeupBagsService', () => {
         populate: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findOne('bad-id')).rejects.toThrow(
+      await expect(service.findOne(mockBadMakeupBagId)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -119,7 +123,7 @@ describe('MakeupBagsService', () => {
         select: jest.fn().mockResolvedValue(mockMakeupBagResponse),
       });
 
-      const result = await service.findOneWithClientId('makeupbag-id');
+      const result = await service.findOneWithClientId(mockMakeupBagId);
       expect(result).toEqual(mockMakeupBagResponse);
     });
 
@@ -128,9 +132,9 @@ describe('MakeupBagsService', () => {
         select: jest.fn().mockResolvedValue(null),
       });
 
-      await expect(service.findOneWithClientId('bad-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findOneWithClientId(mockBadMakeupBagId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -142,7 +146,7 @@ describe('MakeupBagsService', () => {
         }),
       });
 
-      const result = await service.findByClientId('client-id');
+      const result = await service.findByClientId(mockClientId);
       expect(result).toEqual([mockMakeupBagResponse]);
     });
   });
@@ -153,11 +157,11 @@ describe('MakeupBagsService', () => {
         mockMakeupBagResponse,
       );
 
-      const dto: UpdateMakeupBagDto = { stageIds: ['new-stage'] };
-      const result = await service.update('makeupbag-id', dto);
+      const dto: UpdateMakeupBagDto = { stageIds: [mockStageId] };
+      const result = await service.update(mockMakeupBagId, dto);
 
       expect(mockMakeupBagModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        'makeupbag-id',
+        mockMakeupBagId,
         dto,
         { new: true, runValidators: true },
       );
@@ -169,9 +173,9 @@ describe('MakeupBagsService', () => {
         null,
       );
 
-      await expect(service.update('bad-id', {} as any)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.update(mockBadMakeupBagId, {} as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -181,7 +185,7 @@ describe('MakeupBagsService', () => {
         mockMakeupBagResponse,
       );
 
-      const result = await service.remove('makeupbag-id');
+      const result = await service.remove(mockMakeupBagId);
       expect(result).toEqual(mockMakeupBagResponse);
     });
 
@@ -190,7 +194,9 @@ describe('MakeupBagsService', () => {
         null,
       );
 
-      await expect(service.remove('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockBadMakeupBagId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

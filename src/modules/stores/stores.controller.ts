@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateStoreDto } from './dto/create-store.dto';
@@ -41,7 +41,7 @@ export class StoresController {
 
   @Put(':id')
   @Roles('admin')
-  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateStoreDto) {
+  async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateStoreDto) {
     const store = await this.storesService.update(params.id, dto);
 
     return {
@@ -52,7 +52,7 @@ export class StoresController {
 
   @Delete(':id')
   @Roles('admin')
-  async remove(@Param() params: MongoIdParamDto) {
+  async remove(@Param() params: ObjectIdParamDto) {
     const store = await this.storesService.remove(params.id);
 
     return {

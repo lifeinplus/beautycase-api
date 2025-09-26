@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 
-import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { BrandsController } from './brands.controller';
 import { BrandsService } from './brands.service';
@@ -11,10 +12,12 @@ describe('BrandsController', () => {
   let service: BrandsService;
 
   const mockBrand = TestDataFactory.createBrand();
+  const mockBrandId = new Types.ObjectId();
+  const mockInvalidBrandId = new Types.ObjectId();
 
   const mockBrandResponse = {
     ...mockBrand,
-    id: '507f1f77bcf86cd799439011',
+    id: mockBrandId,
   };
 
   const mockBrandsService = {
@@ -99,7 +102,7 @@ describe('BrandsController', () => {
 
   describe('update', () => {
     it('should update a brand successfully', async () => {
-      const params: MongoIdParamDto = { id: mockBrandResponse.id };
+      const params: ObjectIdParamDto = { id: mockBrandResponse.id };
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
@@ -117,7 +120,7 @@ describe('BrandsController', () => {
     });
 
     it('should handle service errors during update', async () => {
-      const params: MongoIdParamDto = { id: mockBrandResponse.id };
+      const params: ObjectIdParamDto = { id: mockBrandResponse.id };
       const dto: UpdateBrandDto = {
         name: 'Updated Brand',
       };
@@ -130,7 +133,7 @@ describe('BrandsController', () => {
     });
 
     it('should handle partial updates', async () => {
-      const params: MongoIdParamDto = { id: mockBrandResponse.id };
+      const params: ObjectIdParamDto = { id: mockBrandResponse.id };
       const dto: UpdateBrandDto = {
         name: 'Updated Brand Only',
       };
@@ -150,7 +153,7 @@ describe('BrandsController', () => {
 
   describe('remove', () => {
     it('should delete a brand successfully', async () => {
-      const params: MongoIdParamDto = { id: mockBrandResponse.id };
+      const params: ObjectIdParamDto = { id: mockBrandResponse.id };
       mockBrandsService.remove.mockResolvedValue(mockBrandResponse);
 
       const result = await controller.remove(params);
@@ -163,7 +166,7 @@ describe('BrandsController', () => {
     });
 
     it('should handle service errors during deletion', async () => {
-      const params: MongoIdParamDto = { id: mockBrandResponse.id };
+      const params: ObjectIdParamDto = { id: mockBrandResponse.id };
       const error = new Error('Brand not found');
       mockBrandsService.remove.mockRejectedValue(error);
 
@@ -172,7 +175,7 @@ describe('BrandsController', () => {
     });
 
     it('should handle invalid MongoDB ObjectId', async () => {
-      const params: MongoIdParamDto = { id: 'invalid-id' };
+      const params: ObjectIdParamDto = { id: mockInvalidBrandId };
       const error = new Error('Invalid ObjectId');
       mockBrandsService.remove.mockRejectedValue(error);
 

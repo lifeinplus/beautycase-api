@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { Types } from 'mongoose';
+import { ErrorCode } from 'src/common/enums/error-code.enum';
 import type { UserRequest } from 'src/common/types/user-request.interface';
 import { LessonsService } from '../lessons.service';
 
@@ -23,14 +25,16 @@ export class LessonAccessGuard implements CanActivate {
     }
 
     if (role === 'client') {
-      const lesson = await this.lessonsService.findOneWithClientId(id);
+      const lesson = await this.lessonsService.findOneWithClientId(
+        new Types.ObjectId(id),
+      );
 
       if (
         !lesson ||
         !userId ||
         !lesson.clientIds?.some((id) => id.toString() === userId)
       ) {
-        throw new NotFoundException('Lesson not found');
+        throw new NotFoundException({ code: ErrorCode.LESSONS_NOT_FOUND });
       }
     }
 

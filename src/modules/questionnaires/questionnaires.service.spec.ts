@@ -1,6 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { NotFoundException } from '@nestjs/common';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
@@ -19,10 +19,12 @@ describe('QuestionnairesService', () => {
   let imageService: jest.Mocked<ImageService>;
 
   const mockQuestionnaire = TestDataFactory.createQuestionnaire();
+  const mockQuestionnaireId = new Types.ObjectId();
+  const mockInvalidQuestionnaireId = new Types.ObjectId();
 
   const mockQuestionnaireResponse = {
     ...mockQuestionnaire,
-    _id: 'questionnaire-id',
+    _id: mockQuestionnaireId,
     save: jest.fn(),
   };
 
@@ -106,14 +108,14 @@ describe('QuestionnairesService', () => {
         mockQuestionnaireResponse,
       );
 
-      const result = await service.findOne('questionnaire-id');
+      const result = await service.findOne(mockQuestionnaireId);
       expect(result).toEqual(mockQuestionnaireResponse);
     });
 
     it('should throw NotFoundException if questionnaire not found', async () => {
       (mockQuestionnaireModel.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
+      await expect(service.findOne(mockInvalidQuestionnaireId)).rejects.toThrow(
         NotFoundException,
       );
     });

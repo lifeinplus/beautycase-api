@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection } from 'mongoose';
+import { Connection, Types } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
@@ -31,7 +31,7 @@ describe('Products (e2e)', () => {
   let tokens: AuthTokens;
   let brandResources: BrandResources;
   let categoryResources: CategoryResources;
-  let productId: string;
+  let productId: Types.ObjectId;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -648,6 +648,28 @@ describe('Products (e2e)', () => {
         .delete('/products/invalid-id')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 if product is used in lessons', async () => {
+      await ResourceHelper.createLesson(app, tokens.adminToken, [productId]);
+
+      const response = await request(app.getHttpServer())
+        .delete(`/products/${productId}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.code).toBe('PRODUCT_IN_USE');
+    });
+
+    it('should return 400 if product is used in stages', async () => {
+      await ResourceHelper.createStage(app, tokens.adminToken, [productId]);
+
+      const response = await request(app.getHttpServer())
+        .delete(`/products/${productId}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .expect(HttpStatus.BAD_REQUEST);
+
+      expect(response.body.code).toBe('PRODUCT_IN_USE');
     });
   });
 

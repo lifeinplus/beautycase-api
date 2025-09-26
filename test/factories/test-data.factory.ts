@@ -92,7 +92,7 @@ export class TestDataFactory {
   }
 
   static createLesson(
-    productIds: string[] = [],
+    productIds: Types.ObjectId[] = [],
     clientIds: Types.ObjectId[] = [],
     overrides: Partial<TestLesson> = {},
   ): TestLesson {
@@ -109,7 +109,7 @@ export class TestDataFactory {
 
   static createMultipleLessons(
     count: number,
-    productIds: string[] = [],
+    productIds: Types.ObjectId[] = [],
     clientIds: Types.ObjectId[] = [],
   ): TestLesson[] {
     return Array.from({ length: count }, (_, index) =>
@@ -122,8 +122,8 @@ export class TestDataFactory {
   static createMakeupBag(
     categoryId: Types.ObjectId,
     clientId: Types.ObjectId,
-    stageIds: string[] = [],
-    toolIds: string[] = [],
+    stageIds: Types.ObjectId[] = [],
+    toolIds: Types.ObjectId[] = [],
     overrides: Partial<TestMakeupBag> = {},
   ): TestMakeupBag {
     return {
@@ -215,7 +215,7 @@ export class TestDataFactory {
   }
 
   static createStage(
-    productIds: string[] = [],
+    productIds: Types.ObjectId[] = [],
     overrides: Partial<TestStage> = {},
   ): TestStage {
     return {
@@ -229,7 +229,7 @@ export class TestDataFactory {
 
   static createMultipleStages(
     count: number,
-    productIds: string[],
+    productIds: Types.ObjectId[],
   ): TestStage[] {
     return Array.from({ length: count }, (_, index) =>
       this.createStage(productIds, {
