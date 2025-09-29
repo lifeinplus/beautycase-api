@@ -5,6 +5,7 @@ import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateQuestionnaireDto } from './dto/create-questionnaire.dto';
+import { CreateTrainingDto } from './dto/create-training.dto';
 import { QuestionnairesService } from './questionnaires.service';
 
 @Controller('questionnaires')
@@ -21,11 +22,35 @@ export class QuestionnairesController {
     };
   }
 
+  @Post('training')
+  async createTraining(@Body() dto: CreateTrainingDto) {
+    const training = await this.questionnairesService.createTraining(dto);
+
+    return {
+      id: training.id,
+      message: 'Training questionnaire created successfully',
+    };
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'mua')
   findAll() {
     return this.questionnairesService.findAll();
+  }
+
+  @Get('trainings')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'mua')
+  findAllTrainings() {
+    return this.questionnairesService.findAllTrainings();
+  }
+
+  @Get('trainings/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'mua')
+  findOneTraining(@Param() params: ObjectIdParamDto) {
+    return this.questionnairesService.findOneTraining(params.id);
   }
 
   @Get(':id')

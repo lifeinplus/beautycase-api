@@ -8,11 +8,13 @@ import {
   Questionnaire,
   QuestionnaireSchema,
 } from './schemas/questionnaire.schema';
+import { Training, TrainingSchema } from './schemas/training.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Questionnaire.name, schema: QuestionnaireSchema },
+      { name: Training.name, schema: TrainingSchema },
     ]),
     SharedModule,
   ],

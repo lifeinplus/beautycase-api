@@ -6,16 +6,20 @@ import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateQuestionnaireDto } from './dto/create-questionnaire.dto';
+import { CreateTrainingDto } from './dto/create-training.dto';
 import {
   Questionnaire,
   QuestionnaireDocument,
 } from './schemas/questionnaire.schema';
+import { Training, TrainingDocument } from './schemas/training.schema';
 
 @Injectable()
 export class QuestionnairesService {
   constructor(
     @InjectModel(Questionnaire.name)
     private readonly questionnaireModel: Model<QuestionnaireDocument>,
+    @InjectModel(Training.name)
+    private readonly trainingModel: Model<TrainingDocument>,
     private readonly imageService: ImageService,
   ) {}
 
@@ -45,6 +49,11 @@ export class QuestionnairesService {
     return questionnaire.save();
   }
 
+  async createTraining(dto: CreateTrainingDto) {
+    const training = new this.trainingModel(dto);
+    return training.save();
+  }
+
   async findAll() {
     const questionnaires = await this.questionnaireModel.find();
 
@@ -63,5 +72,25 @@ export class QuestionnairesService {
     }
 
     return questionnaire;
+  }
+
+  async findAllTrainings(): Promise<TrainingDocument[]> {
+    const trainings = await this.trainingModel.find();
+
+    if (!trainings.length) {
+      throw new NotFoundException({ code: ErrorCode.TRAININGS_NOT_FOUND });
+    }
+
+    return trainings;
+  }
+
+  async findOneTraining(id: Types.ObjectId) {
+    const training = await this.trainingModel.findById(id);
+
+    if (!training) {
+      throw new NotFoundException({ code: ErrorCode.TRAINING_NOT_FOUND });
+    }
+
+    return training;
   }
 }
