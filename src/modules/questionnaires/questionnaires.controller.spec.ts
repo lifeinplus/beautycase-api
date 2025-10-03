@@ -49,9 +49,9 @@ describe('QuestionnairesController', () => {
         mockQuestionnaireResponse,
       );
 
-      const result = await controller.create(mockQuestionnaire);
+      const result = await controller.createMakeupBag(mockQuestionnaire);
 
-      expect(service.create).toHaveBeenCalledWith(mockQuestionnaire);
+      expect(service.createMakeupBag).toHaveBeenCalledWith(mockQuestionnaire);
       expect(result).toEqual({
         id: mockQuestionnaireResponse.id,
         message: 'Questionnaire created successfully',
@@ -65,9 +65,9 @@ describe('QuestionnairesController', () => {
         mockQuestionnaireResponse,
       ]);
 
-      const result = await controller.findAll();
+      const result = await controller.findAllMakeupBags();
 
-      expect(service.findAll).toHaveBeenCalled();
+      expect(service.findAllMakeupBags).toHaveBeenCalled();
       expect(result).toEqual([mockQuestionnaireResponse]);
     });
   });
@@ -78,9 +78,13 @@ describe('QuestionnairesController', () => {
         mockQuestionnaireResponse,
       );
 
-      const result = await controller.findOne({ id: mockQuestionnaireId });
+      const result = await controller.findOneMakeupBag({
+        id: mockQuestionnaireId,
+      });
 
-      expect(service.findOne).toHaveBeenCalledWith(mockQuestionnaireId);
+      expect(service.findOneMakeupBag).toHaveBeenCalledWith(
+        mockQuestionnaireId,
+      );
       expect(result).toEqual(mockQuestionnaireResponse);
     });
 
@@ -90,7 +94,7 @@ describe('QuestionnairesController', () => {
       );
 
       await expect(
-        controller.findOne({ id: mockBadQuestionnaireId }),
+        controller.findOneMakeupBag({ id: mockBadQuestionnaireId }),
       ).rejects.toThrow(NotFoundException);
     });
   });

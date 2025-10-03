@@ -7,7 +7,7 @@ import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { ImageService } from '../shared/image.service';
 import { QuestionnairesService } from './questionnaires.service';
-import { Questionnaire } from './schemas/questionnaire.schema';
+import { MakeupBagQuestionnaire } from './schemas/makeup-bag-questionnaire.schema';
 
 type MockModel<T = any> = Partial<Record<keyof Model<T>, jest.Mock>> & {
   new (doc?: any): { save: jest.Mock };
@@ -47,7 +47,7 @@ describe('QuestionnairesService', () => {
       providers: [
         QuestionnairesService,
         {
-          provide: getModelToken(Questionnaire.name),
+          provide: getModelToken(MakeupBagQuestionnaire.name),
           useValue: mockQuestionnaireModel,
         },
         { provide: ImageService, useValue: imageService },
@@ -59,7 +59,7 @@ describe('QuestionnairesService', () => {
 
   describe('create', () => {
     it('should create a questionnaire without image upload', async () => {
-      const result = await service.create({
+      const result = await service.createMakeupBag({
         ...mockQuestionnaire,
         makeupBagPhotoUrl: undefined,
       });
@@ -69,7 +69,7 @@ describe('QuestionnairesService', () => {
     });
 
     it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
-      await service.create(mockQuestionnaire as any);
+      await service.createMakeupBag(mockQuestionnaire as any);
 
       expect(imageService.handleImageUpload).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -91,14 +91,16 @@ describe('QuestionnairesService', () => {
         mockQuestionnaireResponse,
       ]);
 
-      const result = await service.findAll();
+      const result = await service.findAllMakeupBags();
       expect(result).toEqual([mockQuestionnaireResponse]);
     });
 
     it('should throw NotFoundException if no questionnaires found', async () => {
       (mockQuestionnaireModel.find as jest.Mock).mockResolvedValue([]);
 
-      await expect(service.findAll()).rejects.toThrow(NotFoundException);
+      await expect(service.findAllMakeupBags()).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -108,16 +110,16 @@ describe('QuestionnairesService', () => {
         mockQuestionnaireResponse,
       );
 
-      const result = await service.findOne(mockQuestionnaireId);
+      const result = await service.findOneMakeupBag(mockQuestionnaireId);
       expect(result).toEqual(mockQuestionnaireResponse);
     });
 
     it('should throw NotFoundException if questionnaire not found', async () => {
       (mockQuestionnaireModel.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.findOne(mockInvalidQuestionnaireId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findOneMakeupBag(mockInvalidQuestionnaireId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

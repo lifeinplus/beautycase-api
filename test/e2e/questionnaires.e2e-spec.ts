@@ -10,9 +10,9 @@ import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
-import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-questionnaire.dto';
+import { CreateMakeupBagQuestionnaireDto } from 'src/modules/questionnaires/dto/create-makeup-bag-questionnaire.dto';
 import { QuestionnairesModule } from 'src/modules/questionnaires/questionnaires.module';
-import { Questionnaire } from 'src/modules/questionnaires/schemas/questionnaire.schema';
+import { MakeupBagQuestionnaire } from 'src/modules/questionnaires/schemas/makeup-bag-questionnaire.schema';
 import { UsersModule } from 'src/modules/users/users.module';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
@@ -334,15 +334,15 @@ describe('Questionnaires (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
-      expect(response.body.map((q: Questionnaire) => q.name)).toContain(
-        'Jane Doe',
-      );
-      expect(response.body.map((q: Questionnaire) => q.name)).toContain(
-        'User 2',
-      );
-      expect(response.body.map((q: Questionnaire) => q.name)).toContain(
-        'User 3',
-      );
+      expect(
+        response.body.map((q: MakeupBagQuestionnaire) => q.name),
+      ).toContain('Jane Doe');
+      expect(
+        response.body.map((q: MakeupBagQuestionnaire) => q.name),
+      ).toContain('User 2');
+      expect(
+        response.body.map((q: MakeupBagQuestionnaire) => q.name),
+      ).toContain('User 3');
     });
   });
 
@@ -458,7 +458,7 @@ describe('Questionnaires (e2e)', () => {
     });
 
     it('should handle multiple questionnaires correctly', async () => {
-      const questionnaires: CreateQuestionnaireDto[] = [
+      const questionnaires: CreateMakeupBagQuestionnaireDto[] = [
         { name: 'User A', makeupBag: 'Bag A', age: 20 },
         { name: 'User B', makeupBag: 'Bag B', age: 25 },
         { name: 'User C', makeupBag: 'Bag C', age: 30 },
@@ -482,7 +482,9 @@ describe('Questionnaires (e2e)', () => {
 
       expect(getAllResponse.body).toHaveLength(3);
 
-      const names = getAllResponse.body.map((q: Questionnaire) => q.name);
+      const names = getAllResponse.body.map(
+        (q: MakeupBagQuestionnaire) => q.name,
+      );
       expect(names).toContain('User A');
       expect(names).toContain('User B');
       expect(names).toContain('User C');
@@ -496,7 +498,7 @@ describe('Questionnaires (e2e)', () => {
     });
 
     it('should properly validate enum fields', async () => {
-      const validEnumValues: CreateQuestionnaireDto = {
+      const validEnumValues: CreateMakeupBagQuestionnaireDto = {
         name: 'Enum Test User',
         makeupBag: 'Test bag',
         budget: Budget.MEDIUM,

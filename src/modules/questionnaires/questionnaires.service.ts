@@ -5,32 +5,37 @@ import { Model, Types } from 'mongoose';
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
-import { CreateQuestionnaireDto } from './dto/create-questionnaire.dto';
-import { CreateTrainingDto } from './dto/create-training.dto';
+import { CreateMakeupBagQuestionnaireDto } from './dto/create-makeup-bag-questionnaire.dto';
+import { CreateTrainingQuestionnaireDto } from './dto/create-training-questionnaire.dto';
 import {
-  Questionnaire,
-  QuestionnaireDocument,
-} from './schemas/questionnaire.schema';
-import { Training, TrainingDocument } from './schemas/training.schema';
+  MakeupBagQuestionnaire,
+  MakeupBagQuestionnaireDocument,
+} from './schemas/makeup-bag-questionnaire.schema';
+import {
+  TrainingQuestionnaire,
+  TrainingQuestionnaireDocument,
+} from './schemas/training-questionnaire.schema';
 
 @Injectable()
 export class QuestionnairesService {
   constructor(
-    @InjectModel(Questionnaire.name)
-    private readonly questionnaireModel: Model<QuestionnaireDocument>,
-    @InjectModel(Training.name)
-    private readonly trainingModel: Model<TrainingDocument>,
+    @InjectModel(MakeupBagQuestionnaire.name)
+    private readonly makeupBagQuestionnaireModel: Model<MakeupBagQuestionnaireDocument>,
+    @InjectModel(TrainingQuestionnaire.name)
+    private readonly trainingQuestionnaireModel: Model<TrainingQuestionnaireDocument>,
     private readonly imageService: ImageService,
   ) {}
 
-  private createImageAdapter = (questionnaire: QuestionnaireDocument) => ({
+  private createImageAdapter = (
+    questionnaire: MakeupBagQuestionnaireDocument,
+  ) => ({
     ...questionnaire,
     imageId: questionnaire.makeupBagPhotoId,
     imageUrl: questionnaire.makeupBagPhotoUrl || '',
   });
 
-  async create(dto: CreateQuestionnaireDto) {
-    const questionnaire = new this.questionnaireModel(dto);
+  async createMakeupBag(dto: CreateMakeupBagQuestionnaireDto) {
+    const questionnaire = new this.makeupBagQuestionnaireModel(dto);
     const { makeupBagPhotoUrl } = dto;
 
     if (makeupBagPhotoUrl) {
@@ -49,13 +54,14 @@ export class QuestionnairesService {
     return questionnaire.save();
   }
 
-  async createTraining(dto: CreateTrainingDto) {
-    const training = new this.trainingModel(dto);
-    return training.save();
+  createTraining(
+    dto: CreateTrainingQuestionnaireDto,
+  ): Promise<TrainingQuestionnaireDocument> {
+    return this.trainingQuestionnaireModel.create(dto);
   }
 
-  async findAll() {
-    const questionnaires = await this.questionnaireModel.find();
+  async findAllMakeupBags() {
+    const questionnaires = await this.makeupBagQuestionnaireModel.find();
 
     if (!questionnaires.length) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
@@ -64,8 +70,18 @@ export class QuestionnairesService {
     return questionnaires;
   }
 
-  async findOne(id: Types.ObjectId) {
-    const questionnaire = await this.questionnaireModel.findById(id);
+  async findAllTrainings(): Promise<TrainingQuestionnaireDocument[]> {
+    const questionnaires = await this.trainingQuestionnaireModel.find();
+
+    if (!questionnaires.length) {
+      throw new NotFoundException({ code: ErrorCode.TRAININGS_NOT_FOUND });
+    }
+
+    return questionnaires;
+  }
+
+  async findOneMakeupBag(id: Types.ObjectId) {
+    const questionnaire = await this.makeupBagQuestionnaireModel.findById(id);
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
@@ -74,23 +90,13 @@ export class QuestionnairesService {
     return questionnaire;
   }
 
-  async findAllTrainings(): Promise<TrainingDocument[]> {
-    const trainings = await this.trainingModel.find();
-
-    if (!trainings.length) {
-      throw new NotFoundException({ code: ErrorCode.TRAININGS_NOT_FOUND });
-    }
-
-    return trainings;
-  }
-
   async findOneTraining(id: Types.ObjectId) {
-    const training = await this.trainingModel.findById(id);
+    const questionnaire = await this.trainingQuestionnaireModel.findById(id);
 
-    if (!training) {
+    if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.TRAINING_NOT_FOUND });
     }
 
-    return training;
+    return questionnaire;
   }
 }

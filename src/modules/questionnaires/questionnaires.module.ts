@@ -5,16 +5,22 @@ import { SharedModule } from '../shared/shared.module';
 import { QuestionnairesController } from './questionnaires.controller';
 import { QuestionnairesService } from './questionnaires.service';
 import {
-  Questionnaire,
-  QuestionnaireSchema,
-} from './schemas/questionnaire.schema';
-import { Training, TrainingSchema } from './schemas/training.schema';
+  MakeupBagQuestionnaire,
+  MakeupBagQuestionnaireSchema,
+} from './schemas/makeup-bag-questionnaire.schema';
+import {
+  TrainingQuestionnaire,
+  TrainingQuestionnaireSchema,
+} from './schemas/training-questionnaire.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Questionnaire.name, schema: QuestionnaireSchema },
-      { name: Training.name, schema: TrainingSchema },
+      {
+        name: MakeupBagQuestionnaire.name,
+        schema: MakeupBagQuestionnaireSchema,
+      },
+      { name: TrainingQuestionnaire.name, schema: TrainingQuestionnaireSchema },
     ]),
     SharedModule,
   ],
