@@ -51,10 +51,7 @@ describe('StagesController', () => {
       const result = await controller.create(mockStage);
 
       expect(mockStagesService.create).toHaveBeenCalledWith(mockStage);
-      expect(result).toEqual({
-        id: mockStageId,
-        message: 'Stage created successfully',
-      });
+      expect(result).toEqual({ id: mockStageId });
     });
   });
 
@@ -66,10 +63,7 @@ describe('StagesController', () => {
       const result = await controller.duplicate(params);
 
       expect(mockStagesService.duplicate).toHaveBeenCalledWith(mockStageId);
-      expect(result).toEqual({
-        id: mockStageId,
-        message: 'Stage duplicated successfully',
-      });
+      expect(result).toEqual({ id: mockStageId });
     });
   });
 
@@ -114,10 +108,7 @@ describe('StagesController', () => {
       const result = await controller.update(params, dto);
 
       expect(mockStagesService.update).toHaveBeenCalledWith(mockStageId, dto);
-      expect(result).toEqual({
-        id: mockStageId,
-        message: 'Stage updated successfully',
-      });
+      expect(result).toEqual({ id: mockStageId });
     });
   });
 
@@ -134,10 +125,7 @@ describe('StagesController', () => {
         mockStageId,
         dto,
       );
-      expect(result).toEqual({
-        id: mockStageId,
-        message: 'Stage products updated successfully',
-      });
+      expect(result).toEqual({ id: mockStageId });
     });
   });
 
@@ -149,10 +137,7 @@ describe('StagesController', () => {
       const result = await controller.remove(params);
 
       expect(mockStagesService.remove).toHaveBeenCalledWith(mockStageId);
-      expect(result).toEqual({
-        id: mockStageId,
-        message: 'Stage deleted successfully',
-      });
+      expect(result).toEqual({ id: mockStageId });
     });
   });
 });

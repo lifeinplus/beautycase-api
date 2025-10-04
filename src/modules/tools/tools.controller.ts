@@ -30,11 +30,7 @@ export class ToolsController {
   @Post()
   async create(@Body() dto: CreateToolDto) {
     const tool = await this.toolsService.create(dto);
-
-    return {
-      id: tool.id,
-      message: 'Tool created successfully',
-    };
+    return { id: tool.id };
   }
 
   @Get()
@@ -51,11 +47,7 @@ export class ToolsController {
   @Put(':id')
   async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateToolDto) {
     const tool = await this.toolsService.update(params.id, dto);
-
-    return {
-      id: tool.id,
-      message: 'Tool updated successfully',
-    };
+    return { id: tool.id };
   }
 
   @Patch(':id/store-links')
@@ -64,21 +56,13 @@ export class ToolsController {
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const tool = await this.toolsService.updateStoreLinks(params.id, dto);
-
-    return {
-      id: tool.id,
-      message: 'Tool store links updated successfully',
-    };
+    return { id: tool.id };
   }
 
   @Delete(':id')
   @UseInterceptors(ToolDeletionInterceptor)
   async remove(@Param() params: ObjectIdParamDto) {
     const tool = await this.toolsService.remove(params.id);
-
-    return {
-      id: tool.id,
-      message: 'Tool deleted successfully',
-    };
+    return { id: tool.id };
   }
 }

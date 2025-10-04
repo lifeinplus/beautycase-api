@@ -30,11 +30,7 @@ export class LessonsController {
   @Roles('admin', 'mua')
   async create(@Body() dto: CreateLessonDto) {
     const lesson = await this.lessonsService.create(dto);
-
-    return {
-      id: lesson.id,
-      message: 'Lesson created successfully',
-    };
+    return { id: lesson.id };
   }
 
   @Get()
@@ -56,11 +52,7 @@ export class LessonsController {
     @Body() dto: UpdateLessonDto,
   ) {
     const lesson = await this.lessonsService.update(params.id, dto);
-
-    return {
-      id: lesson.id,
-      message: 'Lesson updated successfully',
-    };
+    return { id: lesson.id };
   }
 
   @Patch(':id/products')
@@ -71,11 +63,7 @@ export class LessonsController {
     @Body() dto: UpdateLessonProductsDto,
   ) {
     const lesson = await this.lessonsService.updateProducts(params.id, dto);
-
-    return {
-      id: lesson.id,
-      message: 'Lesson products updated successfully',
-    };
+    return { id: lesson.id };
   }
 
   @Delete(':id')
@@ -83,10 +71,6 @@ export class LessonsController {
   @Roles('admin', 'mua')
   async remove(@Param() params: ObjectIdParamDto) {
     const lesson = await this.lessonsService.remove(params.id);
-
-    return {
-      id: lesson.id,
-      message: 'Lesson deleted successfully',
-    };
+    return { id: lesson.id };
   }
 }

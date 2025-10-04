@@ -28,11 +28,7 @@ export class MakeupBagsController {
   @Roles('admin', 'mua')
   async create(@Body() dto: CreateMakeupBagDto) {
     const makeupBag = await this.makeupBagsService.create(dto);
-
-    return {
-      id: makeupBag.id,
-      message: 'MakeupBag created successfully',
-    };
+    return { id: makeupBag.id };
   }
 
   @Get()
@@ -56,11 +52,7 @@ export class MakeupBagsController {
     @Body() dto: UpdateMakeupBagDto,
   ) {
     const makeupBag = await this.makeupBagsService.update(params.id, dto);
-
-    return {
-      id: makeupBag.id,
-      message: 'MakeupBag updated successfully',
-    };
+    return { id: makeupBag.id };
   }
 
   @Delete(':id')
@@ -68,10 +60,6 @@ export class MakeupBagsController {
   @Roles('admin', 'mua')
   async remove(@Param() params: ObjectIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);
-
-    return {
-      id: makeupBag.id,
-      message: 'MakeupBag deleted successfully',
-    };
+    return { id: makeupBag.id };
   }
 }

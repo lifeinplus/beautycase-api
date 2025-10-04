@@ -68,10 +68,7 @@ describe('ProductsController', () => {
       const result = await controller.create(mockProduct);
 
       expect(mockProductsService.create).toHaveBeenCalledWith(mockProduct);
-      expect(result).toEqual({
-        id: mockProductId,
-        message: 'Product created successfully',
-      });
+      expect(result).toEqual({ id: mockProductId });
     });
   });
 
@@ -141,10 +138,7 @@ describe('ProductsController', () => {
         mockProductId,
         dto,
       );
-      expect(result).toEqual({
-        id: mockProductId,
-        message: 'Product updated successfully',
-      });
+      expect(result).toEqual({ id: mockProductId });
     });
   });
 
@@ -163,10 +157,7 @@ describe('ProductsController', () => {
         mockProductId,
         dto,
       );
-      expect(result).toEqual({
-        id: mockProductId,
-        message: 'Product store links updated successfully',
-      });
+      expect(result).toEqual({ id: mockProductId });
     });
   });
 
@@ -178,10 +169,7 @@ describe('ProductsController', () => {
       const result = await controller.remove(params);
 
       expect(mockProductsService.remove).toHaveBeenCalledWith(mockProductId);
-      expect(result).toEqual({
-        id: mockProductId,
-        message: 'Product deleted successfully',
-      });
+      expect(result).toEqual({ id: mockProductId });
     });
   });
 });

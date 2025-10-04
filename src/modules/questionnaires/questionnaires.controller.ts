@@ -15,21 +15,13 @@ export class QuestionnairesController {
   @Post('makeup-bags')
   async createMakeupBag(@Body() dto: CreateMakeupBagQuestionnaireDto) {
     const questionnaire = await this.questionnairesService.createMakeupBag(dto);
-
-    return {
-      id: questionnaire.id,
-      message: 'Makeup bag questionnaire created successfully',
-    };
+    return { id: questionnaire.id };
   }
 
   @Post('trainings')
   async createTraining(@Body() dto: CreateTrainingQuestionnaireDto) {
     const training = await this.questionnairesService.createTraining(dto);
-
-    return {
-      id: training.id,
-      message: 'Training questionnaire created successfully',
-    };
+    return { id: training.id };
   }
 
   @Get('makeup-bags')

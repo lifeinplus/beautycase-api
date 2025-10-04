@@ -8,6 +8,7 @@ import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
 import { CreateMakeupBagDto } from 'src/modules/makeup-bags/dto/create-makeup-bag.dto';
 import { CreateProductDto } from 'src/modules/products/dto/create-product.dto';
 import { CreateMakeupBagQuestionnaireDto } from 'src/modules/questionnaires/dto/create-makeup-bag-questionnaire.dto';
+import { CreateTrainingQuestionnaireDto } from 'src/modules/questionnaires/dto/create-training-questionnaire.dto';
 import { CreateStageDto } from 'src/modules/stages/dto/create-stage.dto';
 import { CreateStoreDto } from 'src/modules/stores/dto/create-store.dto';
 import { CreateToolDto } from 'src/modules/tools/dto/create-tool.dto';
@@ -18,7 +19,10 @@ export interface TestCategory extends CreateCategoryDto {}
 export interface TestLesson extends CreateLessonDto {}
 export interface TestMakeupBag extends CreateMakeupBagDto {}
 export interface TestProduct extends CreateProductDto {}
-export interface TestQuestionnaire extends CreateMakeupBagQuestionnaireDto {}
+export interface TestMakeupBagQuestionnaire
+  extends CreateMakeupBagQuestionnaireDto {}
+export interface TestTrainingQuestionnaire
+  extends CreateTrainingQuestionnaireDto {}
 export interface TestStage extends CreateStageDto {}
 export interface TestStore extends CreateStoreDto {}
 export interface TestTool extends CreateToolDto {}
@@ -169,9 +173,9 @@ export class TestDataFactory {
     );
   }
 
-  static createQuestionnaire(
-    overrides: Partial<TestQuestionnaire> = {},
-  ): TestQuestionnaire {
+  static createMakeupBagQuestionnaire(
+    overrides: Partial<TestMakeupBagQuestionnaire> = {},
+  ): TestMakeupBagQuestionnaire {
     return {
       name: 'Jane Doe',
       makeupBag: 'my-makeup-bag-description',
@@ -210,6 +214,19 @@ export class TestDataFactory {
       },
       referral: Referral.INSTAGRAM,
       skinType: 'Combination',
+      ...overrides,
+    };
+  }
+
+  static createTrainingQuestionnaire(
+    overrides: Partial<TestTrainingQuestionnaire> = {},
+  ): TestTrainingQuestionnaire {
+    return {
+      name: 'Jane Doe',
+      contact: 'janedoe',
+      difficulties: 'Struggling with smokey eye looks',
+      expectations: 'Learn advanced techniques',
+      experience: 'Intermediate',
       ...overrides,
     };
   }

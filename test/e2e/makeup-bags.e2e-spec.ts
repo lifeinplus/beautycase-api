@@ -94,7 +94,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('MakeupBag created successfully');
     });
 
     it('should create a makeup-bag as mua', async () => {
@@ -105,7 +104,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('MakeupBag created successfully');
     });
 
     it('should reject creation by client role', async () => {
@@ -297,7 +295,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', makeupBagId);
-      expect(response.body.message).toBe('MakeupBag updated successfully');
     });
 
     it('should update makeup-bag as mua', async () => {
@@ -308,10 +305,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', makeupBagId);
-      expect(response.body).toHaveProperty(
-        'message',
-        'MakeupBag updated successfully',
-      );
     });
 
     it('should reject update by client role', async () => {
@@ -345,8 +338,6 @@ describe('MakeupBags (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({ toolIds: [] })
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('MakeupBag updated successfully');
     });
 
     it('should validate MongoDB ObjectId format in URL', async () => {
@@ -389,7 +380,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', makeupBagId);
-      expect(response.body.message).toBe('MakeupBag deleted successfully');
 
       await request(app.getHttpServer())
         .get(`/makeup-bags/${makeupBagId}`)
@@ -404,10 +394,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', makeupBagId);
-      expect(response.body).toHaveProperty(
-        'message',
-        'MakeupBag deleted successfully',
-      );
     });
 
     it('should reject deletion by client role', async () => {
@@ -501,10 +487,6 @@ describe('MakeupBags (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty(
-        'message',
-        'MakeupBag created successfully',
-      );
     });
 
     it('should handle population of related documents', async () => {

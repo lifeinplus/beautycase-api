@@ -5,7 +5,7 @@ export type TrainingQuestionnaireDocument =
   HydratedDocument<TrainingQuestionnaire>;
 
 @Schema({
-  collection: 'questionnaires_training',
+  collection: 'questionnaires_trainings',
   timestamps: true,
   versionKey: false,
 })

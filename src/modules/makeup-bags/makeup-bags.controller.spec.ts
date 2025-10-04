@@ -61,10 +61,7 @@ describe('MakeupBagsController', () => {
       const result = await controller.create(mockMakeupBag);
 
       expect(mockMakeupBagsService.create).toHaveBeenCalledWith(mockMakeupBag);
-      expect(result).toEqual({
-        id: mockMakeupBagId,
-        message: 'MakeupBag created successfully',
-      });
+      expect(result).toEqual({ id: mockMakeupBagId });
     });
   });
 
@@ -114,10 +111,7 @@ describe('MakeupBagsController', () => {
         mockMakeupBagId,
         dto,
       );
-      expect(result).toEqual({
-        id: mockMakeupBagId,
-        message: 'MakeupBag updated successfully',
-      });
+      expect(result).toEqual({ id: mockMakeupBagId });
     });
   });
 
@@ -131,10 +125,7 @@ describe('MakeupBagsController', () => {
       expect(mockMakeupBagsService.remove).toHaveBeenCalledWith(
         mockMakeupBagId,
       );
-      expect(result).toEqual({
-        id: mockMakeupBagId,
-        message: 'MakeupBag deleted successfully',
-      });
+      expect(result).toEqual({ id: mockMakeupBagId });
     });
   });
 });

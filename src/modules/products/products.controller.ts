@@ -30,11 +30,7 @@ export class ProductsController {
   @Post()
   async create(@Body() dto: CreateProductDto) {
     const product = await this.productsService.create(dto);
-
-    return {
-      id: product.id,
-      message: 'Product created successfully',
-    };
+    return { id: product.id };
   }
 
   @Get()
@@ -59,11 +55,7 @@ export class ProductsController {
     @Body() dto: UpdateProductDto,
   ) {
     const product = await this.productsService.update(params.id, dto);
-
-    return {
-      id: product.id,
-      message: 'Product updated successfully',
-    };
+    return { id: product.id };
   }
 
   @Patch(':id/store-links')
@@ -72,21 +64,13 @@ export class ProductsController {
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const product = await this.productsService.updateStoreLinks(params.id, dto);
-
-    return {
-      id: product.id,
-      message: 'Product store links updated successfully',
-    };
+    return { id: product.id };
   }
 
   @Delete(':id')
   @UseInterceptors(ProductDeletionInterceptor)
   async remove(@Param() params: ObjectIdParamDto) {
     const product = await this.productsService.remove(params.id);
-
-    return {
-      id: product.id,
-      message: 'Product deleted successfully',
-    };
+    return { id: product.id };
   }
 }

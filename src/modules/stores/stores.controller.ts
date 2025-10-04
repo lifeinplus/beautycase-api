@@ -26,11 +26,7 @@ export class StoresController {
   @Roles('admin')
   async create(@Body() dto: CreateStoreDto) {
     const store = await this.storesService.create(dto);
-
-    return {
-      id: store.id,
-      message: 'Store created successfully',
-    };
+    return { id: store.id };
   }
 
   @Get()
@@ -43,21 +39,13 @@ export class StoresController {
   @Roles('admin')
   async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateStoreDto) {
     const store = await this.storesService.update(params.id, dto);
-
-    return {
-      id: store.id,
-      message: 'Store updated successfully',
-    };
+    return { id: store.id };
   }
 
   @Delete(':id')
   @Roles('admin')
   async remove(@Param() params: ObjectIdParamDto) {
     const store = await this.storesService.remove(params.id);
-
-    return {
-      id: store.id,
-      message: 'Store deleted successfully',
-    };
+    return { id: store.id };
   }
 }

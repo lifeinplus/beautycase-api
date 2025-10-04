@@ -68,7 +68,6 @@ describe('Categories (e2e)', () => {
           .expect(HttpStatus.CREATED);
 
         expect(response.body).toHaveProperty('id');
-        expect(response.body.message).toBe('Category created successfully');
       });
 
       it('should reject creation by mua role', async () => {
@@ -135,7 +134,6 @@ describe('Categories (e2e)', () => {
 
         expect(response.body).toHaveProperty('id');
         expect(typeof response.body.id).toBe('string');
-        expect(response.body.message).toBe('Category created successfully');
       });
     });
 

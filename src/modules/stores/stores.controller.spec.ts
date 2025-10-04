@@ -54,10 +54,7 @@ describe('StoresController', () => {
       const result = await controller.create(mockStore);
 
       expect(service.create).toHaveBeenCalledWith(mockStore);
-      expect(result).toEqual({
-        id: mockStoreResponse.id,
-        message: 'Store created successfully',
-      });
+      expect(result).toEqual({ id: mockStoreResponse.id });
     });
 
     it('should handle service errors during creation', async () => {
@@ -110,10 +107,7 @@ describe('StoresController', () => {
       const result = await controller.update(params, dto);
 
       expect(service.update).toHaveBeenCalledWith(params.id, dto);
-      expect(result).toEqual({
-        id: updatedStore.id,
-        message: 'Store updated successfully',
-      });
+      expect(result).toEqual({ id: updatedStore.id });
     });
 
     it('should handle service errors during update', async () => {
@@ -141,10 +135,7 @@ describe('StoresController', () => {
       const result = await controller.update(params, dto);
 
       expect(service.update).toHaveBeenCalledWith(params.id, dto);
-      expect(result).toEqual({
-        id: updatedStore.id,
-        message: 'Store updated successfully',
-      });
+      expect(result).toEqual({ id: updatedStore.id });
     });
   });
 
@@ -156,10 +147,7 @@ describe('StoresController', () => {
       const result = await controller.remove(params);
 
       expect(service.remove).toHaveBeenCalledWith(params.id);
-      expect(result).toEqual({
-        id: mockStoreResponse.id,
-        message: 'Store deleted successfully',
-      });
+      expect(result).toEqual({ id: mockStoreResponse.id });
     });
 
     it('should handle service errors during deletion', async () => {

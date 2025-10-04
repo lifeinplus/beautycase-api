@@ -36,7 +36,7 @@ export class Procedures {
 }
 
 @Schema({
-  collection: 'questionnaires_makeupbag',
+  collection: 'questionnaires_makeupbags',
   timestamps: true,
   versionKey: false,
 })

@@ -28,21 +28,13 @@ export class StagesController {
   @Post()
   async create(@Body() dto: CreateStageDto) {
     const stage = await this.stagesService.create(dto);
-
-    return {
-      id: stage.id,
-      message: 'Stage created successfully',
-    };
+    return { id: stage.id };
   }
 
   @Post('duplicate/:id')
   async duplicate(@Param() params: ObjectIdParamDto) {
     const stage = await this.stagesService.duplicate(params.id);
-
-    return {
-      id: stage.id,
-      message: 'Stage duplicated successfully',
-    };
+    return { id: stage.id };
   }
 
   @Get()
@@ -59,11 +51,7 @@ export class StagesController {
   @Put(':id')
   async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateStageDto) {
     const stage = await this.stagesService.update(params.id, dto);
-
-    return {
-      id: stage.id,
-      message: 'Stage updated successfully',
-    };
+    return { id: stage.id };
   }
 
   @Patch(':id/products')
@@ -72,20 +60,12 @@ export class StagesController {
     @Body() dto: UpdateStageProductsDto,
   ) {
     const stage = await this.stagesService.updateProducts(params.id, dto);
-
-    return {
-      id: stage.id,
-      message: 'Stage products updated successfully',
-    };
+    return { id: stage.id };
   }
 
   @Delete(':id')
   async remove(@Param() params: ObjectIdParamDto) {
     const stage = await this.stagesService.remove(params.id);
-
-    return {
-      id: stage.id,
-      message: 'Stage deleted successfully',
-    };
+    return { id: stage.id };
   }
 }

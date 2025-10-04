@@ -81,10 +81,7 @@ describe('Tools (e2e)', () => {
         .send(createToolDto())
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Tool created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should create a tool as mua', async () => {
@@ -94,10 +91,7 @@ describe('Tools (e2e)', () => {
         .send(createToolDto())
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Tool created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should reject creation by client role', async () => {
@@ -218,7 +212,6 @@ describe('Tools (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body.id).toBeDefined();
-      expect(response.body.message).toBe('Tool created successfully');
     });
   });
 
@@ -359,10 +352,7 @@ describe('Tools (e2e)', () => {
         .send(updateDto)
         .expect(HttpStatus.OK);
 
-      expect(putResponse.body).toMatchObject({
-        id: toolId,
-        message: 'Tool updated successfully',
-      });
+      expect(putResponse.body).toMatchObject({ id: toolId });
 
       const getResponse = await request(app.getHttpServer())
         .get(`/tools/${toolId}`)
@@ -375,13 +365,11 @@ describe('Tools (e2e)', () => {
     it('should update tool as mua', async () => {
       const updateDto = { name: 'MUA Updated Name' };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put(`/tools/${toolId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Tool updated successfully');
     });
 
     it('should reject update by client role', async () => {
@@ -441,13 +429,11 @@ describe('Tools (e2e)', () => {
         number: 'New Shade',
       };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put(`/tools/${toolId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Tool updated successfully');
     });
   });
 
@@ -482,10 +468,7 @@ describe('Tools (e2e)', () => {
         .send(newStoreLinks)
         .expect(HttpStatus.OK);
 
-      expect(patchResponse.body).toMatchObject({
-        id: toolId,
-        message: 'Tool store links updated successfully',
-      });
+      expect(patchResponse.body).toMatchObject({ id: toolId });
 
       const getResponse = await request(app.getHttpServer())
         .get(`/tools/${toolId}`)
@@ -587,10 +570,7 @@ describe('Tools (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
-      expect(response.body).toMatchObject({
-        id: toolId,
-        message: 'Tool deleted successfully',
-      });
+      expect(response.body).toMatchObject({ id: toolId });
 
       await request(app.getHttpServer())
         .get(`/tools/${toolId}`)
@@ -599,12 +579,10 @@ describe('Tools (e2e)', () => {
     });
 
     it('should delete tool as mua', async () => {
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .delete(`/tools/${toolId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Tool deleted successfully');
     });
 
     it('should reject deletion by client role', async () => {
