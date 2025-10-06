@@ -7,7 +7,8 @@ import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { ImageService } from '../shared/image.service';
 import { QuestionnairesService } from './questionnaires.service';
-import { Questionnaire } from './schemas/questionnaire.schema';
+import { MakeupBagQuestionnaire } from './schemas/makeup-bag-questionnaire.schema';
+import { TrainingQuestionnaire } from './schemas/training-questionnaire.schema';
 
 type MockModel<T = any> = Partial<Record<keyof Model<T>, jest.Mock>> & {
   new (doc?: any): { save: jest.Mock };
@@ -15,27 +16,49 @@ type MockModel<T = any> = Partial<Record<keyof Model<T>, jest.Mock>> & {
 
 describe('QuestionnairesService', () => {
   let service: QuestionnairesService;
-  let mockQuestionnaireModel: MockModel;
+  let mockMakeupBagQuestionnaireModel: MockModel;
+  let mockTrainingQuestionnaireModel: MockModel;
   let imageService: jest.Mocked<ImageService>;
 
-  const mockQuestionnaire = TestDataFactory.createQuestionnaire();
-  const mockQuestionnaireId = new Types.ObjectId();
-  const mockInvalidQuestionnaireId = new Types.ObjectId();
-
-  const mockQuestionnaireResponse = {
-    ...mockQuestionnaire,
-    _id: mockQuestionnaireId,
+  const mockMakeupBagQuestionnaire =
+    TestDataFactory.createMakeupBagQuestionnaire();
+  const mockMakeupBagQuestionnaireId = new Types.ObjectId();
+  const mockInvalidMakeupBagQuestionnaireId = new Types.ObjectId();
+  const mockMakeupBagQuestionnaireResponse = {
+    ...mockMakeupBagQuestionnaire,
+    _id: mockMakeupBagQuestionnaireId,
     save: jest.fn(),
   };
 
+  const mockTrainingQuestionnaire =
+    TestDataFactory.createTrainingQuestionnaire();
+  const mockTrainingQuestionnaireId = new Types.ObjectId();
+  const mockInvalidTrainingQuestionnaireId = new Types.ObjectId();
+  const mockTrainingQuestionnaireResponse = {
+    ...mockTrainingQuestionnaire,
+    _id: mockTrainingQuestionnaireId,
+    create: jest.fn(),
+  };
+
   beforeEach(async () => {
-    mockQuestionnaireModel = jest.fn(() => ({
-      ...mockQuestionnaireResponse,
-      save: jest.fn().mockResolvedValue(mockQuestionnaireResponse),
+    mockMakeupBagQuestionnaireModel = jest.fn(() => ({
+      ...mockMakeupBagQuestionnaireResponse,
+      save: jest.fn().mockResolvedValue(mockMakeupBagQuestionnaireResponse),
     })) as any;
 
-    mockQuestionnaireModel.find = jest.fn();
-    mockQuestionnaireModel.findById = jest.fn();
+    mockMakeupBagQuestionnaireModel.find = jest.fn();
+    mockMakeupBagQuestionnaireModel.findById = jest.fn();
+
+    mockTrainingQuestionnaireModel = jest.fn(() => ({
+      ...mockTrainingQuestionnaireResponse,
+      create: jest.fn().mockResolvedValue(mockTrainingQuestionnaireResponse),
+    })) as any;
+
+    mockTrainingQuestionnaireModel.create = jest
+      .fn()
+      .mockResolvedValue(mockTrainingQuestionnaireResponse);
+    mockTrainingQuestionnaireModel.find = jest.fn();
+    mockTrainingQuestionnaireModel.findById = jest.fn();
 
     imageService = {
       handleImageUpload: jest.fn(),
@@ -47,8 +70,12 @@ describe('QuestionnairesService', () => {
       providers: [
         QuestionnairesService,
         {
-          provide: getModelToken(Questionnaire.name),
-          useValue: mockQuestionnaireModel,
+          provide: getModelToken(MakeupBagQuestionnaire.name),
+          useValue: mockMakeupBagQuestionnaireModel,
+        },
+        {
+          provide: getModelToken(TrainingQuestionnaire.name),
+          useValue: mockTrainingQuestionnaireModel,
         },
         { provide: ImageService, useValue: imageService },
       ],
@@ -57,67 +84,130 @@ describe('QuestionnairesService', () => {
     service = module.get<QuestionnairesService>(QuestionnairesService);
   });
 
-  describe('create', () => {
-    it('should create a questionnaire without image upload', async () => {
-      const result = await service.create({
-        ...mockQuestionnaire,
-        makeupBagPhotoUrl: undefined,
+  describe('MakeupBag', () => {
+    describe('createMakeupBag', () => {
+      it('should create a questionnaire without image upload', async () => {
+        const result = await service.createMakeupBag({
+          ...mockMakeupBagQuestionnaire,
+          makeupBagPhotoUrl: undefined,
+        });
+
+        expect(imageService.handleImageUpload).not.toHaveBeenCalled();
+        expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
       });
 
-      expect(imageService.handleImageUpload).not.toHaveBeenCalled();
-      expect(result).toEqual(mockQuestionnaireResponse);
+      it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
+        await service.createMakeupBag(mockMakeupBagQuestionnaire as any);
+
+        expect(imageService.handleImageUpload).toHaveBeenCalledWith(
+          expect.objectContaining({
+            imageId: undefined,
+            imageUrl: 'https://example.com/photo.jpg',
+          }),
+          {
+            filename: 'makeup-bag',
+            folder: `${UploadFolder.QUESTIONNAIRES}/${mockMakeupBagQuestionnaireResponse._id}`,
+            secureUrl: 'https://example.com/photo.jpg',
+          },
+        );
+      });
     });
 
-    it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
-      await service.create(mockQuestionnaire as any);
+    describe('findAllMakeupBag', () => {
+      it('should return all questionnaires', async () => {
+        (mockMakeupBagQuestionnaireModel.find as jest.Mock).mockResolvedValue([
+          mockMakeupBagQuestionnaireResponse,
+        ]);
 
-      expect(imageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({
-          imageId: undefined,
-          imageUrl: 'https://example.com/photo.jpg',
-        }),
-        {
-          filename: 'makeup-bag',
-          folder: `${UploadFolder.QUESTIONNAIRES}/${mockQuestionnaireResponse._id}`,
-          secureUrl: 'https://example.com/photo.jpg',
-        },
-      );
+        const result = await service.findAllMakeupBags();
+        expect(result).toEqual([mockMakeupBagQuestionnaireResponse]);
+      });
+
+      it('should throw NotFoundException if no questionnaires found', async () => {
+        (mockMakeupBagQuestionnaireModel.find as jest.Mock).mockResolvedValue(
+          [],
+        );
+
+        await expect(service.findAllMakeupBags()).rejects.toThrow(
+          NotFoundException,
+        );
+      });
+    });
+
+    describe('findOneMakeupBag', () => {
+      it('should return a questionnaire by id', async () => {
+        (
+          mockMakeupBagQuestionnaireModel.findById as jest.Mock
+        ).mockResolvedValue(mockMakeupBagQuestionnaireResponse);
+
+        const result = await service.findOneMakeupBag(
+          mockMakeupBagQuestionnaireId,
+        );
+        expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
+      });
+
+      it('should throw NotFoundException if questionnaire not found', async () => {
+        (
+          mockMakeupBagQuestionnaireModel.findById as jest.Mock
+        ).mockResolvedValue(null);
+
+        await expect(
+          service.findOneMakeupBag(mockInvalidMakeupBagQuestionnaireId),
+        ).rejects.toThrow(NotFoundException);
+      });
     });
   });
 
-  describe('findAll', () => {
-    it('should return all questionnaires', async () => {
-      (mockQuestionnaireModel.find as jest.Mock).mockResolvedValue([
-        mockQuestionnaireResponse,
-      ]);
-
-      const result = await service.findAll();
-      expect(result).toEqual([mockQuestionnaireResponse]);
+  describe('Training', () => {
+    describe('createTraining', () => {
+      it('should create a questionnaire', async () => {
+        const result = await service.createTraining(mockTrainingQuestionnaire);
+        expect(result).toEqual(mockTrainingQuestionnaireResponse);
+      });
     });
 
-    it('should throw NotFoundException if no questionnaires found', async () => {
-      (mockQuestionnaireModel.find as jest.Mock).mockResolvedValue([]);
+    describe('findAllTraining', () => {
+      it('should return all questionnaires', async () => {
+        (mockTrainingQuestionnaireModel.find as jest.Mock).mockResolvedValue([
+          mockTrainingQuestionnaireResponse,
+        ]);
 
-      await expect(service.findAll()).rejects.toThrow(NotFoundException);
+        const result = await service.findAllTrainings();
+        expect(result).toEqual([mockTrainingQuestionnaireResponse]);
+      });
+
+      it('should throw NotFoundException if no questionnaires found', async () => {
+        (mockTrainingQuestionnaireModel.find as jest.Mock).mockResolvedValue(
+          [],
+        );
+
+        await expect(service.findAllTrainings()).rejects.toThrow(
+          NotFoundException,
+        );
+      });
     });
-  });
 
-  describe('findOne', () => {
-    it('should return a questionnaire by id', async () => {
-      (mockQuestionnaireModel.findById as jest.Mock).mockResolvedValue(
-        mockQuestionnaireResponse,
-      );
+    describe('findOneTraining', () => {
+      it('should return a questionnaire by id', async () => {
+        (
+          mockTrainingQuestionnaireModel.findById as jest.Mock
+        ).mockResolvedValue(mockTrainingQuestionnaireResponse);
 
-      const result = await service.findOne(mockQuestionnaireId);
-      expect(result).toEqual(mockQuestionnaireResponse);
-    });
+        const result = await service.findOneTraining(
+          mockTrainingQuestionnaireId,
+        );
+        expect(result).toEqual(mockTrainingQuestionnaireResponse);
+      });
 
-    it('should throw NotFoundException if questionnaire not found', async () => {
-      (mockQuestionnaireModel.findById as jest.Mock).mockResolvedValue(null);
+      it('should throw NotFoundException if questionnaire not found', async () => {
+        (
+          mockTrainingQuestionnaireModel.findById as jest.Mock
+        ).mockResolvedValue(null);
 
-      await expect(service.findOne(mockInvalidQuestionnaireId)).rejects.toThrow(
-        NotFoundException,
-      );
+        await expect(
+          service.findOneTraining(mockInvalidTrainingQuestionnaireId),
+        ).rejects.toThrow(NotFoundException);
+      });
     });
   });
 });

@@ -8,8 +8,8 @@ import {
   TestDataFactory,
   TestLesson,
   TestMakeupBag,
+  TestMakeupBagQuestionnaire,
   TestProduct,
-  TestQuestionnaire,
   TestStage,
   TestStore,
   TestTool,
@@ -62,7 +62,7 @@ export interface ProductResources {
 
 export interface QuestionnaireResources {
   id: string;
-  data: TestQuestionnaire;
+  data: TestMakeupBagQuestionnaire;
 }
 
 export interface StageResources {
@@ -350,10 +350,10 @@ export class ResourceHelper {
   static async createQuestionnaire(
     app: INestApplication,
   ): Promise<QuestionnaireResources> {
-    const data = TestDataFactory.createQuestionnaire();
+    const data = TestDataFactory.createMakeupBagQuestionnaire();
 
     const response = await request(app.getHttpServer())
-      .post('/questionnaires')
+      .post('/questionnaires/makeup-bags')
       .send(data)
       .expect(HttpStatus.CREATED);
 

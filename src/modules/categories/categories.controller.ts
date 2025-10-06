@@ -26,11 +26,7 @@ export class CategoriesController {
   @Roles('admin')
   async create(@Body() dto: CreateCategoryDto) {
     const category = await this.categoriesService.create(dto);
-
-    return {
-      id: category.id,
-      message: 'Category created successfully',
-    };
+    return { id: category.id };
   }
 
   @Get()
@@ -64,21 +60,13 @@ export class CategoriesController {
     @Body() dto: UpdateCategoryDto,
   ) {
     const brand = await this.categoriesService.update(params.id, dto);
-
-    return {
-      id: brand.id,
-      message: 'Category updated successfully',
-    };
+    return { id: brand.id };
   }
 
   @Delete(':id')
   @Roles('admin')
   async remove(@Param() params: ObjectIdParamDto) {
     const category = await this.categoriesService.remove(params.id);
-
-    return {
-      id: category.id,
-      message: 'Category deleted successfully',
-    };
+    return { id: category.id };
   }
 }

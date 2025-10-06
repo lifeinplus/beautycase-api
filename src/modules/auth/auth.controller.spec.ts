@@ -176,7 +176,6 @@ describe('AuthController', () => {
       const result = await controller.registerUser(dto);
 
       expect(mockAuthService.registerUser).toHaveBeenCalledWith(dto);
-      expect(result.message).toBe('Account created successfully');
     });
   });
 });

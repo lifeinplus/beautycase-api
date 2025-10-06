@@ -83,10 +83,7 @@ describe('Products (e2e)', () => {
         .send(createProductDto())
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Product created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should create a product as mua', async () => {
@@ -96,10 +93,7 @@ describe('Products (e2e)', () => {
         .send(createProductDto())
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Product created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should reject creation by client role', async () => {
@@ -221,7 +215,6 @@ describe('Products (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body.id).toBeDefined();
-      expect(response.body.message).toBe('Product created successfully');
     });
   });
 
@@ -366,10 +359,7 @@ describe('Products (e2e)', () => {
         .send(updateDto)
         .expect(HttpStatus.OK);
 
-      expect(putResponse.body).toMatchObject({
-        id: productId,
-        message: 'Product updated successfully',
-      });
+      expect(putResponse.body).toMatchObject({ id: productId });
 
       const getResponse = await request(app.getHttpServer())
         .get(`/products/${productId}`)
@@ -382,13 +372,11 @@ describe('Products (e2e)', () => {
     it('should update product as mua', async () => {
       const updateDto = { name: 'MUA Updated Name' };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put(`/products/${productId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Product updated successfully');
     });
 
     it('should reject update by client role', async () => {
@@ -448,13 +436,11 @@ describe('Products (e2e)', () => {
         shade: 'New Shade',
       };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put(`/products/${productId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Product updated successfully');
     });
   });
 
@@ -490,10 +476,7 @@ describe('Products (e2e)', () => {
         .send(newStoreLinks)
         .expect(HttpStatus.OK);
 
-      expect(patchResponse.body).toMatchObject({
-        id: productId,
-        message: 'Product store links updated successfully',
-      });
+      expect(patchResponse.body).toMatchObject({ id: productId });
 
       const getResponse = await request(app.getHttpServer())
         .get(`/products/${productId}`)
@@ -598,7 +581,6 @@ describe('Products (e2e)', () => {
 
       expect(response.body).toMatchObject({
         id: productId,
-        message: 'Product deleted successfully',
       });
 
       await request(app.getHttpServer())
@@ -608,12 +590,10 @@ describe('Products (e2e)', () => {
     });
 
     it('should delete product as mua', async () => {
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .delete(`/products/${productId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Product deleted successfully');
     });
 
     it('should reject deletion by client role', async () => {

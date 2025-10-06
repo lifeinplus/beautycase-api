@@ -10,9 +10,9 @@ import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
-import { CreateQuestionnaireDto } from 'src/modules/questionnaires/dto/create-questionnaire.dto';
+import { CreateMakeupBagQuestionnaireDto } from 'src/modules/questionnaires/dto/create-makeup-bag-questionnaire.dto';
 import { QuestionnairesModule } from 'src/modules/questionnaires/questionnaires.module';
-import { Questionnaire } from 'src/modules/questionnaires/schemas/questionnaire.schema';
+import { MakeupBagQuestionnaire } from 'src/modules/questionnaires/schemas/makeup-bag-questionnaire.schema';
 import { UsersModule } from 'src/modules/users/users.module';
 import { TestDataFactory } from 'test/factories/test-data.factory';
 import { AuthHelper, AuthTokens } from 'test/helpers/auth.helper';
@@ -27,7 +27,7 @@ describe('Questionnaires (e2e)', () => {
   let connection: Connection;
 
   let tokens: AuthTokens;
-  const mockQuestionnaire = TestDataFactory.createQuestionnaire();
+  const mockQuestionnaire = TestDataFactory.createMakeupBagQuestionnaire();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -54,7 +54,10 @@ describe('Questionnaires (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await DatabaseHelper.clearCollection(connection, 'questionnaires');
+    await DatabaseHelper.clearCollection(
+      connection,
+      'questionnaires_makeupbags',
+    );
   });
 
   afterAll(async () => {
@@ -62,17 +65,14 @@ describe('Questionnaires (e2e)', () => {
     await DatabaseHelper.closeConnection();
   });
 
-  describe('POST /questionnaires', () => {
+  describe('POST /questionnaires/makeup-bags', () => {
     it('should create with all fields', async () => {
       const response = await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(mockQuestionnaire)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Questionnaire created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should create with only required fields', async () => {
@@ -82,14 +82,11 @@ describe('Questionnaires (e2e)', () => {
       };
 
       const response = await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(minimalDto)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Questionnaire created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should create a questionnaire without photo URL', async () => {
@@ -99,14 +96,11 @@ describe('Questionnaires (e2e)', () => {
       };
 
       const response = await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(dtoWithoutPhoto)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Questionnaire created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should fail when name is missing', async () => {
@@ -115,7 +109,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -126,7 +120,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -138,7 +132,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -150,7 +144,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -162,7 +156,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -174,7 +168,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -186,7 +180,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -198,7 +192,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -210,7 +204,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -225,7 +219,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -240,7 +234,7 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -255,20 +249,20 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
   });
 
-  describe('GET /questionnaires', () => {
+  describe('GET /questionnaires/makeup-bags', () => {
     beforeEach(async () => {
       await ResourceHelper.createQuestionnaire(app);
     });
 
     it('should get all questionnaires as admin', async () => {
       const response = await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
@@ -280,7 +274,7 @@ describe('Questionnaires (e2e)', () => {
 
     it('should get all questionnaires as MUA', async () => {
       const response = await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
@@ -290,63 +284,66 @@ describe('Questionnaires (e2e)', () => {
 
     it('should reject access when authenticated as client', async () => {
       await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.clientToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
 
     it('should reject access when not authenticated', async () => {
       await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
     it('should return 404 when no questionnaires exist', async () => {
-      await DatabaseHelper.clearCollection(connection, 'questionnaires');
+      await DatabaseHelper.clearCollection(
+        connection,
+        'questionnaires_makeupbags',
+      );
 
       await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should fail with invalid token', async () => {
       await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', 'Bearer invalid-token')
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
     it('should return multiple questionnaires', async () => {
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send({ name: 'User 2', makeupBag: 'Bag 2' })
         .expect(HttpStatus.CREATED);
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send({ name: 'User 3', makeupBag: 'Bag 3' })
         .expect(HttpStatus.CREATED);
 
       const response = await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveLength(3);
-      expect(response.body.map((q: Questionnaire) => q.name)).toContain(
-        'Jane Doe',
-      );
-      expect(response.body.map((q: Questionnaire) => q.name)).toContain(
-        'User 2',
-      );
-      expect(response.body.map((q: Questionnaire) => q.name)).toContain(
-        'User 3',
-      );
+      expect(
+        response.body.map((q: MakeupBagQuestionnaire) => q.name),
+      ).toContain('Jane Doe');
+      expect(
+        response.body.map((q: MakeupBagQuestionnaire) => q.name),
+      ).toContain('User 2');
+      expect(
+        response.body.map((q: MakeupBagQuestionnaire) => q.name),
+      ).toContain('User 3');
     });
   });
 
-  describe('GET /questionnaires/:id', () => {
+  describe('GET /questionnaires/makeup-bags/:id', () => {
     let questionnaireId: string;
 
     beforeEach(async () => {
@@ -356,7 +353,7 @@ describe('Questionnaires (e2e)', () => {
 
     it('should return questionnaire by id for admin user', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/questionnaires/${questionnaireId}`)
+        .get(`/questionnaires/makeup-bags/${questionnaireId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
@@ -388,7 +385,7 @@ describe('Questionnaires (e2e)', () => {
 
     it('should return questionnaire by id for MUA user', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/questionnaires/${questionnaireId}`)
+        .get(`/questionnaires/makeup-bags/${questionnaireId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
@@ -398,13 +395,13 @@ describe('Questionnaires (e2e)', () => {
 
     it('should reject unauthenticated requests', async () => {
       await request(app.getHttpServer())
-        .get(`/questionnaires/${questionnaireId}`)
+        .get(`/questionnaires/makeup-bags/${questionnaireId}`)
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
     it('should fail for client user (insufficient privileges)', async () => {
       await request(app.getHttpServer())
-        .get(`/questionnaires/${questionnaireId}`)
+        .get(`/questionnaires/makeup-bags/${questionnaireId}`)
         .set('Authorization', `Bearer ${tokens.clientToken}`)
         .expect(HttpStatus.FORBIDDEN);
     });
@@ -413,21 +410,21 @@ describe('Questionnaires (e2e)', () => {
       const fakeId = '507f1f77bcf86cd799439999';
 
       await request(app.getHttpServer())
-        .get(`/questionnaires/${fakeId}`)
+        .get(`/questionnaires/makeup-bags/${fakeId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
-        .get('/questionnaires/invalid-id')
+        .get('/questionnaires/makeup-bags/invalid-id')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should fail with invalid token', async () => {
       await request(app.getHttpServer())
-        .get(`/questionnaires/${questionnaireId}`)
+        .get(`/questionnaires/makeup-bags/${questionnaireId}`)
         .set('Authorization', 'Bearer invalid-token')
         .expect(HttpStatus.UNAUTHORIZED);
     });
@@ -440,7 +437,7 @@ describe('Questionnaires (e2e)', () => {
       expect(id).toBeDefined();
 
       const getOneResponse = await request(app.getHttpServer())
-        .get(`/questionnaires/${id}`)
+        .get(`/questionnaires/makeup-bags/${id}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
@@ -449,7 +446,7 @@ describe('Questionnaires (e2e)', () => {
       expect(getOneResponse.body.budget).toBe(mockQuestionnaire.budget);
 
       const getAllResponse = await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
@@ -458,7 +455,7 @@ describe('Questionnaires (e2e)', () => {
     });
 
     it('should handle multiple questionnaires correctly', async () => {
-      const questionnaires: CreateQuestionnaireDto[] = [
+      const questionnaires: CreateMakeupBagQuestionnaireDto[] = [
         { name: 'User A', makeupBag: 'Bag A', age: 20 },
         { name: 'User B', makeupBag: 'Bag B', age: 25 },
         { name: 'User C', makeupBag: 'Bag C', age: 30 },
@@ -468,7 +465,7 @@ describe('Questionnaires (e2e)', () => {
 
       for (const questionnaire of questionnaires) {
         const postResponse = await request(app.getHttpServer())
-          .post('/questionnaires')
+          .post('/questionnaires/makeup-bags')
           .send(questionnaire)
           .expect(HttpStatus.CREATED);
 
@@ -476,27 +473,29 @@ describe('Questionnaires (e2e)', () => {
       }
 
       const getAllResponse = await request(app.getHttpServer())
-        .get('/questionnaires')
+        .get('/questionnaires/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
       expect(getAllResponse.body).toHaveLength(3);
 
-      const names = getAllResponse.body.map((q: Questionnaire) => q.name);
+      const names = getAllResponse.body.map(
+        (q: MakeupBagQuestionnaire) => q.name,
+      );
       expect(names).toContain('User A');
       expect(names).toContain('User B');
       expect(names).toContain('User C');
 
       for (const id of createdIds) {
         await request(app.getHttpServer())
-          .get(`/questionnaires/${id}`)
+          .get(`/questionnaires/makeup-bags/${id}`)
           .set('Authorization', `Bearer ${tokens.adminToken}`)
           .expect(HttpStatus.OK);
       }
     });
 
     it('should properly validate enum fields', async () => {
-      const validEnumValues: CreateQuestionnaireDto = {
+      const validEnumValues: CreateMakeupBagQuestionnaireDto = {
         name: 'Enum Test User',
         makeupBag: 'Test bag',
         budget: Budget.MEDIUM,
@@ -505,25 +504,25 @@ describe('Questionnaires (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(validEnumValues)
         .expect(HttpStatus.CREATED);
 
       const invalidBudget = { ...validEnumValues, budget: 'INVALID' };
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidBudget)
         .expect(HttpStatus.BAD_REQUEST);
 
       const invalidMakeupTime = { ...validEnumValues, makeupTime: 'INVALID' };
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidMakeupTime)
         .expect(HttpStatus.BAD_REQUEST);
 
       const invalidReferral = { ...validEnumValues, referral: 'INVALID' };
       await request(app.getHttpServer())
-        .post('/questionnaires')
+        .post('/questionnaires/makeup-bags')
         .send(invalidReferral)
         .expect(HttpStatus.BAD_REQUEST);
     });

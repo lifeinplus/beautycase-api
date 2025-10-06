@@ -9,19 +9,31 @@ describe('QuestionnairesController', () => {
   let controller: QuestionnairesController;
   let service: QuestionnairesService;
 
-  const mockQuestionnaire = TestDataFactory.createQuestionnaire();
-  const mockQuestionnaireId = new Types.ObjectId();
-  const mockBadQuestionnaireId = new Types.ObjectId();
+  const mockMakeupBagQuestionnaire =
+    TestDataFactory.createMakeupBagQuestionnaire();
+  const mockMakeupBagQuestionnaireId = new Types.ObjectId();
+  const mockBadMakeupBagQuestionnaireId = new Types.ObjectId();
+  const mockMakeupBagQuestionnaireResponse = {
+    ...mockMakeupBagQuestionnaire,
+    id: mockMakeupBagQuestionnaireId,
+  };
 
-  const mockQuestionnaireResponse = {
-    ...mockQuestionnaire,
-    id: mockQuestionnaireId,
+  const mockTrainingQuestionnaire =
+    TestDataFactory.createTrainingQuestionnaire();
+  const mockTrainingQuestionnaireId = new Types.ObjectId();
+  const mockBadTrainingQuestionnaireId = new Types.ObjectId();
+  const mockTrainingQuestionnaireResponse = {
+    ...mockTrainingQuestionnaire,
+    id: mockTrainingQuestionnaireId,
   };
 
   const mockQuestionnairesService = {
-    create: jest.fn(),
-    findAll: jest.fn(),
-    findOne: jest.fn(),
+    createMakeupBag: jest.fn(),
+    createTraining: jest.fn(),
+    findAllMakeupBags: jest.fn(),
+    findAllTrainings: jest.fn(),
+    findOneMakeupBag: jest.fn(),
+    findOneTraining: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -43,55 +55,121 @@ describe('QuestionnairesController', () => {
     jest.clearAllMocks();
   });
 
-  describe('create', () => {
-    it('should return id and success message after creation', async () => {
-      mockQuestionnairesService.create.mockResolvedValue(
-        mockQuestionnaireResponse,
-      );
+  describe('makeup-bags', () => {
+    describe('createMakeupBag', () => {
+      it('should return id after creation', async () => {
+        mockQuestionnairesService.createMakeupBag.mockResolvedValue(
+          mockMakeupBagQuestionnaireResponse,
+        );
 
-      const result = await controller.create(mockQuestionnaire);
+        const result = await controller.createMakeupBag(
+          mockMakeupBagQuestionnaire,
+        );
 
-      expect(service.create).toHaveBeenCalledWith(mockQuestionnaire);
-      expect(result).toEqual({
-        id: mockQuestionnaireResponse.id,
-        message: 'Questionnaire created successfully',
+        expect(service.createMakeupBag).toHaveBeenCalledWith(
+          mockMakeupBagQuestionnaire,
+        );
+        expect(result).toEqual({ id: mockMakeupBagQuestionnaireResponse.id });
+      });
+    });
+
+    describe('findAllMakeupBags', () => {
+      it('should return all questionnaires', async () => {
+        mockQuestionnairesService.findAllMakeupBags.mockResolvedValue([
+          mockMakeupBagQuestionnaireResponse,
+        ]);
+
+        const result = await controller.findAllMakeupBags();
+
+        expect(service.findAllMakeupBags).toHaveBeenCalled();
+        expect(result).toEqual([mockMakeupBagQuestionnaireResponse]);
+      });
+    });
+
+    describe('findOneMakeupBag', () => {
+      it('should return questionnaire by id', async () => {
+        mockQuestionnairesService.findOneMakeupBag.mockResolvedValue(
+          mockMakeupBagQuestionnaireResponse,
+        );
+
+        const result = await controller.findOneMakeupBag({
+          id: mockMakeupBagQuestionnaireId,
+        });
+
+        expect(service.findOneMakeupBag).toHaveBeenCalledWith(
+          mockMakeupBagQuestionnaireId,
+        );
+        expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
+      });
+
+      it('should throw NotFoundException if questionnaire not found', async () => {
+        mockQuestionnairesService.findOneMakeupBag.mockRejectedValue(
+          new NotFoundException(),
+        );
+
+        await expect(
+          controller.findOneMakeupBag({ id: mockBadMakeupBagQuestionnaireId }),
+        ).rejects.toThrow(NotFoundException);
       });
     });
   });
 
-  describe('findAll', () => {
-    it('should return all questionnaires', async () => {
-      mockQuestionnairesService.findAll.mockResolvedValue([
-        mockQuestionnaireResponse,
-      ]);
+  describe('trainings', () => {
+    describe('createTraining', () => {
+      it('should return id after creation', async () => {
+        mockQuestionnairesService.createTraining.mockResolvedValue(
+          mockTrainingQuestionnaireResponse,
+        );
 
-      const result = await controller.findAll();
+        const result = await controller.createTraining(
+          mockTrainingQuestionnaire,
+        );
 
-      expect(service.findAll).toHaveBeenCalled();
-      expect(result).toEqual([mockQuestionnaireResponse]);
-    });
-  });
-
-  describe('findOne', () => {
-    it('should return questionnaire by id', async () => {
-      mockQuestionnairesService.findOne.mockResolvedValue(
-        mockQuestionnaireResponse,
-      );
-
-      const result = await controller.findOne({ id: mockQuestionnaireId });
-
-      expect(service.findOne).toHaveBeenCalledWith(mockQuestionnaireId);
-      expect(result).toEqual(mockQuestionnaireResponse);
+        expect(service.createTraining).toHaveBeenCalledWith(
+          mockTrainingQuestionnaire,
+        );
+        expect(result).toEqual({ id: mockTrainingQuestionnaireResponse.id });
+      });
     });
 
-    it('should throw NotFoundException if questionnaire not found', async () => {
-      mockQuestionnairesService.findOne.mockRejectedValue(
-        new NotFoundException(),
-      );
+    describe('findAllTrainings', () => {
+      it('should return all questionnaires', async () => {
+        mockQuestionnairesService.findAllTrainings.mockResolvedValue([
+          mockTrainingQuestionnaireResponse,
+        ]);
 
-      await expect(
-        controller.findOne({ id: mockBadQuestionnaireId }),
-      ).rejects.toThrow(NotFoundException);
+        const result = await controller.findAllTrainings();
+
+        expect(service.findAllTrainings).toHaveBeenCalled();
+        expect(result).toEqual([mockTrainingQuestionnaireResponse]);
+      });
+    });
+
+    describe('findOneTraining', () => {
+      it('should return questionnaire by id', async () => {
+        mockQuestionnairesService.findOneTraining.mockResolvedValue(
+          mockTrainingQuestionnaireResponse,
+        );
+
+        const result = await controller.findOneTraining({
+          id: mockTrainingQuestionnaireId,
+        });
+
+        expect(service.findOneTraining).toHaveBeenCalledWith(
+          mockTrainingQuestionnaireId,
+        );
+        expect(result).toEqual(mockTrainingQuestionnaireResponse);
+      });
+
+      it('should throw NotFoundException if questionnaire not found', async () => {
+        mockQuestionnairesService.findOneTraining.mockRejectedValue(
+          new NotFoundException(),
+        );
+
+        await expect(
+          controller.findOneTraining({ id: mockBadTrainingQuestionnaireId }),
+        ).rejects.toThrow(NotFoundException);
+      });
     });
   });
 });

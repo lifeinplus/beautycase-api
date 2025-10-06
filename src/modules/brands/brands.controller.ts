@@ -26,11 +26,7 @@ export class BrandsController {
   @Roles('admin')
   async create(@Body() dto: CreateBrandDto) {
     const brand = await this.brandsService.create(dto);
-
-    return {
-      id: brand.id,
-      message: 'Brand created successfully',
-    };
+    return { id: brand.id };
   }
 
   @Get()
@@ -43,21 +39,13 @@ export class BrandsController {
   @Roles('admin')
   async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateBrandDto) {
     const brand = await this.brandsService.update(params.id, dto);
-
-    return {
-      id: brand.id,
-      message: 'Brand updated successfully',
-    };
+    return { id: brand.id };
   }
 
   @Delete(':id')
   @Roles('admin')
   async remove(@Param() params: ObjectIdParamDto) {
     const brand = await this.brandsService.remove(params.id);
-
-    return {
-      id: brand.id,
-      message: 'Brand deleted successfully',
-    };
+    return { id: brand.id };
   }
 }

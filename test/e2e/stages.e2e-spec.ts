@@ -89,10 +89,7 @@ describe('Stages (e2e)', () => {
         .send(createStageDto())
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toMatchObject({
-        id: expect.any(String),
-        message: 'Stage created successfully',
-      });
+      expect(response.body).toMatchObject({ id: expect.any(String) });
     });
 
     it('should create a stage as mua', async () => {
@@ -116,10 +113,7 @@ describe('Stages (e2e)', () => {
         .send(stageDto)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toEqual({
-        id: expect.any(String),
-        message: 'Stage created successfully',
-      });
+      expect(response.body).toEqual({ id: expect.any(String) });
     });
 
     it('should reject stage creation as client', async () => {
@@ -231,10 +225,7 @@ describe('Stages (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toEqual({
-        id: expect.any(String),
-        message: 'Stage duplicated successfully',
-      });
+      expect(response.body).toEqual({ id: expect.any(String) });
 
       expect(response.body.id).not.toBe(stageId);
     });
@@ -245,10 +236,7 @@ describe('Stages (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.CREATED);
 
-      expect(response.body).toEqual({
-        id: expect.any(String),
-        message: 'Stage duplicated successfully',
-      });
+      expect(response.body).toEqual({ id: expect.any(String) });
     });
 
     it('should reject duplication with client role', async () => {
@@ -450,10 +438,7 @@ describe('Stages (e2e)', () => {
         .send(updateDto)
         .expect(HttpStatus.OK);
 
-      expect(putResponse.body).toMatchObject({
-        id: stageId,
-        message: 'Stage updated successfully',
-      });
+      expect(putResponse.body).toMatchObject({ id: stageId });
 
       const getResponse = await request(app.getHttpServer())
         .get(`/stages/${stageId}`)
@@ -466,13 +451,11 @@ describe('Stages (e2e)', () => {
     it('should update stage as mua', async () => {
       const updateDto = { title: 'MUA Updated Title' };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put(`/stages/${stageId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Stage updated successfully');
     });
 
     it('should reject update by client role', async () => {
@@ -534,13 +517,11 @@ describe('Stages (e2e)', () => {
         steps: ['New step 1', 'New step 2'],
       };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put(`/stages/${stageId}`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Stage updated successfully');
     });
   });
 
@@ -573,7 +554,6 @@ describe('Stages (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', stageId);
-      expect(response.body.message).toBe('Stage products updated successfully');
     });
 
     it('should update stage products as mua', async () => {
@@ -649,10 +629,7 @@ describe('Stages (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
 
-      expect(response.body).toMatchObject({
-        id: stageId,
-        message: 'Stage deleted successfully',
-      });
+      expect(response.body).toMatchObject({ id: stageId });
 
       await request(app.getHttpServer())
         .get(`/stages/${stageId}`)

@@ -65,14 +65,10 @@ describe('Auth (e2e)', () => {
         confirmPassword: mockUser.password,
       };
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send(dto)
         .expect(HttpStatus.CREATED);
-
-      expect(response.body).toEqual({
-        message: 'Account created successfully',
-      });
 
       const createdUser = await usersService.findByUsername('client');
       expect(createdUser).toBeTruthy();

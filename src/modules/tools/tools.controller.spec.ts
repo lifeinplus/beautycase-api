@@ -57,10 +57,7 @@ describe('ToolsController', () => {
       const result = await controller.create(mockTool);
 
       expect(mockToolsService.create).toHaveBeenCalledWith(mockTool);
-      expect(result).toEqual({
-        id: mockToolId,
-        message: 'Tool created successfully',
-      });
+      expect(result).toEqual({ id: mockToolId });
     });
   });
 
@@ -105,10 +102,7 @@ describe('ToolsController', () => {
       const result = await controller.update(params, dto);
 
       expect(mockToolsService.update).toHaveBeenCalledWith(mockToolId, dto);
-      expect(result).toEqual({
-        id: mockToolId,
-        message: 'Tool updated successfully',
-      });
+      expect(result).toEqual({ id: mockToolId });
     });
   });
 
@@ -125,10 +119,7 @@ describe('ToolsController', () => {
         mockToolId,
         dto,
       );
-      expect(result).toEqual({
-        id: mockToolId,
-        message: 'Tool store links updated successfully',
-      });
+      expect(result).toEqual({ id: mockToolId });
     });
   });
 
@@ -140,10 +131,7 @@ describe('ToolsController', () => {
       const result = await controller.remove(params);
 
       expect(mockToolsService.remove).toHaveBeenCalledWith(mockToolId);
-      expect(result).toEqual({
-        id: mockToolId,
-        message: 'Tool deleted successfully',
-      });
+      expect(result).toEqual({ id: mockToolId });
     });
   });
 });

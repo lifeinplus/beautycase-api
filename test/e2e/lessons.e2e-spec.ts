@@ -84,7 +84,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('Lesson created successfully');
     });
 
     it('should create a lesson as mua', async () => {
@@ -95,7 +94,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('Lesson created successfully');
     });
 
     it('should reject creation by client role', async () => {
@@ -166,7 +164,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('Lesson created successfully');
     });
 
     it('should reject invalid MongoDB ObjectIds', async () => {
@@ -328,7 +325,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
-      expect(response.body.message).toBe('Lesson updated successfully');
 
       const getResponse = await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
@@ -349,7 +345,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
-      expect(response.body.message).toBe('Lesson updated successfully');
     });
 
     it('should reject update by client role', async () => {
@@ -387,8 +382,6 @@ describe('Lessons (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe('Lesson updated successfully');
     });
 
     it('should validate update data', async () => {
@@ -430,23 +423,16 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
-      expect(response.body.message).toBe(
-        'Lesson products updated successfully',
-      );
     });
 
     it('should update lesson products as mua', async () => {
       const productIds = ['507f1f77bcf86cd799439011'];
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ productIds })
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe(
-        'Lesson products updated successfully',
-      );
     });
 
     it('should reject update by client role', async () => {
@@ -478,15 +464,11 @@ describe('Lessons (e2e)', () => {
     });
 
     it('should handle empty productIds array', async () => {
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
         .set('Authorization', `Bearer ${tokens.adminToken}`)
         .send({ productIds: [] })
         .expect(HttpStatus.OK);
-
-      expect(response.body.message).toBe(
-        'Lesson products updated successfully',
-      );
     });
 
     it('should return 404 for non-existent lesson', async () => {
@@ -519,7 +501,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
-      expect(response.body.message).toBe('Lesson deleted successfully');
 
       await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
@@ -534,7 +515,6 @@ describe('Lessons (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
-      expect(response.body.message).toBe('Lesson deleted successfully');
     });
 
     it('should reject deletion by client role', async () => {

@@ -1,6 +1,21 @@
 import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+
 import { ErrorCode } from '../enums/error-code.enum';
 import { AppExceptionFilter } from './app-exception.filter';
+
+jest.mock('@nestjs/common', () => {
+  const original = jest.requireActual('@nestjs/common');
+  return {
+    ...original,
+    Logger: jest.fn().mockImplementation(() => ({
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+    })),
+  };
+});
 
 describe('AppExceptionFilter', () => {
   let filter: AppExceptionFilter;

@@ -10,6 +10,7 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
+
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
@@ -38,7 +39,7 @@ class ProceduresDto {
   @IsBoolean() none?: boolean;
 }
 
-export class CreateQuestionnaireDto {
+export class CreateMakeupBagQuestionnaireDto {
   @IsOptional()
   @IsNumber()
   age?: number;

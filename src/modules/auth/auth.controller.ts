@@ -18,7 +18,6 @@ import { AuthService } from './auth.service';
 import { RefreshToken } from './decorators/refresh-token.decorator';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginDto } from './dto/login.dto';
-import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ClearCookieInterceptor } from './interceptors/clear-cookie.interceptor';
 
@@ -101,11 +100,7 @@ export class AuthController {
   }
 
   @Post('register')
-  async registerUser(@Body() dto: RegisterDto): Promise<RegisterResponseDto> {
+  async registerUser(@Body() dto: RegisterDto): Promise<void> {
     await this.authService.registerUser(dto);
-
-    return {
-      message: 'Account created successfully',
-    };
   }
 }

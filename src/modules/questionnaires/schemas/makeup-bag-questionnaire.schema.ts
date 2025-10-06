@@ -5,7 +5,8 @@ import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
 
-export type QuestionnaireDocument = HydratedDocument<Questionnaire>;
+export type MakeupBagQuestionnaireDocument =
+  HydratedDocument<MakeupBagQuestionnaire>;
 
 @Schema({ _id: false, versionKey: false })
 export class DesiredSkills {
@@ -34,8 +35,12 @@ export class Procedures {
   @Prop() none?: boolean;
 }
 
-@Schema({ timestamps: true, versionKey: false })
-export class Questionnaire {
+@Schema({
+  collection: 'questionnaires_makeupbags',
+  timestamps: true,
+  versionKey: false,
+})
+export class MakeupBagQuestionnaire {
   @Prop() age?: number;
 
   @Prop() allergies?: string;
@@ -77,4 +82,6 @@ export class Questionnaire {
   @Prop() skinType?: string;
 }
 
-export const QuestionnaireSchema = SchemaFactory.createForClass(Questionnaire);
+export const MakeupBagQuestionnaireSchema = SchemaFactory.createForClass(
+  MakeupBagQuestionnaire,
+);

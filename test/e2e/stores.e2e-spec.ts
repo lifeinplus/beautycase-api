@@ -69,7 +69,6 @@ describe('Stores (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('Store created successfully');
     });
 
     it('should reject creation by mua role', async () => {
@@ -157,7 +156,6 @@ describe('Stores (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('Store updated successfully');
     });
 
     it('should reject update by mua role', async () => {
@@ -218,7 +216,6 @@ describe('Stores (e2e)', () => {
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id');
-      expect(response.body.message).toBe('Store deleted successfully');
 
       await request(app.getHttpServer())
         .get(`/stores/${storeId}`)

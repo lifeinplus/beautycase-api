@@ -66,10 +66,7 @@ describe('CategoriesController', () => {
 
       expect(service.create).toHaveBeenCalledWith(mockCategory);
       expect(service.create).toHaveBeenCalledTimes(1);
-      expect(result).toEqual({
-        id: mockCreatedCategory.id,
-        message: 'Category created successfully',
-      });
+      expect(result).toEqual({ id: mockCreatedCategory.id });
     });
 
     it('should handle service errors when creating a category', async () => {
@@ -256,10 +253,7 @@ describe('CategoriesController', () => {
       const result = await controller.update(params, dto);
 
       expect(service.update).toHaveBeenCalledWith(params.id, dto);
-      expect(result).toEqual({
-        id: updatedCategory.id,
-        message: 'Category updated successfully',
-      });
+      expect(result).toEqual({ id: updatedCategory.id });
     });
 
     it('should handle service errors during update', async () => {
@@ -287,10 +281,7 @@ describe('CategoriesController', () => {
       const result = await controller.update(params, dto);
 
       expect(service.update).toHaveBeenCalledWith(params.id, dto);
-      expect(result).toEqual({
-        id: updatedCategory.id,
-        message: 'Category updated successfully',
-      });
+      expect(result).toEqual({ id: updatedCategory.id });
     });
   });
 
@@ -302,10 +293,7 @@ describe('CategoriesController', () => {
       const result = await controller.remove(params);
 
       expect(service.remove).toHaveBeenCalledWith(params.id);
-      expect(result).toEqual({
-        id: mockCategoryResponse.id,
-        message: 'Category deleted successfully',
-      });
+      expect(result).toEqual({ id: mockCategoryResponse.id });
     });
 
     it('should handle service errors during deletion', async () => {

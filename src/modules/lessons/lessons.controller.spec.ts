@@ -52,10 +52,7 @@ describe('LessonsController', () => {
       const result = await controller.create(mockLesson);
 
       expect(mockLessonsService.create).toHaveBeenCalledWith(mockLesson);
-      expect(result).toEqual({
-        id: mockLessonId,
-        message: 'Lesson created successfully',
-      });
+      expect(result).toEqual({ id: mockLessonId });
     });
   });
 
@@ -100,10 +97,7 @@ describe('LessonsController', () => {
       const result = await controller.update(params, dto);
 
       expect(mockLessonsService.update).toHaveBeenCalledWith(mockLessonId, dto);
-      expect(result).toEqual({
-        id: mockLessonId,
-        message: 'Lesson updated successfully',
-      });
+      expect(result).toEqual({ id: mockLessonId });
     });
   });
 
@@ -120,10 +114,7 @@ describe('LessonsController', () => {
         mockLessonId,
         dto,
       );
-      expect(result).toEqual({
-        id: mockLessonId,
-        message: 'Lesson products updated successfully',
-      });
+      expect(result).toEqual({ id: mockLessonId });
     });
   });
 
@@ -135,10 +126,7 @@ describe('LessonsController', () => {
       const result = await controller.remove(params);
 
       expect(mockLessonsService.remove).toHaveBeenCalledWith(mockLessonId);
-      expect(result).toEqual({
-        id: mockLessonId,
-        message: 'Lesson deleted successfully',
-      });
+      expect(result).toEqual({ id: mockLessonId });
     });
   });
 });

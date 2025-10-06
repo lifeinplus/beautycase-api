@@ -53,10 +53,7 @@ describe('BrandsController', () => {
       const result = await controller.create(mockBrand);
 
       expect(service.create).toHaveBeenCalledWith(mockBrand);
-      expect(result).toEqual({
-        id: mockBrandResponse.id,
-        message: 'Brand created successfully',
-      });
+      expect(result).toEqual({ id: mockBrandResponse.id });
     });
 
     it('should handle service errors during creation', async () => {
@@ -113,10 +110,7 @@ describe('BrandsController', () => {
       const result = await controller.update(params, dto);
 
       expect(service.update).toHaveBeenCalledWith(params.id, dto);
-      expect(result).toEqual({
-        id: updatedBrand.id,
-        message: 'Brand updated successfully',
-      });
+      expect(result).toEqual({ id: updatedBrand.id });
     });
 
     it('should handle service errors during update', async () => {
@@ -144,10 +138,7 @@ describe('BrandsController', () => {
       const result = await controller.update(params, dto);
 
       expect(service.update).toHaveBeenCalledWith(params.id, dto);
-      expect(result).toEqual({
-        id: updatedBrand.id,
-        message: 'Brand updated successfully',
-      });
+      expect(result).toEqual({ id: updatedBrand.id });
     });
   });
 
@@ -159,10 +150,7 @@ describe('BrandsController', () => {
       const result = await controller.remove(params);
 
       expect(service.remove).toHaveBeenCalledWith(params.id);
-      expect(result).toEqual({
-        id: mockBrandResponse.id,
-        message: 'Brand deleted successfully',
-      });
+      expect(result).toEqual({ id: mockBrandResponse.id });
     });
 
     it('should handle service errors during deletion', async () => {
