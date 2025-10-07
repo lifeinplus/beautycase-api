@@ -74,7 +74,7 @@ export class QuestionnairesService {
     const questionnaires = await this.trainingQuestionnaireModel.find();
 
     if (!questionnaires.length) {
-      throw new NotFoundException({ code: ErrorCode.TRAININGS_NOT_FOUND });
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
     }
 
     return questionnaires;
@@ -94,7 +94,7 @@ export class QuestionnairesService {
     const questionnaire = await this.trainingQuestionnaireModel.findById(id);
 
     if (!questionnaire) {
-      throw new NotFoundException({ code: ErrorCode.TRAINING_NOT_FOUND });
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
     }
 
     return questionnaire;
