@@ -33,6 +33,12 @@ export class ProductsController {
     return { id: product.id };
   }
 
+  @Post('duplicate/:id')
+  async duplicate(@Param() params: ObjectIdParamDto) {
+    const product = await this.productsService.duplicate(params.id);
+    return { id: product.id };
+  }
+
   @Get()
   findAll() {
     return this.productsService.findAll();

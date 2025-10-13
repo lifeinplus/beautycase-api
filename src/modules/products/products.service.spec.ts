@@ -89,6 +89,31 @@ describe('ProductsService', () => {
     });
   });
 
+  describe('duplicate', () => {
+    it('should duplicate a stage', async () => {
+      (mockProductModel.findById as jest.Mock).mockResolvedValue({
+        toObject: () => mockProductResponse,
+        name: mockProductResponse.name,
+      });
+
+      const saveMock = jest.fn().mockResolvedValue(mockProductResponse);
+      (mockProductModel as any).mockImplementation(() => ({ save: saveMock }));
+
+      const result = await service.duplicate(mockProductId);
+
+      expect(mockProductModel.findById).toHaveBeenCalledWith(mockProductId);
+      expect(result).toEqual(mockProductResponse);
+    });
+
+    it('should throw NotFoundException if not found', async () => {
+      (mockProductModel.findById as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.duplicate(mockBadProductId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('findAll', () => {
     it('should return all products', async () => {
       (mockProductModel.find as jest.Mock).mockReturnValue({
@@ -184,6 +209,7 @@ describe('ProductsService', () => {
         {
           folder: UploadFolder.PRODUCTS,
           secureUrl: dto.imageUrl,
+          destroyOnReplace: false,
         },
       );
       expect(result).toEqual(mockProductResponse);
@@ -220,16 +246,12 @@ describe('ProductsService', () => {
   });
 
   describe('remove', () => {
-    it('should delete product and remove image if exists', async () => {
+    it('should delete a product', async () => {
       (mockProductModel.findByIdAndDelete as jest.Mock).mockResolvedValue(
         mockProductResponse,
       );
 
       const result = await service.remove(mockProductId);
-
-      expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
-        mockProductResponse.imageId,
-      );
       expect(result).toEqual(mockProductResponse);
     });
 

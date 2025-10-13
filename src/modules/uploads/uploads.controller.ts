@@ -3,6 +3,7 @@ import {
   Controller,
   Post,
   UploadedFile,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -10,14 +11,16 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from './config/multer.config';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { UploadUrlDto } from './dto/upload-url.dto';
+import { MulterExceptionFilter } from './filters/multer-exception.filter';
 import { UploadsService } from './uploads.service';
 
 @Controller('uploads')
 export class UploadsController {
   constructor(private readonly uploadService: UploadsService) {}
 
-  @Post('temp-image-file')
+  @UseFilters(MulterExceptionFilter)
   @UseInterceptors(FileInterceptor('imageFile', multerConfig))
+  @Post('temp-image-file')
   async uploadTempImageByFile(
     @Body() dto: UploadFileDto,
     @UploadedFile() file: Express.Multer.File,

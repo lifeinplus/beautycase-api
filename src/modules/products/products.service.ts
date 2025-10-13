@@ -33,6 +33,24 @@ export class ProductsService {
     return product;
   }
 
+  async duplicate(id: Types.ObjectId): Promise<ProductDocument> {
+    const product = await this.productModel.findById(id);
+
+    if (!product) {
+      throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
+    }
+
+    const duplicated = new this.productModel({
+      ...product.toObject(),
+      _id: undefined,
+      createdAt: undefined,
+      updatedAt: undefined,
+      name: `${product.name} (Копия)`,
+    });
+
+    return duplicated.save();
+  }
+
   async findAll(): Promise<ProductDocument[]> {
     const products = await this.productModel.find().select('imageUrl');
 
@@ -91,6 +109,7 @@ export class ProductsService {
       await this.imageService.handleImageUpdate(product, {
         folder: UploadFolder.PRODUCTS,
         secureUrl: imageUrl,
+        destroyOnReplace: false,
       });
 
       await product.save();
@@ -119,10 +138,6 @@ export class ProductsService {
 
     if (!product) {
       throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
-    }
-
-    if (product.imageId) {
-      await this.imageService.handleImageDeletion(product.imageId);
     }
 
     return product;
