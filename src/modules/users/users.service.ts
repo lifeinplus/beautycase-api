@@ -21,7 +21,9 @@ export class UsersService {
   }
 
   async findAll() {
-    const users = await this.userModel.find().select('_id username');
+    const users = await this.userModel
+      .find()
+      .select('-password -refreshTokens');
 
     if (!users.length) {
       throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
@@ -31,7 +33,9 @@ export class UsersService {
   }
 
   async findOne(id: Types.ObjectId) {
-    const user = await this.userModel.findById(id).select('role username');
+    const user = await this.userModel
+      .findById(id)
+      .select('-password -refreshTokens');
 
     if (!user) {
       throw new NotFoundException({ code: ErrorCode.USER_NOT_FOUND });
@@ -64,5 +68,15 @@ export class UsersService {
       { refreshTokens },
       { new: true },
     );
+  }
+
+  async remove(id: Types.ObjectId): Promise<UserDocument> {
+    const user = await this.userModel.findByIdAndDelete(id);
+
+    if (!user) {
+      throw new NotFoundException({ code: ErrorCode.USER_NOT_FOUND });
+    }
+
+    return user;
   }
 }

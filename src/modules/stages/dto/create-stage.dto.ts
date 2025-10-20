@@ -33,6 +33,7 @@ export class CreateStageDto {
   @IsString({ each: true })
   steps?: string[];
 
+  @IsOptional()
   @IsArray()
   @IsMongoId({ each: true })
   productIds: Types.ObjectId[];
