@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
@@ -21,5 +21,13 @@ export class UsersController {
   @Get(':id')
   findOne(@Param() params: ObjectIdParamDto) {
     return this.usersService.findOne(params.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async remove(@Param() params: ObjectIdParamDto) {
+    const user = await this.usersService.remove(params.id);
+    return { id: user.id };
   }
 }
