@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
@@ -20,8 +28,8 @@ export class QuestionnairesController {
 
   @Post('trainings')
   async createTraining(@Body() dto: CreateTrainingQuestionnaireDto) {
-    const training = await this.questionnairesService.createTraining(dto);
-    return { id: training.id };
+    const questionnaire = await this.questionnairesService.createTraining(dto);
+    return { id: questionnaire.id };
   }
 
   @Get('makeup-bags')
@@ -50,5 +58,25 @@ export class QuestionnairesController {
   @Roles('admin', 'mua')
   findOneTraining(@Param() params: ObjectIdParamDto) {
     return this.questionnairesService.findOneTraining(params.id);
+  }
+
+  @Delete('makeup-bags/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async removeMakeupBag(@Param() params: ObjectIdParamDto) {
+    const questionnaire = await this.questionnairesService.removeMakeupBag(
+      params.id,
+    );
+    return { id: questionnaire.id };
+  }
+
+  @Delete('trainings/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async removeTraining(@Param() params: ObjectIdParamDto) {
+    const questionnaire = await this.questionnairesService.removeTraining(
+      params.id,
+    );
+    return { id: questionnaire.id };
   }
 }

@@ -99,4 +99,36 @@ export class QuestionnairesService {
 
     return questionnaire;
   }
+
+  async removeMakeupBag(
+    id: Types.ObjectId,
+  ): Promise<MakeupBagQuestionnaireDocument> {
+    const questionnaire =
+      await this.makeupBagQuestionnaireModel.findByIdAndDelete(id);
+
+    if (!questionnaire) {
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
+    }
+
+    if (questionnaire.makeupBagPhotoId) {
+      await this.imageService.handleImageDeletion(
+        questionnaire.makeupBagPhotoId,
+      );
+    }
+
+    return questionnaire;
+  }
+
+  async removeTraining(
+    id: Types.ObjectId,
+  ): Promise<TrainingQuestionnaireDocument> {
+    const questionnaire =
+      await this.trainingQuestionnaireModel.findByIdAndDelete(id);
+
+    if (!questionnaire) {
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
+    }
+
+    return questionnaire;
+  }
 }
