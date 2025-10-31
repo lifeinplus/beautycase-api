@@ -34,7 +34,9 @@ export class QuestionnairesService {
     imageUrl: questionnaire.makeupBagPhotoUrl || '',
   });
 
-  async createMakeupBag(dto: CreateMakeupBagQuestionnaireDto) {
+  async createMakeupBag(
+    dto: CreateMakeupBagQuestionnaireDto,
+  ): Promise<MakeupBagQuestionnaireDocument> {
     const questionnaire = new this.makeupBagQuestionnaireModel(dto);
     const { makeupBagPhotoUrl } = dto;
 
@@ -81,7 +83,9 @@ export class QuestionnairesService {
   }
 
   async findOneMakeupBag(id: Types.ObjectId) {
-    const questionnaire = await this.makeupBagQuestionnaireModel.findById(id);
+    const questionnaire = await this.makeupBagQuestionnaireModel
+      .findById(id)
+      .populate('muaId', 'username');
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
@@ -91,7 +95,9 @@ export class QuestionnairesService {
   }
 
   async findOneTraining(id: Types.ObjectId) {
-    const questionnaire = await this.trainingQuestionnaireModel.findById(id);
+    const questionnaire = await this.trainingQuestionnaireModel
+      .findById(id)
+      .populate('muaId', 'username');
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });

@@ -32,6 +32,18 @@ export class UsersService {
     return users;
   }
 
+  async findAllMuas() {
+    const users = await this.userModel
+      .find({ role: 'mua' })
+      .select('username role');
+
+    if (!users.length) {
+      throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
+    }
+
+    return users;
+  }
+
   async findOne(id: Types.ObjectId) {
     const user = await this.userModel
       .findById(id)

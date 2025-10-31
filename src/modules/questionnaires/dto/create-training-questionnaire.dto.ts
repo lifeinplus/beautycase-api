@@ -1,6 +1,13 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Types } from 'mongoose';
+
+import { IsObjectId } from 'src/common/decorators/objectid.decorator';
 
 export class CreateTrainingQuestionnaireDto {
+  @IsNotEmpty()
+  @IsObjectId()
+  muaId: Types.ObjectId;
+
   @IsString()
   name: string;
 

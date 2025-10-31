@@ -19,6 +19,11 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('muas')
+  findAllMuas() {
+    return this.usersService.findAllMuas();
+  }
+
   @Get(':id')
   findOne(@Param() params: ObjectIdParamDto) {
     return this.usersService.findOne(params.id);
