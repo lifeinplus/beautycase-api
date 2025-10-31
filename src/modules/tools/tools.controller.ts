@@ -13,6 +13,7 @@ import {
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateToolDto } from './dto/create-tool.dto';
@@ -23,7 +24,7 @@ import { ToolsService } from './tools.service';
 
 @Controller('tools')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'mua')
+@Roles(Role.ADMIN, Role.MUA)
 export class ToolsController {
   constructor(private readonly toolsService: ToolsService) {}
 

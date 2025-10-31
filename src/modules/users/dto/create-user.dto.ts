@@ -1,12 +1,12 @@
 import {
+  IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
 
-import { Role } from '../schemas/user.schema';
+import { Role } from 'src/common/enums/role.enum';
 
 export class CreateUserDto {
   @IsString()
@@ -20,7 +20,6 @@ export class CreateUserDto {
   @MinLength(8)
   password: string;
 
-  @IsOptional()
-  @IsString()
-  role?: Role;
+  @IsEnum(Role)
+  role: Role;
 }

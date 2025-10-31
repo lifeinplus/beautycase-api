@@ -12,6 +12,7 @@ import {
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateStageDto } from './dto/create-stage.dto';
@@ -21,7 +22,7 @@ import { StagesService } from './stages.service';
 
 @Controller('stages')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'mua')
+@Roles(Role.ADMIN, Role.MUA)
 export class StagesController {
   constructor(private readonly stagesService: StagesService) {}
 

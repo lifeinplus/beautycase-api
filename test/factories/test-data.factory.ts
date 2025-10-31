@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
+import { Role } from 'src/common/enums/role.enum';
 import { CreateBrandDto } from 'src/modules/brands/dto/create-brand.dto';
 import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
 import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
@@ -33,7 +34,7 @@ export class TestDataFactory {
     return {
       username: 'admin',
       password: 'admin123',
-      role: 'admin',
+      role: Role.ADMIN,
       ...overrides,
     };
   }
@@ -42,7 +43,7 @@ export class TestDataFactory {
     return {
       username: 'mua',
       password: 'mua123',
-      role: 'mua',
+      role: Role.MUA,
       ...overrides,
     };
   }
@@ -51,7 +52,7 @@ export class TestDataFactory {
     return {
       username: 'client',
       password: 'client123',
-      role: 'client',
+      role: Role.CLIENT,
       ...overrides,
     };
   }

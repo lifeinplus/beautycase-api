@@ -1,4 +1,4 @@
-import type { Role } from 'src/modules/users/schemas/user.schema';
+import { Role } from 'src/common/enums/role.enum';
 
 export interface AuthUser {
   role: string;

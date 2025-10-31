@@ -1,6 +1,13 @@
 import { Transform } from 'class-transformer';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
+import { Role } from 'src/common/enums/role.enum';
 import { IsPasswordMatch } from '../validators/password-match.validator';
 
 export class RegisterDto {
@@ -17,4 +24,8 @@ export class RegisterDto {
   @IsString()
   @IsPasswordMatch('password')
   confirmPassword: string;
+
+  @IsNotEmpty()
+  @IsEnum(Role)
+  role: Role;
 }

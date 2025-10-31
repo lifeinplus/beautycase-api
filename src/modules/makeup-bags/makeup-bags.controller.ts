@@ -11,6 +11,7 @@ import {
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
@@ -25,7 +26,7 @@ export class MakeupBagsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN, Role.MUA)
   async create(@Body() dto: CreateMakeupBagDto) {
     const makeupBag = await this.makeupBagsService.create(dto);
     return { id: makeupBag.id };
@@ -33,7 +34,7 @@ export class MakeupBagsController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN, Role.MUA)
   findAll() {
     return this.makeupBagsService.findAll();
   }
@@ -46,7 +47,7 @@ export class MakeupBagsController {
 
   @Put(':id')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN, Role.MUA)
   async update(
     @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateMakeupBagDto,
@@ -57,7 +58,7 @@ export class MakeupBagsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN, Role.MUA)
   async remove(@Param() params: ObjectIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);
     return { id: makeupBag.id };

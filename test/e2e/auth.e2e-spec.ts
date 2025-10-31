@@ -7,6 +7,7 @@ import * as cookieParser from 'cookie-parser';
 import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
+import { Role } from 'src/common/enums/role.enum';
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
@@ -70,10 +71,10 @@ describe('Auth (e2e)', () => {
         .send(dto)
         .expect(HttpStatus.CREATED);
 
-      const createdUser = await usersService.findByUsername('client');
+      const createdUser = await usersService.findByUsername(mockUser.username);
       expect(createdUser).toBeTruthy();
-      expect(createdUser?.username).toBe('client');
-      expect(createdUser?.role).toBe('client');
+      expect(createdUser?.username).toBe(mockUser.username);
+      expect(createdUser?.role).toBe(Role.CLIENT);
 
       const isPasswordHashed = await bcrypt.compare(
         'client123',
@@ -103,6 +104,7 @@ describe('Auth (e2e)', () => {
         username: '',
         password: '123',
         confirmPassword: '123',
+        role: 'invalid-role' as Role,
       };
 
       await request(app.getHttpServer())

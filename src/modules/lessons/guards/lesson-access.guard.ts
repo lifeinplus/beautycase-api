@@ -7,6 +7,7 @@ import {
 
 import { Types } from 'mongoose';
 import { ErrorCode } from 'src/common/enums/error-code.enum';
+import { Role } from 'src/common/enums/role.enum';
 import type { UserRequest } from 'src/common/types/user-request.interface';
 import { LessonsService } from '../lessons.service';
 
@@ -20,11 +21,11 @@ export class LessonAccessGuard implements CanActivate {
     const { id } = params;
     const { role, userId } = user || {};
 
-    if (['admin', 'mua'].includes(role || '')) {
+    if (role && [Role.ADMIN, Role.MUA].includes(role)) {
       return true;
     }
 
-    if (role === 'client') {
+    if (role === Role.CLIENT) {
       const lesson = await this.lessonsService.findOneWithClientId(
         new Types.ObjectId(id),
       );
