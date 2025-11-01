@@ -9,6 +9,21 @@ import {
 import { Role } from 'src/common/enums/role.enum';
 
 export class CreateUserDto {
+  @IsEnum(Role)
+  role: Role;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(20)
+  firstName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(20)
+  lastName: string;
+
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
@@ -19,7 +34,4 @@ export class CreateUserDto {
   @IsNotEmpty()
   @MinLength(8)
   password: string;
-
-  @IsEnum(Role)
-  role: Role;
 }

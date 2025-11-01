@@ -183,7 +183,7 @@ export class AuthService {
   }
 
   async registerUser(dto: RegisterDto): Promise<void> {
-    const { username, password, role } = dto;
+    const { role, firstName, lastName, username, password } = dto;
 
     const existingUser = await this.usersService.findByUsername(username);
 
@@ -194,9 +194,11 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await this.usersService.create({
+      role,
+      firstName,
+      lastName,
       username,
       password: hashedPassword,
-      role,
     });
   }
 }

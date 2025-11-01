@@ -23,6 +23,7 @@ export class UsersService {
   async findAll() {
     const users = await this.userModel
       .find()
+      .sort({ updatedAt: 'desc' })
       .select('-password -refreshTokens');
 
     if (!users.length) {
@@ -35,7 +36,7 @@ export class UsersService {
   async findAllMuas() {
     const users = await this.userModel
       .find({ role: 'mua' })
-      .select('username role');
+      .select('firstName lastName username');
 
     if (!users.length) {
       throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
