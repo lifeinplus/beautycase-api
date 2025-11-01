@@ -85,7 +85,7 @@ export class QuestionnairesService {
   async findOneMakeupBag(id: Types.ObjectId) {
     const questionnaire = await this.makeupBagQuestionnaireModel
       .findById(id)
-      .populate('muaId', 'username');
+      .populate('muaId', 'firstName lastName username');
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
@@ -97,7 +97,7 @@ export class QuestionnairesService {
   async findOneTraining(id: Types.ObjectId) {
     const questionnaire = await this.trainingQuestionnaireModel
       .findById(id)
-      .populate('muaId', 'username');
+      .populate('muaId', 'firstName lastName username');
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });

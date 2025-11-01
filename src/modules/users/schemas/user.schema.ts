@@ -9,18 +9,24 @@ export type UserDocument = HydratedDocument<User>;
   versionKey: false,
 })
 export class User {
-  @Prop({ required: true, unique: true, trim: true })
-  username: string;
-
-  @Prop({ required: true })
-  password: string;
-
   @Prop({
     required: true,
     enum: Role,
     default: Role.CLIENT,
   })
   role: Role;
+
+  @Prop({ required: true, trim: true })
+  firstName: string;
+
+  @Prop({ required: true, trim: true })
+  lastName: string;
+
+  @Prop({ required: true, unique: true, trim: true })
+  username: string;
+
+  @Prop({ required: true })
+  password: string;
 
   @Prop({ type: [String], default: [] })
   refreshTokens: string[];
