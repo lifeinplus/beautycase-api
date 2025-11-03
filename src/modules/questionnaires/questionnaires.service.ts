@@ -63,7 +63,22 @@ export class QuestionnairesService {
   }
 
   async findAllMakeupBags() {
-    const questionnaires = await this.makeupBagQuestionnaireModel.find();
+    const questionnaires = await this.makeupBagQuestionnaireModel
+      .find()
+      .populate('muaId', 'firstName lastName')
+      .sort({ createdAt: 'desc' });
+
+    if (!questionnaires.length) {
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
+    }
+
+    return questionnaires;
+  }
+
+  async findAllMakeupBagsByMua(muaId: Types.ObjectId) {
+    const questionnaires = await this.makeupBagQuestionnaireModel
+      .find({ muaId })
+      .sort({ createdAt: 'desc' });
 
     if (!questionnaires.length) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
@@ -73,7 +88,22 @@ export class QuestionnairesService {
   }
 
   async findAllTrainings(): Promise<TrainingQuestionnaireDocument[]> {
-    const questionnaires = await this.trainingQuestionnaireModel.find();
+    const questionnaires = await this.trainingQuestionnaireModel
+      .find()
+      .populate('muaId', 'firstName lastName')
+      .sort({ createdAt: 'desc' });
+
+    if (!questionnaires.length) {
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
+    }
+
+    return questionnaires;
+  }
+
+  async findAllTrainingsByMua(muaId: Types.ObjectId) {
+    const questionnaires = await this.trainingQuestionnaireModel
+      .find({ muaId })
+      .sort({ createdAt: 'desc' });
 
     if (!questionnaires.length) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
