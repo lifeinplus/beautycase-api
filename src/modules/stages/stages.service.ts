@@ -59,6 +59,18 @@ export class StagesService {
     return stages;
   }
 
+  async findAllByMua(muaId: Types.ObjectId): Promise<StageDocument[]> {
+    const stages = await this.stageModel
+      .find({ authorId: muaId })
+      .select('createdAt imageUrl subtitle title');
+
+    if (!stages.length) {
+      throw new NotFoundException({ code: ErrorCode.STAGES_NOT_FOUND });
+    }
+
+    return stages;
+  }
+
   async findOne(id: Types.ObjectId): Promise<StageDocument> {
     const stage = await this.stageModel
       .findById(id)

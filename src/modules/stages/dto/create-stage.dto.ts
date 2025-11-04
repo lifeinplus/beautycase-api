@@ -10,6 +10,9 @@ import {
 import { Types } from 'mongoose';
 
 export class CreateStageDto {
+  @IsOptional()
+  authorId: Types.ObjectId;
+
   @IsString()
   @MinLength(3)
   @MaxLength(100)

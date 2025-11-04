@@ -19,6 +19,9 @@ export type MakeupBagDocument = HydratedDocument<MakeupBag>;
   versionKey: false,
 })
 export class MakeupBag {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  authorId: Types.ObjectId;
+
   @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
   categoryId: Types.ObjectId;
 

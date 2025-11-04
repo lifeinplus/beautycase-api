@@ -35,6 +35,24 @@ export class MakeupBagsService {
     return makeupBags;
   }
 
+  async findAllByMua(muaId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+    const makeupBags = await this.makeupBagModel
+      .find({ authorId: muaId })
+      .select('categoryId clientId createdAt stageIds')
+      .populate([
+        { path: 'categoryId', select: 'name' },
+        { path: 'clientId', select: 'firstName lastName' },
+        { path: 'stageIds', select: '_id' },
+      ])
+      .sort({ createdAt: 'desc' });
+
+    if (!makeupBags.length) {
+      throw new NotFoundException({ code: ErrorCode.MAKEUP_BAGS_NOT_FOUND });
+    }
+
+    return makeupBags;
+  }
+
   async findOne(id: Types.ObjectId): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).populate([
       { path: 'categoryId' },

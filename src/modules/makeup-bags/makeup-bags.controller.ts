@@ -6,8 +6,10 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
@@ -26,17 +28,26 @@ export class MakeupBagsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
-  async create(@Body() dto: CreateMakeupBagDto) {
-    const makeupBag = await this.makeupBagsService.create(dto);
+  @Roles(Role.MUA)
+  async create(@Req() req: Request, @Body() dto: CreateMakeupBagDto) {
+    const authorId = req.user!.id;
+    const makeupBag = await this.makeupBagsService.create({ ...dto, authorId });
     return { id: makeupBag.id };
   }
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
+  @Roles(Role.ADMIN)
   findAll() {
     return this.makeupBagsService.findAll();
+  }
+
+  @Get('mine')
+  @UseGuards(RolesGuard)
+  @Roles(Role.MUA)
+  findAllByMua(@Req() req: Request) {
+    const muaId = req.user!.id;
+    return this.makeupBagsService.findAllByMua(muaId);
   }
 
   @Get(':id')
@@ -47,7 +58,7 @@ export class MakeupBagsController {
 
   @Put(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
+  @Roles(Role.MUA)
   async update(
     @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateMakeupBagDto,
@@ -58,7 +69,7 @@ export class MakeupBagsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
+  @Roles(Role.MUA)
   async remove(@Param() params: ObjectIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);
     return { id: makeupBag.id };

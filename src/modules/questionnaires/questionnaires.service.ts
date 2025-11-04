@@ -62,7 +62,7 @@ export class QuestionnairesService {
     return this.trainingQuestionnaireModel.create(dto);
   }
 
-  async findAllMakeupBags() {
+  async findAllMakeupBags(): Promise<MakeupBagQuestionnaireDocument[]> {
     const questionnaires = await this.makeupBagQuestionnaireModel
       .find()
       .populate('muaId', 'firstName lastName')
@@ -75,7 +75,9 @@ export class QuestionnairesService {
     return questionnaires;
   }
 
-  async findAllMakeupBagsByMua(muaId: Types.ObjectId) {
+  async findAllMakeupBagsByMua(
+    muaId: Types.ObjectId,
+  ): Promise<MakeupBagQuestionnaireDocument[]> {
     const questionnaires = await this.makeupBagQuestionnaireModel
       .find({ muaId })
       .sort({ createdAt: 'desc' });

@@ -15,6 +15,9 @@ export type StageDocument = HydratedDocument<Stage>;
   versionKey: false,
 })
 export class Stage {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  authorId: Types.ObjectId;
+
   @Prop({ required: true })
   title: string;
 
