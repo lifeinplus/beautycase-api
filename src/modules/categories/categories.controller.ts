@@ -6,8 +6,10 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
@@ -46,6 +48,13 @@ export class CategoriesController {
   @Roles(Role.ADMIN, Role.MUA)
   findProducts() {
     return this.categoriesService.findProducts();
+  }
+
+  @Get('products/mine/with-counts')
+  @Roles(Role.MUA)
+  findProductsWithCountsByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.categoriesService.findProductsWithCountsByAuthor(authorId);
   }
 
   @Get('products/with-counts')

@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
@@ -24,25 +26,42 @@ import { ProductsService } from './products.service';
 
 @Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.MUA)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  async create(@Body() dto: CreateProductDto) {
-    const product = await this.productsService.create(dto);
+  @Roles(Role.MUA)
+  async create(@Req() req: Request, @Body() dto: CreateProductDto) {
+    const authorId = req.user!.id;
+    const product = await this.productsService.create({ ...dto, authorId });
     return { id: product.id };
   }
 
   @Post('duplicate/:id')
+  @Roles(Role.MUA)
   async duplicate(@Param() params: ObjectIdParamDto) {
     const product = await this.productsService.duplicate(params.id);
     return { id: product.id };
   }
 
   @Get()
+  @Roles(Role.ADMIN)
   findAll() {
     return this.productsService.findAll();
+  }
+
+  @Get('mine')
+  @Roles(Role.MUA)
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.productsService.findAllByAuthor(authorId);
+  }
+
+  @Get('mine/category/:name')
+  @Roles(Role.MUA)
+  findAllByAuthorAndCategory(@Req() req: Request, @Param('name') name: string) {
+    const authorId = req.user!.id;
+    return this.productsService.findAllByAuthorAndCategory(authorId, name);
   }
 
   @Get(':id')
@@ -51,12 +70,8 @@ export class ProductsController {
     return this.productsService.findOne(params.id);
   }
 
-  @Get('category/:name')
-  findByCategory(@Param('name') name: string) {
-    return this.productsService.findByCategory(name);
-  }
-
   @Put(':id')
+  @Roles(Role.MUA)
   async update(
     @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateProductDto,
@@ -66,6 +81,7 @@ export class ProductsController {
   }
 
   @Patch(':id/store-links')
+  @Roles(Role.MUA)
   async updateStoreLinks(
     @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
@@ -75,6 +91,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @Roles(Role.MUA)
   @UseInterceptors(ProductDeletionInterceptor)
   async remove(@Param() params: ObjectIdParamDto) {
     const product = await this.productsService.remove(params.id);

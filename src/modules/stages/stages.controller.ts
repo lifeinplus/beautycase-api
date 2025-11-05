@@ -54,9 +54,9 @@ export class StagesController {
   @Get('mine')
   @UseGuards(RolesGuard)
   @Roles(Role.MUA)
-  findAllByMua(@Req() req: Request) {
-    const muaId = req.user!.id;
-    return this.stagesService.findAllByMua(muaId);
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.stagesService.findAllByAuthor(authorId);
   }
 
   // TODO: @UseGuards(StageAccessGuard)

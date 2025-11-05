@@ -167,7 +167,7 @@ describe('ProductsService', () => {
         select: jest.fn().mockResolvedValue(mockProducts),
       });
 
-      const result = await service.findByCategory('makeup');
+      const result = await service.findAllByAuthorAndCategory('makeup');
 
       expect(
         (service as any).categoriesService.findByName,
@@ -189,9 +189,9 @@ describe('ProductsService', () => {
         select: jest.fn().mockResolvedValue([]),
       });
 
-      await expect(service.findByCategory('makeup')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findAllByAuthorAndCategory('makeup'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

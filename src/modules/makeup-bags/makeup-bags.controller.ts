@@ -22,12 +22,11 @@ import { MakeupBagAccessGuard } from './guards/makeup-bag-access.guard';
 import { MakeupBagsService } from './makeup-bags.service';
 
 @Controller('makeup-bags')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MakeupBagsController {
   constructor(private readonly makeupBagsService: MakeupBagsService) {}
 
   @Post()
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async create(@Req() req: Request, @Body() dto: CreateMakeupBagDto) {
     const authorId = req.user!.id;
@@ -36,18 +35,16 @@ export class MakeupBagsController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   findAll() {
     return this.makeupBagsService.findAll();
   }
 
   @Get('mine')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
-  findAllByMua(@Req() req: Request) {
-    const muaId = req.user!.id;
-    return this.makeupBagsService.findAllByMua(muaId);
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.makeupBagsService.findAllByAuthor(authorId);
   }
 
   @Get(':id')
@@ -57,7 +54,6 @@ export class MakeupBagsController {
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async update(
     @Param() params: ObjectIdParamDto,
@@ -68,7 +64,6 @@ export class MakeupBagsController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async remove(@Param() params: ObjectIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);

@@ -111,6 +111,55 @@ export class CategoriesService {
     return categories;
   }
 
+  async findProductsWithCountsByAuthor(
+    authorId: Types.ObjectId,
+  ): Promise<CategoryWithProductCount[]> {
+    const pipeline = [
+      { $match: { type: 'product' } },
+      {
+        $lookup: {
+          from: 'products',
+          let: { categoryId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$categoryId', '$$categoryId'] },
+                    { $eq: ['$authorId', new Types.ObjectId(authorId)] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: 'products',
+        },
+      },
+      {
+        $addFields: {
+          productCount: { $size: '$products' },
+        },
+      },
+      {
+        $project: {
+          products: 0,
+        },
+      },
+      { $sort: { name: 1 as const } },
+    ];
+
+    const categories = await this.categoryModel.aggregate(pipeline);
+
+    if (!categories.length) {
+      throw new NotFoundException({
+        code: ErrorCode.CATEGORIES_NOT_FOUND,
+        message: 'Product categories not found for this author',
+      });
+    }
+
+    return categories;
+  }
+
   async update(
     id: Types.ObjectId,
     dto: UpdateCategoryDto,

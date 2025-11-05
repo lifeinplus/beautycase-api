@@ -59,9 +59,9 @@ export class StagesService {
     return stages;
   }
 
-  async findAllByMua(muaId: Types.ObjectId): Promise<StageDocument[]> {
+  async findAllByAuthor(authorId: Types.ObjectId): Promise<StageDocument[]> {
     const stages = await this.stageModel
-      .find({ authorId: muaId })
+      .find({ authorId })
       .select('createdAt imageUrl subtitle title');
 
     if (!stages.length) {

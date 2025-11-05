@@ -11,6 +11,9 @@ import {
 import { Types } from 'mongoose';
 
 export class CreateLessonDto {
+  @IsOptional()
+  authorId: Types.ObjectId;
+
   @IsString()
   @MinLength(3)
   @MaxLength(100)

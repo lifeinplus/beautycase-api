@@ -61,6 +61,38 @@ export class ProductsService {
     return products;
   }
 
+  async findAllByAuthor(authorId: Types.ObjectId): Promise<ProductDocument[]> {
+    const products = await this.productModel
+      .find({ authorId })
+      .select('imageUrl');
+
+    if (!products.length) {
+      throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
+    }
+
+    return products;
+  }
+
+  async findAllByAuthorAndCategory(
+    authorId: Types.ObjectId,
+    categoryName: string,
+  ): Promise<ProductDocument[]> {
+    const category = await this.categoriesService.findByName(categoryName);
+
+    const products = await this.productModel
+      .find({ authorId, categoryId: category._id })
+      .select('imageUrl');
+
+    if (!products.length) {
+      throw new NotFoundException({
+        code: ErrorCode.PRODUCTS_NOT_FOUND,
+        message: `No products found for category ${categoryName}`,
+      });
+    }
+
+    return products;
+  }
+
   async findOne(id: Types.ObjectId): Promise<ProductDocument> {
     const product = await this.productModel
       .findById(id)
@@ -71,23 +103,6 @@ export class ProductsService {
     }
 
     return product;
-  }
-
-  async findByCategory(name: string): Promise<ProductDocument[]> {
-    const category = await this.categoriesService.findByName(name);
-
-    const products = await this.productModel
-      .find({ categoryId: category._id })
-      .select('imageUrl');
-
-    if (!products.length) {
-      throw new NotFoundException({
-        code: ErrorCode.PRODUCTS_NOT_FOUND,
-        message: `No products found for category ${name}`,
-      });
-    }
-
-    return products;
   }
 
   async update(

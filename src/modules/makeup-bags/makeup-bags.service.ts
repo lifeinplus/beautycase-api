@@ -35,9 +35,11 @@ export class MakeupBagsService {
     return makeupBags;
   }
 
-  async findAllByMua(muaId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+  async findAllByAuthor(
+    authorId: Types.ObjectId,
+  ): Promise<MakeupBagDocument[]> {
     const makeupBags = await this.makeupBagModel
-      .find({ authorId: muaId })
+      .find({ authorId })
       .select('categoryId clientId createdAt stageIds')
       .populate([
         { path: 'categoryId', select: 'name' },

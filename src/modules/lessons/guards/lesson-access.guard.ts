@@ -30,7 +30,7 @@ export class LessonAccessGuard implements CanActivate {
       if (
         !lesson ||
         !req.user!.id ||
-        !lesson.clientIds?.some((id) => id === req.user!.id)
+        !lesson.clientIds?.some((id) => id.equals(req.user!.id))
       ) {
         throw new NotFoundException({ code: ErrorCode.LESSONS_NOT_FOUND });
       }

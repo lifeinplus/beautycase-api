@@ -17,6 +17,9 @@ export type ProductDocument = HydratedDocument<Product>;
   versionKey: false,
 })
 export class Product {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  authorId: Types.ObjectId;
+
   @Prop({ type: Types.ObjectId, ref: 'Brand', required: true })
   brandId: Types.ObjectId;
 

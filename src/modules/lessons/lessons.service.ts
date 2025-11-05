@@ -30,6 +30,18 @@ export class LessonsService {
     return lessons;
   }
 
+  async findAllByAuthor(authorId: Types.ObjectId): Promise<LessonDocument[]> {
+    const lessons = await this.lessonModel
+      .find({ authorId })
+      .select('-fullDescription -productIds');
+
+    if (!lessons.length) {
+      throw new NotFoundException({ code: ErrorCode.LESSONS_NOT_FOUND });
+    }
+
+    return lessons;
+  }
+
   async findOne(id: Types.ObjectId): Promise<LessonDocument> {
     const lesson = await this.lessonModel
       .findById(id)

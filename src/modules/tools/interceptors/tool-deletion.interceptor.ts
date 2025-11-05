@@ -5,6 +5,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { isValidObjectId, Types } from 'mongoose';
 import { Observable } from 'rxjs';
 
@@ -19,7 +20,7 @@ export class ToolDeletionInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<any>> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
     const { id } = request.params;
 
     if (!isValidObjectId(id)) {

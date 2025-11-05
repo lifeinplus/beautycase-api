@@ -108,7 +108,7 @@ describe('ProductsController', () => {
       const mockProducts = [mockProductResponse];
       mockProductsService.findByCategory.mockResolvedValue(mockProducts);
 
-      const result = await controller.findByCategory('makeup');
+      const result = await controller.findAllByCategory('makeup');
 
       expect(mockProductsService.findByCategory).toHaveBeenCalledWith('makeup');
       expect(result).toEqual(mockProducts);
@@ -119,7 +119,7 @@ describe('ProductsController', () => {
         new NotFoundException(),
       );
 
-      await expect(controller.findByCategory('invalid')).rejects.toThrow(
+      await expect(controller.findAllByCategory('invalid')).rejects.toThrow(
         NotFoundException,
       );
     });

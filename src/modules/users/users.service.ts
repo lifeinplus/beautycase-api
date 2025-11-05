@@ -33,6 +33,18 @@ export class UsersService {
     return users;
   }
 
+  async findAllClients() {
+    const users = await this.userModel
+      .find({ role: 'client' })
+      .select('firstName lastName username');
+
+    if (!users.length) {
+      throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
+    }
+
+    return users;
+  }
+
   async findAllMuas() {
     const users = await this.userModel
       .find({ role: 'mua' })

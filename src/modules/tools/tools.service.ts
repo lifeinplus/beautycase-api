@@ -40,6 +40,16 @@ export class ToolsService {
     return tools;
   }
 
+  async findAllByAuthor(authorId: Types.ObjectId): Promise<ToolDocument[]> {
+    const tools = await this.toolModel.find({ authorId }).select('imageUrl');
+
+    if (!tools.length) {
+      throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
+    }
+
+    return tools;
+  }
+
   async findOne(id: Types.ObjectId): Promise<ToolDocument> {
     const tool = await this.toolModel.findById(id).populate('brandId');
 

@@ -7,8 +7,10 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
@@ -22,21 +24,29 @@ import { LessonAccessGuard } from './guards/lesson-access.guard';
 import { LessonsService } from './lessons.service';
 
 @Controller('lessons')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class LessonsController {
   constructor(private readonly lessonsService: LessonsService) {}
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
-  async create(@Body() dto: CreateLessonDto) {
-    const lesson = await this.lessonsService.create(dto);
+  @Roles(Role.MUA)
+  async create(@Req() req: Request, @Body() dto: CreateLessonDto) {
+    const authorId = req.user!.id;
+    const lesson = await this.lessonsService.create({ ...dto, authorId });
     return { id: lesson.id };
   }
 
   @Get()
+  @Roles(Role.ADMIN)
   findAll() {
     return this.lessonsService.findAll();
+  }
+
+  @Get('mine')
+  @Roles(Role.MUA)
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.lessonsService.findAllByAuthor(authorId);
   }
 
   @Get(':id')
@@ -46,8 +56,7 @@ export class LessonsController {
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
+  @Roles(Role.MUA)
   async update(
     @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateLessonDto,
@@ -57,8 +66,7 @@ export class LessonsController {
   }
 
   @Patch(':id/products')
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
+  @Roles(Role.MUA)
   async updateProducts(
     @Param() params: ObjectIdParamDto,
     @Body() dto: UpdateLessonProductsDto,
@@ -68,8 +76,7 @@ export class LessonsController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MUA)
+  @Roles(Role.MUA)
   async remove(@Param() params: ObjectIdParamDto) {
     const lesson = await this.lessonsService.remove(params.id);
     return { id: lesson.id };

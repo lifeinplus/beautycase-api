@@ -27,7 +27,11 @@ export class MakeupBagAccessGuard implements CanActivate {
         new Types.ObjectId(req.params.id),
       );
 
-      if (!makeupBag || !req.user!.id || makeupBag.clientId !== req.user!.id) {
+      if (
+        !makeupBag ||
+        !req.user!.id ||
+        !makeupBag.clientId.equals(req.user!.id)
+      ) {
         throw new NotFoundException({ code: ErrorCode.MAKEUP_BAG_NOT_FOUND });
       }
     }

@@ -15,6 +15,9 @@ import { IsObjectId } from 'src/common/decorators/objectid.decorator';
 import { StoreLinkDto } from 'src/common/dto/store-link.dto';
 
 export class CreateToolDto {
+  @IsOptional()
+  authorId: Types.ObjectId;
+
   @IsObjectId()
   @IsNotEmpty()
   brandId: Types.ObjectId;
