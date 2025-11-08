@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { BrandsService } from './brands.service';
@@ -23,28 +24,28 @@ export class BrandsController {
   constructor(private readonly brandsService: BrandsService) {}
 
   @Post()
-  @Roles('admin')
+  @Roles(Role.ADMIN)
   async create(@Body() dto: CreateBrandDto) {
     const brand = await this.brandsService.create(dto);
     return { id: brand.id };
   }
 
   @Get()
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN, Role.MUA)
   findAll() {
     return this.brandsService.findAll();
   }
 
   @Put(':id')
-  @Roles('admin')
-  async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateBrandDto) {
+  @Roles(Role.ADMIN)
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateBrandDto) {
     const brand = await this.brandsService.update(params.id, dto);
     return { id: brand.id };
   }
 
   @Delete(':id')
-  @Roles('admin')
-  async remove(@Param() params: ObjectIdParamDto) {
+  @Roles(Role.ADMIN)
+  async remove(@Param() params: MongoIdParamDto) {
     const brand = await this.brandsService.remove(params.id);
     return { id: brand.id };
   }

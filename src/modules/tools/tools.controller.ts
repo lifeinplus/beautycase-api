@@ -7,12 +7,15 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateToolDto } from './dto/create-tool.dto';
@@ -23,36 +26,47 @@ import { ToolsService } from './tools.service';
 
 @Controller('tools')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'mua')
 export class ToolsController {
   constructor(private readonly toolsService: ToolsService) {}
 
   @Post()
-  async create(@Body() dto: CreateToolDto) {
-    const tool = await this.toolsService.create(dto);
+  @Roles(Role.MUA)
+  async create(@Req() req: Request, @Body() dto: CreateToolDto) {
+    const authorId = req.user!.id;
+    const tool = await this.toolsService.create({ ...dto, authorId });
     return { id: tool.id };
   }
 
   @Get()
+  @Roles(Role.ADMIN)
   findAll() {
     return this.toolsService.findAll();
   }
 
+  @Get('mine')
+  @Roles(Role.MUA)
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.toolsService.findAllByAuthor(authorId);
+  }
+
   @Get(':id')
   @Roles()
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.toolsService.findOne(params.id);
   }
 
   @Put(':id')
-  async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateToolDto) {
+  @Roles(Role.MUA)
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateToolDto) {
     const tool = await this.toolsService.update(params.id, dto);
     return { id: tool.id };
   }
 
   @Patch(':id/store-links')
+  @Roles(Role.MUA)
   async updateStoreLinks(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const tool = await this.toolsService.updateStoreLinks(params.id, dto);
@@ -60,8 +74,9 @@ export class ToolsController {
   }
 
   @Delete(':id')
+  @Roles(Role.MUA)
   @UseInterceptors(ToolDeletionInterceptor)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const tool = await this.toolsService.remove(params.id);
     return { id: tool.id };
   }

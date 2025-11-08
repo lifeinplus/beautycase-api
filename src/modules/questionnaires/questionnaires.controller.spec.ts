@@ -1,7 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { QuestionnairesController } from './questionnaires.controller';
 import { QuestionnairesService } from './questionnaires.service';
 
@@ -9,19 +10,21 @@ describe('QuestionnairesController', () => {
   let controller: QuestionnairesController;
   let service: QuestionnairesService;
 
+  const mockMuaId = makeObjectId();
+
   const mockMakeupBagQuestionnaire =
-    TestDataFactory.createMakeupBagQuestionnaire();
-  const mockMakeupBagQuestionnaireId = new Types.ObjectId();
-  const mockBadMakeupBagQuestionnaireId = new Types.ObjectId();
+    TestDataFactory.createMakeupBagQuestionnaire(mockMuaId);
+  const mockMakeupBagQuestionnaireId = makeObjectId();
+  const mockBadMakeupBagQuestionnaireId = makeObjectId();
   const mockMakeupBagQuestionnaireResponse = {
     ...mockMakeupBagQuestionnaire,
     id: mockMakeupBagQuestionnaireId,
   };
 
   const mockTrainingQuestionnaire =
-    TestDataFactory.createTrainingQuestionnaire();
-  const mockTrainingQuestionnaireId = new Types.ObjectId();
-  const mockBadTrainingQuestionnaireId = new Types.ObjectId();
+    TestDataFactory.createTrainingQuestionnaire(mockMuaId);
+  const mockTrainingQuestionnaireId = makeObjectId();
+  const mockBadTrainingQuestionnaireId = makeObjectId();
   const mockTrainingQuestionnaireResponse = {
     ...mockTrainingQuestionnaire,
     id: mockTrainingQuestionnaireId,
@@ -29,11 +32,15 @@ describe('QuestionnairesController', () => {
 
   const mockQuestionnairesService = {
     createMakeupBag: jest.fn(),
-    createTraining: jest.fn(),
     findAllMakeupBags: jest.fn(),
-    findAllTrainings: jest.fn(),
+    findAllMakeupBagsByMua: jest.fn(),
     findOneMakeupBag: jest.fn(),
+    removeMakeupBag: jest.fn(),
+    createTraining: jest.fn(),
+    findAllTrainings: jest.fn(),
+    findAllTrainingsByMua: jest.fn(),
     findOneTraining: jest.fn(),
+    removeTraining: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -86,6 +93,21 @@ describe('QuestionnairesController', () => {
       });
     });
 
+    describe('findAllMakeupBagsByMua', () => {
+      it('should return all makeup bags for a specific MUA', async () => {
+        mockQuestionnairesService.findAllMakeupBagsByMua = jest
+          .fn()
+          .mockResolvedValue([mockMakeupBagQuestionnaireResponse]);
+
+        const mockReq = { user: { id: mockMuaId } } as any;
+
+        const result = await controller.findAllMakeupBagsByMua(mockReq);
+
+        expect(service.findAllMakeupBagsByMua).toHaveBeenCalledWith(mockMuaId);
+        expect(result).toEqual([mockMakeupBagQuestionnaireResponse]);
+      });
+    });
+
     describe('findOneMakeupBag', () => {
       it('should return questionnaire by id', async () => {
         mockQuestionnairesService.findOneMakeupBag.mockResolvedValue(
@@ -110,6 +132,23 @@ describe('QuestionnairesController', () => {
         await expect(
           controller.findOneMakeupBag({ id: mockBadMakeupBagQuestionnaireId }),
         ).rejects.toThrow(NotFoundException);
+      });
+    });
+
+    describe('removeMakeupBag', () => {
+      it('should remove a questionnaire and return its id', async () => {
+        mockQuestionnairesService.removeMakeupBag = jest
+          .fn()
+          .mockResolvedValue(mockMakeupBagQuestionnaireResponse);
+
+        const result = await controller.removeMakeupBag({
+          id: mockMakeupBagQuestionnaireId,
+        });
+
+        expect(service.removeMakeupBag).toHaveBeenCalledWith(
+          mockMakeupBagQuestionnaireId,
+        );
+        expect(result).toEqual({ id: mockMakeupBagQuestionnaireResponse.id });
       });
     });
   });
@@ -145,6 +184,21 @@ describe('QuestionnairesController', () => {
       });
     });
 
+    describe('findAllTrainingsByMua', () => {
+      it('should return all training questionnaires for a specific MUA', async () => {
+        mockQuestionnairesService.findAllTrainingsByMua = jest
+          .fn()
+          .mockResolvedValue([mockTrainingQuestionnaireResponse]);
+
+        const mockReq = { user: { id: mockMuaId } } as any;
+
+        const result = await controller.findAllTrainingsByMua(mockReq);
+
+        expect(service.findAllTrainingsByMua).toHaveBeenCalledWith(mockMuaId);
+        expect(result).toEqual([mockTrainingQuestionnaireResponse]);
+      });
+    });
+
     describe('findOneTraining', () => {
       it('should return questionnaire by id', async () => {
         mockQuestionnairesService.findOneTraining.mockResolvedValue(
@@ -169,6 +223,23 @@ describe('QuestionnairesController', () => {
         await expect(
           controller.findOneTraining({ id: mockBadTrainingQuestionnaireId }),
         ).rejects.toThrow(NotFoundException);
+      });
+    });
+
+    describe('removeTraining', () => {
+      it('should remove a training questionnaire and return its id', async () => {
+        mockQuestionnairesService.removeTraining = jest
+          .fn()
+          .mockResolvedValue(mockTrainingQuestionnaireResponse);
+
+        const result = await controller.removeTraining({
+          id: mockTrainingQuestionnaireId,
+        });
+
+        expect(service.removeTraining).toHaveBeenCalledWith(
+          mockTrainingQuestionnaireId,
+        );
+        expect(result).toEqual({ id: mockTrainingQuestionnaireResponse.id });
       });
     });
   });

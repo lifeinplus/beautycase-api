@@ -8,6 +8,7 @@ import { TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
+import { Role } from 'src/common/enums/role.enum';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -182,20 +183,22 @@ export class AuthService {
   }
 
   async registerUser(dto: RegisterDto): Promise<void> {
-    const { username, password } = dto;
+    const { role, firstName, lastName, username, password } = dto;
 
     const existingUser = await this.usersService.findByUsername(username);
 
-    if (existingUser) {
+    if (existingUser || role === Role.ADMIN) {
       throw new ConflictException({ code: ErrorCode.REGISTER_ERROR });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await this.usersService.create({
+      role,
+      firstName,
+      lastName,
       username,
       password: hashedPassword,
-      role: 'client',
     });
   }
 }

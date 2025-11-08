@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Types } from 'mongoose';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -16,8 +16,8 @@ describe('CategoriesController', () => {
 
   const mockCategory = TestDataFactory.createCategory();
   const mockCategories = TestDataFactory.createMultipleCategories(2);
-  const mockCategoryId = new Types.ObjectId();
-  const mockInvalidCategoryId = new Types.ObjectId();
+  const mockCategoryId = makeObjectId();
+  const mockBadCategoryId = makeObjectId();
 
   const mockCategoryResponse = {
     ...mockCategory,
@@ -242,7 +242,7 @@ describe('CategoriesController', () => {
 
   describe('update', () => {
     it('should update a brand successfully', async () => {
-      const params: ObjectIdParamDto = { id: mockCategoryResponse.id };
+      const params: MongoIdParamDto = { id: mockCategoryResponse.id };
       const dto: UpdateCategoryDto = {
         name: 'Updated Category',
       };
@@ -257,7 +257,7 @@ describe('CategoriesController', () => {
     });
 
     it('should handle service errors during update', async () => {
-      const params: ObjectIdParamDto = { id: mockCategoryResponse.id };
+      const params: MongoIdParamDto = { id: mockCategoryResponse.id };
       const dto: UpdateCategoryDto = {
         name: 'Updated Category',
       };
@@ -270,7 +270,7 @@ describe('CategoriesController', () => {
     });
 
     it('should handle partial updates', async () => {
-      const params: ObjectIdParamDto = { id: mockCategoryResponse.id };
+      const params: MongoIdParamDto = { id: mockCategoryResponse.id };
       const dto: UpdateCategoryDto = {
         name: 'Updated Category Only',
       };
@@ -287,7 +287,7 @@ describe('CategoriesController', () => {
 
   describe('remove', () => {
     it('should delete a brand successfully', async () => {
-      const params: ObjectIdParamDto = { id: mockCategoryResponse.id };
+      const params: MongoIdParamDto = { id: mockCategoryResponse.id };
       mockCategoriesService.remove.mockResolvedValue(mockCategoryResponse);
 
       const result = await controller.remove(params);
@@ -297,7 +297,7 @@ describe('CategoriesController', () => {
     });
 
     it('should handle service errors during deletion', async () => {
-      const params: ObjectIdParamDto = { id: mockCategoryResponse.id };
+      const params: MongoIdParamDto = { id: mockCategoryResponse.id };
       const error = new Error('Category not found');
       mockCategoriesService.remove.mockRejectedValue(error);
 
@@ -306,7 +306,7 @@ describe('CategoriesController', () => {
     });
 
     it('should handle invalid MongoDB ObjectId', async () => {
-      const params: ObjectIdParamDto = { id: mockInvalidCategoryId };
+      const params: MongoIdParamDto = { id: mockBadCategoryId };
       const error = new Error('Invalid ObjectId');
       mockCategoriesService.remove.mockRejectedValue(error);
 

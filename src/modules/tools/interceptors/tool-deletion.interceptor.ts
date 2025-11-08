@@ -5,7 +5,8 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { isValidObjectId, Types } from 'mongoose';
+import { Request } from 'express';
+import { isValidObjectId } from 'mongoose';
 import { Observable } from 'rxjs';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
@@ -19,18 +20,16 @@ export class ToolDeletionInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<any>> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
     const { id } = request.params;
 
     if (!isValidObjectId(id)) {
       throw new BadRequestException({ code: ErrorCode.INVALID_OBJECT_ID });
     }
 
-    const toolId = Types.ObjectId.createFromHexString(id);
-
-    if (toolId) {
+    if (id) {
       const [makeupBags] = await Promise.all([
-        this.makeupBagsService.findByToolId(toolId),
+        this.makeupBagsService.findByToolId(id),
       ]);
 
       if (makeupBags.length > 0) {

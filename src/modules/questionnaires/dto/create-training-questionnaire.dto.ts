@@ -1,6 +1,10 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateTrainingQuestionnaireDto {
+  @IsNotEmpty()
+  @IsMongoId()
+  muaId: string;
+
   @IsString()
   name: string;
 

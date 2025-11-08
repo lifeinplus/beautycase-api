@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
@@ -38,50 +38,84 @@ export class Procedures {
 @Schema({
   collection: 'questionnaires_makeupbags',
   timestamps: true,
+  toJSON: {
+    transform: (_, ret: any) => {
+      delete ret.muaId;
+      return ret;
+    },
+    virtuals: true,
+  },
   versionKey: false,
 })
 export class MakeupBagQuestionnaire {
-  @Prop() age?: number;
+  @Prop()
+  age?: number;
 
-  @Prop() allergies?: string;
+  @Prop()
+  allergies?: string;
 
-  @Prop({ enum: Budget }) budget?: string;
+  @Prop({ enum: Budget })
+  budget?: string;
 
-  @Prop() brushes?: string;
+  @Prop()
+  brushes?: string;
 
-  @Prop() city?: string;
+  @Prop()
+  city?: string;
 
-  @Prop() currentSkills?: string;
+  @Prop()
+  currentSkills?: string;
 
-  @Prop({ type: DesiredSkills }) desiredSkills?: DesiredSkills;
+  @Prop({ type: DesiredSkills })
+  desiredSkills?: DesiredSkills;
 
-  @Prop() instagram?: string;
+  @Prop()
+  instagram?: string;
 
-  @Prop({ required: true }) makeupBag: string;
+  @Prop({ required: true })
+  makeupBag: string;
 
-  @Prop() makeupBagPhotoId?: string;
+  @Prop()
+  makeupBagPhotoId?: string;
 
-  @Prop() makeupBagPhotoUrl?: string;
+  @Prop()
+  makeupBagPhotoUrl?: string;
 
-  @Prop({ enum: MakeupTime }) makeupTime?: string;
+  @Prop({ enum: MakeupTime })
+  makeupTime?: string;
 
-  @Prop({ required: true }) name: string;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  muaId: Types.ObjectId;
 
-  @Prop() oilyShine?: string;
+  @Prop({ required: true })
+  name: string;
 
-  @Prop() peeling?: string;
+  @Prop()
+  oilyShine?: string;
 
-  @Prop() pores?: string;
+  @Prop()
+  peeling?: string;
 
-  @Prop({ type: Problems }) problems?: Problems;
+  @Prop()
+  pores?: string;
 
-  @Prop({ type: Procedures }) procedures?: Procedures;
+  @Prop({ type: Problems })
+  problems?: Problems;
 
-  @Prop({ enum: Referral }) referral?: string;
+  @Prop({ type: Procedures })
+  procedures?: Procedures;
 
-  @Prop() skinType?: string;
+  @Prop({ enum: Referral })
+  referral?: string;
+
+  @Prop()
+  skinType?: string;
 }
 
 export const MakeupBagQuestionnaireSchema = SchemaFactory.createForClass(
   MakeupBagQuestionnaire,
 );
+
+MakeupBagQuestionnaireSchema.virtual('mua').get(function () {
+  return this.muaId;
+});

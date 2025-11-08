@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
@@ -34,7 +34,9 @@ export class QuestionnairesService {
     imageUrl: questionnaire.makeupBagPhotoUrl || '',
   });
 
-  async createMakeupBag(dto: CreateMakeupBagQuestionnaireDto) {
+  async createMakeupBag(
+    dto: CreateMakeupBagQuestionnaireDto,
+  ): Promise<MakeupBagQuestionnaireDocument> {
     const questionnaire = new this.makeupBagQuestionnaireModel(dto);
     const { makeupBagPhotoUrl } = dto;
 
@@ -60,8 +62,25 @@ export class QuestionnairesService {
     return this.trainingQuestionnaireModel.create(dto);
   }
 
-  async findAllMakeupBags() {
-    const questionnaires = await this.makeupBagQuestionnaireModel.find();
+  async findAllMakeupBags(): Promise<MakeupBagQuestionnaireDocument[]> {
+    const questionnaires = await this.makeupBagQuestionnaireModel
+      .find()
+      .populate('muaId', 'firstName lastName')
+      .sort({ createdAt: 'desc' });
+
+    if (!questionnaires.length) {
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
+    }
+
+    return questionnaires;
+  }
+
+  async findAllMakeupBagsByMua(
+    muaId: string,
+  ): Promise<MakeupBagQuestionnaireDocument[]> {
+    const questionnaires = await this.makeupBagQuestionnaireModel
+      .find({ muaId })
+      .sort({ createdAt: 'desc' });
 
     if (!questionnaires.length) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
@@ -71,7 +90,10 @@ export class QuestionnairesService {
   }
 
   async findAllTrainings(): Promise<TrainingQuestionnaireDocument[]> {
-    const questionnaires = await this.trainingQuestionnaireModel.find();
+    const questionnaires = await this.trainingQuestionnaireModel
+      .find()
+      .populate('muaId', 'firstName lastName')
+      .sort({ createdAt: 'desc' });
 
     if (!questionnaires.length) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
@@ -80,8 +102,22 @@ export class QuestionnairesService {
     return questionnaires;
   }
 
-  async findOneMakeupBag(id: Types.ObjectId) {
-    const questionnaire = await this.makeupBagQuestionnaireModel.findById(id);
+  async findAllTrainingsByMua(muaId: string) {
+    const questionnaires = await this.trainingQuestionnaireModel
+      .find({ muaId })
+      .sort({ createdAt: 'desc' });
+
+    if (!questionnaires.length) {
+      throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRES_NOT_FOUND });
+    }
+
+    return questionnaires;
+  }
+
+  async findOneMakeupBag(id: string) {
+    const questionnaire = await this.makeupBagQuestionnaireModel
+      .findById(id)
+      .populate('muaId', 'firstName lastName username');
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
@@ -90,8 +126,10 @@ export class QuestionnairesService {
     return questionnaire;
   }
 
-  async findOneTraining(id: Types.ObjectId) {
-    const questionnaire = await this.trainingQuestionnaireModel.findById(id);
+  async findOneTraining(id: string) {
+    const questionnaire = await this.trainingQuestionnaireModel
+      .findById(id)
+      .populate('muaId', 'firstName lastName username');
 
     if (!questionnaire) {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
@@ -100,9 +138,7 @@ export class QuestionnairesService {
     return questionnaire;
   }
 
-  async removeMakeupBag(
-    id: Types.ObjectId,
-  ): Promise<MakeupBagQuestionnaireDocument> {
+  async removeMakeupBag(id: string): Promise<MakeupBagQuestionnaireDocument> {
     const questionnaire =
       await this.makeupBagQuestionnaireModel.findByIdAndDelete(id);
 
@@ -119,9 +155,7 @@ export class QuestionnairesService {
     return questionnaire;
   }
 
-  async removeTraining(
-    id: Types.ObjectId,
-  ): Promise<TrainingQuestionnaireDocument> {
+  async removeTraining(id: string): Promise<TrainingQuestionnaireDocument> {
     const questionnaire =
       await this.trainingQuestionnaireModel.findByIdAndDelete(id);
 

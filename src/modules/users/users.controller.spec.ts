@@ -1,9 +1,9 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { NotFoundException } from '@nestjs/common';
-import { Types } from 'mongoose';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -12,8 +12,8 @@ describe('UsersController', () => {
   let service: UsersService;
 
   const mockUser = TestDataFactory.createClientUser();
-  const mockUserId = new Types.ObjectId();
-  const mockBadUserId = new Types.ObjectId();
+  const mockUserId = makeObjectId();
+  const mockBadUserId = makeObjectId();
 
   const mockUserResponse = {
     ...mockUser,
@@ -55,7 +55,7 @@ describe('UsersController', () => {
     it('should return a user by id', async () => {
       mockUsersService.findOne.mockResolvedValue(mockUserResponse);
 
-      const params: ObjectIdParamDto = { id: mockUserId };
+      const params: MongoIdParamDto = { id: mockUserId };
       const result = await controller.findOne(params);
 
       expect(mockUsersService.findOne).toHaveBeenCalledWith(mockUserId);

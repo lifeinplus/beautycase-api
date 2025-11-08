@@ -14,6 +14,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 
 describe('Users (e2e)', () => {
   let app: INestApplication;
@@ -64,13 +65,6 @@ describe('Users (e2e)', () => {
       });
     });
 
-    it('should allow mua to get all users', async () => {
-      await request(app.getHttpServer())
-        .get('/users')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .expect(HttpStatus.OK);
-    });
-
     it('should reject regular clients', async () => {
       await request(app.getHttpServer())
         .get('/users')
@@ -92,7 +86,7 @@ describe('Users (e2e)', () => {
     });
 
     it('should return 404 for non-existent user', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/users/${fakeId}`)

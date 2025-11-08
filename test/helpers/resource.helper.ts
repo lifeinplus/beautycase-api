@@ -1,5 +1,4 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Types } from 'mongoose';
 import * as request from 'supertest';
 
 import {
@@ -14,34 +13,35 @@ import {
   TestStore,
   TestTool,
 } from 'test/factories/test-data.factory';
+import { AuthTokens } from './auth.helper';
 
 export interface TestToolResources {
-  brandId: Types.ObjectId;
-  categoryId: Types.ObjectId;
-  productId: Types.ObjectId;
-  stageId: Types.ObjectId;
+  brandId: string;
+  categoryId: string;
+  productId: string;
+  stageId: string;
 }
 
 export interface TestLessonResources {
-  brandId: Types.ObjectId;
-  productId: Types.ObjectId;
+  brandId: string;
+  productId: string;
 }
 
 export interface TestMakeupBagResources {
-  brandId: Types.ObjectId;
-  categoryId: Types.ObjectId;
-  productIds: Types.ObjectId[];
-  stageId: Types.ObjectId;
-  toolId: Types.ObjectId;
+  brandId: string;
+  categoryId: string;
+  productIds: string[];
+  stageId: string;
+  toolId: string;
 }
 
 export interface BrandResources {
-  id: Types.ObjectId;
+  id: string;
   data: TestBrand;
 }
 
 export interface CategoryResources {
-  id: Types.ObjectId;
+  id: string;
   data: TestCategory;
 }
 
@@ -56,7 +56,7 @@ export interface MakeupBagResources {
 }
 
 export interface ProductResources {
-  id: Types.ObjectId;
+  id: string;
   data: TestProduct;
 }
 
@@ -66,7 +66,7 @@ export interface QuestionnaireResources {
 }
 
 export interface StageResources {
-  id: Types.ObjectId;
+  id: string;
   data: TestStage;
 }
 
@@ -76,20 +76,22 @@ export interface StoreResources {
 }
 
 export interface ToolResources {
-  id: Types.ObjectId;
+  id: string;
   data: TestTool;
 }
 
 export class ResourceHelper {
   static async setupLessonResources(
     app: INestApplication,
-    adminToken: string,
+    tokens: AuthTokens,
   ): Promise<TestLessonResources> {
-    const category = await this.createCategory(app, adminToken);
-    const brand = await this.createBrand(app, adminToken);
+    const category = await this.createCategory(app, tokens.adminToken);
+    const brand = await this.createBrand(app, tokens.adminToken);
+
     const product = await this.createProduct(
       app,
-      adminToken,
+      tokens.muaToken,
+      tokens.muaId,
       brand.id,
       category.id,
     );
@@ -102,18 +104,27 @@ export class ResourceHelper {
 
   static async setupMakeupBagResources(
     app: INestApplication,
-    adminToken: string,
+    tokens: AuthTokens,
   ): Promise<TestMakeupBagResources> {
-    const category = await this.createCategory(app, adminToken);
-    const brand = await this.createBrand(app, adminToken);
+    const category = await this.createCategory(app, tokens.adminToken);
+    const brand = await this.createBrand(app, tokens.adminToken);
+
     const product = await this.createProduct(
       app,
-      adminToken,
+      tokens.muaToken,
+      tokens.muaId,
       brand.id,
       category.id,
     );
-    const stage = await this.createStage(app, adminToken, [product.id]);
-    const tool = await this.createTool(app, adminToken, brand.id);
+
+    const stage = await this.createStage(app, tokens, [product.id]);
+
+    const tool = await this.createTool(
+      app,
+      tokens.muaToken,
+      tokens.muaId,
+      brand.id,
+    );
 
     return {
       brandId: brand.id,
@@ -126,19 +137,20 @@ export class ResourceHelper {
 
   static async setupToolResources(
     app: INestApplication,
-    adminToken: string,
+    tokens: AuthTokens,
   ): Promise<TestToolResources> {
-    const brand = await this.createBrand(app, adminToken);
-    const category = await this.createCategory(app, adminToken);
+    const brand = await this.createBrand(app, tokens.adminToken);
+    const category = await this.createCategory(app, tokens.adminToken);
 
     const product = await this.createProduct(
       app,
-      adminToken,
+      tokens.muaToken,
+      tokens.muaId,
       brand.id,
       category.id,
     );
 
-    const stage = await this.createStage(app, adminToken, [product.id]);
+    const stage = await this.createStage(app, tokens, [product.id]);
 
     return {
       brandId: brand.id,
@@ -229,10 +241,11 @@ export class ResourceHelper {
   static async createLesson(
     app: INestApplication,
     adminToken: string,
-    productIds: Types.ObjectId[] = [],
-    clientIds: Types.ObjectId[] = [],
+    authorId: string,
+    productIds: string[] = [],
+    clientIds: string[] = [],
   ): Promise<LessonResources> {
-    const data = TestDataFactory.createLesson(productIds, clientIds);
+    const data = TestDataFactory.createLesson(authorId, productIds, clientIds);
 
     const response = await request(app.getHttpServer())
       .post('/lessons')
@@ -250,12 +263,14 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     count: number,
-    productIds: Types.ObjectId[] = [],
-    clientIds: Types.ObjectId[] = [],
+    authorId: string,
+    productIds: string[] = [],
+    clientIds: string[] = [],
   ): Promise<LessonResources[]> {
     const lessons: LessonResources[] = [];
     const lessonsData = TestDataFactory.createMultipleLessons(
       count,
+      authorId,
       productIds,
       clientIds,
     );
@@ -275,22 +290,22 @@ export class ResourceHelper {
 
   static async createMakeupBag(
     app: INestApplication,
-    adminToken: string,
-    categoryId: Types.ObjectId,
-    clientId: Types.ObjectId,
-    stageIds: Types.ObjectId[] = [],
-    toolIds: Types.ObjectId[] = [],
+    tokens: AuthTokens,
+    categoryId: string,
+    stageIds: string[] = [],
+    toolIds: string[] = [],
   ): Promise<MakeupBagResources> {
     const data = TestDataFactory.createMakeupBag(
+      tokens.muaId,
       categoryId,
-      clientId,
+      tokens.clientId,
       stageIds,
       toolIds,
     );
 
     const response = await request(app.getHttpServer())
       .post('/makeup-bags')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Authorization', `Bearer ${tokens.muaToken}`)
       .send(data)
       .expect(HttpStatus.CREATED);
 
@@ -302,15 +317,16 @@ export class ResourceHelper {
 
   static async createProduct(
     app: INestApplication,
-    adminToken: string,
-    brandId: Types.ObjectId,
-    categoryId: Types.ObjectId,
+    token: string,
+    authorId: string,
+    brandId: string,
+    categoryId: string,
   ): Promise<ProductResources> {
-    const data = TestDataFactory.createProduct(brandId, categoryId);
+    const data = TestDataFactory.createProduct(authorId, brandId, categoryId);
 
     const response = await request(app.getHttpServer())
       .post('/products')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .send(data)
       .expect(HttpStatus.CREATED);
 
@@ -322,14 +338,15 @@ export class ResourceHelper {
 
   static async createMultipleProducts(
     app: INestApplication,
-    adminToken: string,
+    tokens: AuthTokens,
     count: number,
-    brandId: Types.ObjectId,
-    categoryId: Types.ObjectId,
+    brandId: string,
+    categoryId: string,
   ): Promise<ProductResources[]> {
     const products: ProductResources[] = [];
     const productsData = TestDataFactory.createMultipleProducts(
       count,
+      tokens.muaId,
       brandId,
       categoryId,
     );
@@ -337,7 +354,7 @@ export class ResourceHelper {
     for (const data of productsData) {
       const { body } = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(data)
         .expect(HttpStatus.CREATED);
 
@@ -347,10 +364,11 @@ export class ResourceHelper {
     return products;
   }
 
-  static async createQuestionnaire(
+  static async createMakeupBagQuestionnaire(
     app: INestApplication,
+    muaId: string,
   ): Promise<QuestionnaireResources> {
-    const data = TestDataFactory.createMakeupBagQuestionnaire();
+    const data = TestDataFactory.createMakeupBagQuestionnaire(muaId);
 
     const response = await request(app.getHttpServer())
       .post('/questionnaires/makeup-bags')
@@ -365,14 +383,14 @@ export class ResourceHelper {
 
   static async createStage(
     app: INestApplication,
-    adminToken: string,
-    productIds: Types.ObjectId[],
+    tokens: AuthTokens,
+    productIds: string[],
   ): Promise<StageResources> {
-    const data = TestDataFactory.createStage(productIds);
+    const data = TestDataFactory.createStage(tokens.muaId, productIds);
 
     const response = await request(app.getHttpServer())
       .post('/stages')
-      .set('Authorization', `Bearer ${adminToken}`)
+      .set('Authorization', `Bearer ${tokens.muaToken}`)
       .send(data)
       .expect(HttpStatus.CREATED);
 
@@ -386,10 +404,15 @@ export class ResourceHelper {
     app: INestApplication,
     adminToken: string,
     count: number,
-    productIds: Types.ObjectId[],
+    authorId: string,
+    productIds: string[],
   ): Promise<StageResources[]> {
     const stages: StageResources[] = [];
-    const stagesData = TestDataFactory.createMultipleStages(count, productIds);
+    const stagesData = TestDataFactory.createMultipleStages(
+      count,
+      authorId,
+      productIds,
+    );
 
     for (const data of stagesData) {
       const { body } = await request(app.getHttpServer())
@@ -446,9 +469,10 @@ export class ResourceHelper {
   static async createTool(
     app: INestApplication,
     adminToken: string,
-    brandId: Types.ObjectId,
+    authorId: string,
+    brandId: string,
   ): Promise<ToolResources> {
-    const data = TestDataFactory.createTool(brandId);
+    const data = TestDataFactory.createTool(authorId, brandId);
 
     const response = await request(app.getHttpServer())
       .post('/tools')

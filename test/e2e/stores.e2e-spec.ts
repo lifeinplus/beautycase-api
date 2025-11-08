@@ -17,6 +17,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { ResourceHelper } from 'test/helpers/resource.helper';
 
 describe('Stores (e2e)', () => {
@@ -175,7 +176,7 @@ describe('Stores (e2e)', () => {
     });
 
     it('should return 404 for non-existent store', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .put(`/stores/${nonExistentId}`)
@@ -238,7 +239,7 @@ describe('Stores (e2e)', () => {
     });
 
     it('should return 404 for non-existent store', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .delete(`/stores/${nonExistentId}`)

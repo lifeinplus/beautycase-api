@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection, Types } from 'mongoose';
+import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
@@ -17,6 +17,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { ResourceHelper } from 'test/helpers/resource.helper';
 
 describe('Brands (e2e)', () => {
@@ -24,7 +25,7 @@ describe('Brands (e2e)', () => {
   let connection: Connection;
 
   let tokens: AuthTokens;
-  let brandId: Types.ObjectId;
+  let brandId: string;
   const mockBrand = TestDataFactory.createBrand();
 
   beforeAll(async () => {
@@ -175,7 +176,7 @@ describe('Brands (e2e)', () => {
     });
 
     it('should return 404 for non-existent brand', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .put(`/brands/${nonExistentId}`)
@@ -238,7 +239,7 @@ describe('Brands (e2e)', () => {
     });
 
     it('should return 404 for non-existent brand', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .delete(`/brands/${nonExistentId}`)

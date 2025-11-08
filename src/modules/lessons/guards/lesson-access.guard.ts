@@ -4,10 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Request } from 'express';
 
-import { Types } from 'mongoose';
 import { ErrorCode } from 'src/common/enums/error-code.enum';
-import type { UserRequest } from 'src/common/types/user-request.interface';
+import { Role } from 'src/common/enums/role.enum';
 import { LessonsService } from '../lessons.service';
 
 @Injectable()
@@ -15,24 +15,21 @@ export class LessonAccessGuard implements CanActivate {
   constructor(private readonly lessonsService: LessonsService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request: UserRequest = context.switchToHttp().getRequest();
-    const { user, params } = request;
-    const { id } = params;
-    const { role, userId } = user || {};
+    const req = context.switchToHttp().getRequest<Request>();
 
-    if (['admin', 'mua'].includes(role || '')) {
+    if (req.user!.role && [Role.ADMIN, Role.MUA].includes(req.user!.role)) {
       return true;
     }
 
-    if (role === 'client') {
+    if (req.user!.role === Role.CLIENT) {
       const lesson = await this.lessonsService.findOneWithClientId(
-        new Types.ObjectId(id),
+        req.params.id,
       );
 
       if (
         !lesson ||
-        !userId ||
-        !lesson.clientIds?.some((id) => id.toString() === userId)
+        !req.user!.id ||
+        !lesson.clientIds?.some((id) => id.equals(req.user!.id))
       ) {
         throw new NotFoundException({ code: ErrorCode.LESSONS_NOT_FOUND });
       }

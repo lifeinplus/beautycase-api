@@ -1,32 +1,45 @@
 import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
+import { Public } from 'src/common/decorators/public.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UsersService } from './users.service';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN)
   findAll() {
     return this.usersService.findAll();
   }
 
+  @Get('clients')
+  @Roles(Role.MUA)
+  findAllClients() {
+    return this.usersService.findAllClients();
+  }
+
+  @Get('muas')
+  @Public()
+  findAllMuas() {
+    return this.usersService.findAllMuas();
+  }
+
   @Get(':id')
-  findOne(@Param() params: ObjectIdParamDto) {
+  @Roles()
+  findOne(@Param() params: MongoIdParamDto) {
     return this.usersService.findOne(params.id);
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin')
-  async remove(@Param() params: ObjectIdParamDto) {
+  @Roles(Role.ADMIN)
+  async remove(@Param() params: MongoIdParamDto) {
     const user = await this.usersService.remove(params.id);
     return { id: user.id };
   }

@@ -1,9 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
+
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Store } from './schemas/store.schema';
 import { StoresService } from './stores.service';
@@ -13,7 +14,7 @@ describe('StoresService', () => {
 
   const mockStore = TestDataFactory.createStore();
   const mockStores = TestDataFactory.createMultipleStores(2);
-  const mockStoreId = new Types.ObjectId();
+  const mockStoreId = makeObjectId();
 
   const mockStoreResponse = {
     ...mockStore,

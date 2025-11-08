@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -85,6 +86,10 @@ export class CreateMakeupBagQuestionnaireDto {
   @IsOptional()
   @IsEnum(MakeupTime)
   makeupTime?: MakeupTime;
+
+  @IsNotEmpty()
+  @IsMongoId()
+  muaId: string;
 
   @IsString()
   name: string;

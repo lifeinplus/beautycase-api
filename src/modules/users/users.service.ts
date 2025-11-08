@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { LessonsService } from '../lessons/lessons.service';
@@ -23,6 +23,7 @@ export class UsersService {
   async findAll() {
     const users = await this.userModel
       .find()
+      .sort({ updatedAt: 'desc' })
       .select('-password -refreshTokens');
 
     if (!users.length) {
@@ -32,7 +33,31 @@ export class UsersService {
     return users;
   }
 
-  async findOne(id: Types.ObjectId) {
+  async findAllClients() {
+    const users = await this.userModel
+      .find({ role: 'client' })
+      .select('firstName lastName username');
+
+    if (!users.length) {
+      throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
+    }
+
+    return users;
+  }
+
+  async findAllMuas() {
+    const users = await this.userModel
+      .find({ role: 'mua' })
+      .select('firstName lastName username');
+
+    if (!users.length) {
+      throw new NotFoundException({ code: ErrorCode.USERS_NOT_FOUND });
+    }
+
+    return users;
+  }
+
+  async findOne(id: string) {
     const user = await this.userModel
       .findById(id)
       .select('-password -refreshTokens');
@@ -70,7 +95,7 @@ export class UsersService {
     );
   }
 
-  async remove(id: Types.ObjectId): Promise<UserDocument> {
+  async remove(id: string): Promise<UserDocument> {
     const user = await this.userModel.findByIdAndDelete(id);
 
     if (!user) {

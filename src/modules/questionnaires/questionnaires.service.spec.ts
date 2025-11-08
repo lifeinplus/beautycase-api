@@ -1,10 +1,11 @@
+import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
-import { NotFoundException } from '@nestjs/common';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { ImageService } from '../shared/image.service';
 import { QuestionnairesService } from './questionnaires.service';
 import { MakeupBagQuestionnaire } from './schemas/makeup-bag-questionnaire.schema';
@@ -18,27 +19,35 @@ describe('QuestionnairesService', () => {
   let service: QuestionnairesService;
   let mockMakeupBagQuestionnaireModel: MockModel;
   let mockTrainingQuestionnaireModel: MockModel;
-  let imageService: jest.Mocked<ImageService>;
+
+  const mockMuaId = makeObjectId();
+  const mockMakeupBagQuestionnaireId = makeObjectId();
+  const mockBadMakeupBagQuestionnaireId = makeObjectId();
+  const mockTrainingQuestionnaireId = makeObjectId();
+  const mockBadTrainingQuestionnaireId = makeObjectId();
 
   const mockMakeupBagQuestionnaire =
-    TestDataFactory.createMakeupBagQuestionnaire();
-  const mockMakeupBagQuestionnaireId = new Types.ObjectId();
-  const mockInvalidMakeupBagQuestionnaireId = new Types.ObjectId();
+    TestDataFactory.createMakeupBagQuestionnaire(mockMuaId);
   const mockMakeupBagQuestionnaireResponse = {
     ...mockMakeupBagQuestionnaire,
     _id: mockMakeupBagQuestionnaireId,
+    makeupBagPhotoId: 'img-id',
     save: jest.fn(),
   };
 
   const mockTrainingQuestionnaire =
-    TestDataFactory.createTrainingQuestionnaire();
-  const mockTrainingQuestionnaireId = new Types.ObjectId();
-  const mockInvalidTrainingQuestionnaireId = new Types.ObjectId();
+    TestDataFactory.createTrainingQuestionnaire(mockMuaId);
   const mockTrainingQuestionnaireResponse = {
     ...mockTrainingQuestionnaire,
     _id: mockTrainingQuestionnaireId,
     create: jest.fn(),
   };
+
+  const mockImageService = {
+    handleImageUpload: jest.fn(),
+    handleImageUpdate: jest.fn(),
+    handleImageDeletion: jest.fn(),
+  } as any;
 
   beforeEach(async () => {
     mockMakeupBagQuestionnaireModel = jest.fn(() => ({
@@ -48,6 +57,7 @@ describe('QuestionnairesService', () => {
 
     mockMakeupBagQuestionnaireModel.find = jest.fn();
     mockMakeupBagQuestionnaireModel.findById = jest.fn();
+    mockMakeupBagQuestionnaireModel.findByIdAndDelete = jest.fn();
 
     mockTrainingQuestionnaireModel = jest.fn(() => ({
       ...mockTrainingQuestionnaireResponse,
@@ -60,12 +70,6 @@ describe('QuestionnairesService', () => {
     mockTrainingQuestionnaireModel.find = jest.fn();
     mockTrainingQuestionnaireModel.findById = jest.fn();
 
-    imageService = {
-      handleImageUpload: jest.fn(),
-      handleImageUpdate: jest.fn(),
-      handleImageDeletion: jest.fn(),
-    } as any;
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuestionnairesService,
@@ -77,7 +81,10 @@ describe('QuestionnairesService', () => {
           provide: getModelToken(TrainingQuestionnaire.name),
           useValue: mockTrainingQuestionnaireModel,
         },
-        { provide: ImageService, useValue: imageService },
+        {
+          provide: ImageService,
+          useValue: mockImageService,
+        },
       ],
     }).compile();
 
@@ -92,16 +99,16 @@ describe('QuestionnairesService', () => {
           makeupBagPhotoUrl: undefined,
         });
 
-        expect(imageService.handleImageUpload).not.toHaveBeenCalled();
+        expect(mockImageService.handleImageUpload).not.toHaveBeenCalled();
         expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
       });
 
       it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
         await service.createMakeupBag(mockMakeupBagQuestionnaire as any);
 
-        expect(imageService.handleImageUpload).toHaveBeenCalledWith(
+        expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
           expect.objectContaining({
-            imageId: undefined,
+            imageId: 'img-id',
             imageUrl: 'https://example.com/photo.jpg',
           }),
           {
@@ -115,18 +122,30 @@ describe('QuestionnairesService', () => {
 
     describe('findAllMakeupBag', () => {
       it('should return all questionnaires', async () => {
-        (mockMakeupBagQuestionnaireModel.find as jest.Mock).mockResolvedValue([
-          mockMakeupBagQuestionnaireResponse,
-        ]);
+        const mockFindChain = {
+          populate: jest.fn().mockReturnThis(),
+          sort: jest
+            .fn()
+            .mockResolvedValue([mockMakeupBagQuestionnaireResponse]),
+        };
+
+        mockMakeupBagQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
 
         const result = await service.findAllMakeupBags();
         expect(result).toEqual([mockMakeupBagQuestionnaireResponse]);
       });
 
       it('should throw NotFoundException if no questionnaires found', async () => {
-        (mockMakeupBagQuestionnaireModel.find as jest.Mock).mockResolvedValue(
-          [],
-        );
+        const mockFindChain = {
+          populate: jest.fn().mockReturnThis(),
+          sort: jest.fn().mockResolvedValue([]),
+        };
+
+        mockMakeupBagQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
 
         await expect(service.findAllMakeupBags()).rejects.toThrow(
           NotFoundException,
@@ -134,11 +153,48 @@ describe('QuestionnairesService', () => {
       });
     });
 
+    describe('findAllMakeupBagsByMua', () => {
+      it('should return all questionnaires', async () => {
+        const mockFindChain = {
+          sort: jest
+            .fn()
+            .mockResolvedValue([mockMakeupBagQuestionnaireResponse]),
+        };
+
+        mockMakeupBagQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
+
+        const result = await service.findAllMakeupBagsByMua(mockMuaId);
+        expect(result).toEqual([mockMakeupBagQuestionnaireResponse]);
+      });
+
+      it('should throw NotFoundException if no questionnaires found', async () => {
+        const mockFindChain = {
+          sort: jest.fn().mockResolvedValue([]),
+        };
+
+        mockMakeupBagQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
+
+        await expect(service.findAllMakeupBagsByMua(mockMuaId)).rejects.toThrow(
+          NotFoundException,
+        );
+      });
+    });
+
     describe('findOneMakeupBag', () => {
       it('should return a questionnaire by id', async () => {
-        (
-          mockMakeupBagQuestionnaireModel.findById as jest.Mock
-        ).mockResolvedValue(mockMakeupBagQuestionnaireResponse);
+        const mockFindByIdChain = {
+          populate: jest
+            .fn()
+            .mockResolvedValue(mockMakeupBagQuestionnaireResponse),
+        };
+
+        (mockMakeupBagQuestionnaireModel.findById as jest.Mock).mockReturnValue(
+          mockFindByIdChain,
+        );
 
         const result = await service.findOneMakeupBag(
           mockMakeupBagQuestionnaireId,
@@ -147,12 +203,43 @@ describe('QuestionnairesService', () => {
       });
 
       it('should throw NotFoundException if questionnaire not found', async () => {
+        const mockFindByIdChain = {
+          populate: jest.fn().mockResolvedValue(null),
+        };
+
+        (mockMakeupBagQuestionnaireModel.findById as jest.Mock).mockReturnValue(
+          mockFindByIdChain,
+        );
+
+        await expect(
+          service.findOneMakeupBag(mockBadMakeupBagQuestionnaireId),
+        ).rejects.toThrow(NotFoundException);
+      });
+    });
+
+    describe('removeMakeupBag', () => {
+      it('should delete tool and remove image if exists', async () => {
         (
-          mockMakeupBagQuestionnaireModel.findById as jest.Mock
+          mockMakeupBagQuestionnaireModel.findByIdAndDelete as jest.Mock
+        ).mockResolvedValue(mockMakeupBagQuestionnaireResponse);
+
+        const result = await service.removeMakeupBag(
+          mockMakeupBagQuestionnaireId,
+        );
+
+        expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
+          mockMakeupBagQuestionnaireResponse.makeupBagPhotoId,
+        );
+        expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
+      });
+
+      it('should throw NotFoundException if tool not found', async () => {
+        (
+          mockMakeupBagQuestionnaireModel.findByIdAndDelete as jest.Mock
         ).mockResolvedValue(null);
 
         await expect(
-          service.findOneMakeupBag(mockInvalidMakeupBagQuestionnaireId),
+          service.removeMakeupBag(mockBadMakeupBagQuestionnaireId),
         ).rejects.toThrow(NotFoundException);
       });
     });
@@ -167,19 +254,31 @@ describe('QuestionnairesService', () => {
     });
 
     describe('findAllTraining', () => {
-      it('should return all questionnaires', async () => {
-        (mockTrainingQuestionnaireModel.find as jest.Mock).mockResolvedValue([
-          mockTrainingQuestionnaireResponse,
-        ]);
+      it('should return all training questionnaires', async () => {
+        const mockFindChain = {
+          populate: jest.fn().mockReturnThis(),
+          sort: jest
+            .fn()
+            .mockResolvedValue([mockTrainingQuestionnaireResponse]),
+        };
+
+        mockTrainingQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
 
         const result = await service.findAllTrainings();
         expect(result).toEqual([mockTrainingQuestionnaireResponse]);
       });
 
-      it('should throw NotFoundException if no questionnaires found', async () => {
-        (mockTrainingQuestionnaireModel.find as jest.Mock).mockResolvedValue(
-          [],
-        );
+      it('should throw NotFoundException if no training questionnaires found', async () => {
+        const mockFindChain = {
+          populate: jest.fn().mockReturnThis(),
+          sort: jest.fn().mockResolvedValue([]),
+        };
+
+        mockTrainingQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
 
         await expect(service.findAllTrainings()).rejects.toThrow(
           NotFoundException,
@@ -187,11 +286,48 @@ describe('QuestionnairesService', () => {
       });
     });
 
+    describe('findAllTrainingsByMua', () => {
+      it('should return all training questionnaires', async () => {
+        const mockFindChain = {
+          sort: jest
+            .fn()
+            .mockResolvedValue([mockTrainingQuestionnaireResponse]),
+        };
+
+        mockTrainingQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
+
+        const result = await service.findAllTrainingsByMua(mockMuaId);
+        expect(result).toEqual([mockTrainingQuestionnaireResponse]);
+      });
+
+      it('should throw NotFoundException if no training questionnaires found', async () => {
+        const mockFindChain = {
+          sort: jest.fn().mockResolvedValue([]),
+        };
+
+        mockTrainingQuestionnaireModel.find = jest
+          .fn()
+          .mockReturnValue(mockFindChain);
+
+        await expect(service.findAllTrainingsByMua(mockMuaId)).rejects.toThrow(
+          NotFoundException,
+        );
+      });
+    });
+
     describe('findOneTraining', () => {
-      it('should return a questionnaire by id', async () => {
-        (
-          mockTrainingQuestionnaireModel.findById as jest.Mock
-        ).mockResolvedValue(mockTrainingQuestionnaireResponse);
+      it('should return a training questionnaire by id', async () => {
+        const mockFindByIdChain = {
+          populate: jest
+            .fn()
+            .mockResolvedValue(mockTrainingQuestionnaireResponse),
+        };
+
+        (mockTrainingQuestionnaireModel.findById as jest.Mock).mockReturnValue(
+          mockFindByIdChain,
+        );
 
         const result = await service.findOneTraining(
           mockTrainingQuestionnaireId,
@@ -199,13 +335,17 @@ describe('QuestionnairesService', () => {
         expect(result).toEqual(mockTrainingQuestionnaireResponse);
       });
 
-      it('should throw NotFoundException if questionnaire not found', async () => {
-        (
-          mockTrainingQuestionnaireModel.findById as jest.Mock
-        ).mockResolvedValue(null);
+      it('should throw NotFoundException if training questionnaire not found', async () => {
+        const mockFindByIdChain = {
+          populate: jest.fn().mockResolvedValue(null),
+        };
+
+        (mockTrainingQuestionnaireModel.findById as jest.Mock).mockReturnValue(
+          mockFindByIdChain,
+        );
 
         await expect(
-          service.findOneTraining(mockInvalidTrainingQuestionnaireId),
+          service.findOneTraining(mockBadTrainingQuestionnaireId),
         ).rejects.toThrow(NotFoundException);
       });
     });

@@ -8,7 +8,6 @@ import * as request from 'supertest';
 import configuration from 'src/config/configuration';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { BrandsModule } from 'src/modules/brands/brands.module';
-import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
 import { UpdateLessonDto } from 'src/modules/lessons/dto/update-lesson.dto';
 import { LessonsModule } from 'src/modules/lessons/lessons.module';
 import { ProductsModule } from 'src/modules/products/products.module';
@@ -19,6 +18,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import {
   ResourceHelper,
   TestLessonResources,
@@ -56,11 +56,7 @@ describe('Lessons (e2e)', () => {
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
-
-    resources = await ResourceHelper.setupLessonResources(
-      app,
-      tokens.adminToken,
-    );
+    resources = await ResourceHelper.setupLessonResources(app, tokens);
   });
 
   beforeEach(async () => {
@@ -74,12 +70,16 @@ describe('Lessons (e2e)', () => {
 
   describe('POST /lessons', () => {
     const createLessonDto = () =>
-      TestDataFactory.createLesson([resources.productId], [tokens.clientId]);
+      TestDataFactory.createLesson(
+        tokens.muaId,
+        [resources.productId],
+        [tokens.clientId],
+      );
 
     it('should create a lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(createLessonDto())
         .expect(HttpStatus.CREATED);
 
@@ -121,7 +121,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidData)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -131,7 +131,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({
           ...createLessonDto(),
           title: longTitle,
@@ -142,7 +142,7 @@ describe('Lessons (e2e)', () => {
     it('should validate URL format', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({
           ...createLessonDto(),
           videoUrl: 'invalid-url',
@@ -159,7 +159,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(dataWithIds)
         .expect(HttpStatus.CREATED);
 
@@ -175,7 +175,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(dataWithInvalidIds)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -185,29 +185,12 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       await ResourceHelper.createMultipleLessons(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
         2,
+        tokens.muaId,
         [resources.productId],
         [tokens.clientId],
       );
-    });
-
-    it('should return all lessons when authenticated', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/lessons')
-        .set('Authorization', `Bearer ${tokens.clientToken}`)
-        .expect(HttpStatus.OK);
-
-      expect(response.body).toBeInstanceOf(Array);
-      expect(response.body.length).toBe(2);
-
-      response.body.forEach((lesson: CreateLessonDto) => {
-        expect(lesson).not.toHaveProperty('fullDescription');
-        expect(lesson).not.toHaveProperty('productIds');
-        expect(lesson).toHaveProperty('title');
-        expect(lesson).toHaveProperty('shortDescription');
-        expect(lesson).toHaveProperty('videoUrl');
-      });
     });
 
     it('should reject unauthenticated requests', async () => {
@@ -221,15 +204,19 @@ describe('Lessons (e2e)', () => {
     let clientAccessibleLessonId: string;
 
     beforeEach(async () => {
-      const { id } = await ResourceHelper.createLesson(app, tokens.adminToken, [
-        resources.productId,
-      ]);
+      const { id } = await ResourceHelper.createLesson(
+        app,
+        tokens.muaToken,
+        tokens.muaId,
+        [resources.productId],
+      );
 
       lessonId = id;
 
       const clientLesson = await ResourceHelper.createLesson(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         [resources.productId],
         [tokens.clientId],
       );
@@ -240,7 +227,7 @@ describe('Lessons (e2e)', () => {
     it('should return lesson details for admin', async () => {
       const response = await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('_id', lessonId);
@@ -276,18 +263,18 @@ describe('Lessons (e2e)', () => {
     });
 
     it('should return 404 for non-existent lesson', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/lessons/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .get('/lessons/invalid-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -304,7 +291,8 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createLesson(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         [resources.productId],
         [tokens.clientId],
       );
@@ -320,7 +308,7 @@ describe('Lessons (e2e)', () => {
     it('should update lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
 
@@ -328,7 +316,7 @@ describe('Lessons (e2e)', () => {
 
       const getResponse = await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(getResponse.body.title).toBe(updateDto.title);
@@ -356,11 +344,11 @@ describe('Lessons (e2e)', () => {
     });
 
     it('should return 404 for non-existent lesson', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .put(`/lessons/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -379,7 +367,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
     });
@@ -392,7 +380,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidData)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -402,7 +390,8 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createLesson(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         [resources.productId],
         [tokens.clientId],
       );
@@ -418,7 +407,7 @@ describe('Lessons (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ productIds })
         .expect(HttpStatus.OK);
 
@@ -450,7 +439,7 @@ describe('Lessons (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ productIds: invalidProductIds })
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -458,7 +447,7 @@ describe('Lessons (e2e)', () => {
     it('should require productIds array', async () => {
       await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -466,17 +455,17 @@ describe('Lessons (e2e)', () => {
     it('should handle empty productIds array', async () => {
       await request(app.getHttpServer())
         .patch(`/lessons/${lessonId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ productIds: [] })
         .expect(HttpStatus.OK);
     });
 
     it('should return 404 for non-existent lesson', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .patch(`/lessons/${fakeId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ productIds: [] })
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -486,7 +475,8 @@ describe('Lessons (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createLesson(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         [resources.productId],
         [tokens.clientId],
       );
@@ -497,14 +487,14 @@ describe('Lessons (e2e)', () => {
     it('should delete lesson as admin', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', lessonId);
 
       await request(app.getHttpServer())
         .get(`/lessons/${lessonId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -525,18 +515,18 @@ describe('Lessons (e2e)', () => {
     });
 
     it('should return 404 for non-existent lesson', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .delete(`/lessons/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .delete('/lessons/invalid-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -549,7 +539,7 @@ describe('Lessons (e2e)', () => {
 
   describe('Access Control Edge Cases', () => {
     it('should handle LessonAccessGuard when makeup bag does not exist', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/lessons/${nonExistentId}`)
@@ -560,7 +550,8 @@ describe('Lessons (e2e)', () => {
     it('should handle LessonAccessGuard when user ID is missing', async () => {
       const { id } = await ResourceHelper.createLesson(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         [resources.productId],
         [tokens.clientId],
       );
@@ -575,7 +566,7 @@ describe('Lessons (e2e)', () => {
     it('should handle malformed request bodies gracefully', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send('invalid json')
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -583,7 +574,7 @@ describe('Lessons (e2e)', () => {
     it('should handle missing required fields', async () => {
       await request(app.getHttpServer())
         .post('/lessons')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -591,7 +582,7 @@ describe('Lessons (e2e)', () => {
     it('should handle invalid route parameters', async () => {
       await request(app.getHttpServer())
         .get('/lessons/not-an-object-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
   });

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Transform } from 'class-transformer';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type MakeupBagDocument = HydratedDocument<MakeupBag>;
 
@@ -19,16 +19,34 @@ export type MakeupBagDocument = HydratedDocument<MakeupBag>;
   versionKey: false,
 })
 export class MakeupBag {
-  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
+  authorId: Types.ObjectId;
+
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  })
   categoryId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   clientId: Types.ObjectId;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Stage' }], required: true })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Stage' }],
+    required: true,
+  })
   stageIds: Types.ObjectId[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Tool' }], required: true })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Tool' }],
+    required: true,
+  })
   toolIds: Types.ObjectId[];
 
   @Transform(({ obj }) => obj.categoryId)

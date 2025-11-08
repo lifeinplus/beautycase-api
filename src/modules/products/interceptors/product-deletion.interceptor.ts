@@ -5,7 +5,8 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { isValidObjectId, Types } from 'mongoose';
+import { Request } from 'express';
+import { isValidObjectId } from 'mongoose';
 import { Observable } from 'rxjs';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
@@ -23,19 +24,17 @@ export class ProductDeletionInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<any>> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
     const { id } = request.params;
 
     if (!isValidObjectId(id)) {
       throw new BadRequestException({ code: ErrorCode.INVALID_OBJECT_ID });
     }
 
-    const productId = Types.ObjectId.createFromHexString(id);
-
-    if (productId) {
+    if (id) {
       const [lessons, stages] = await Promise.all([
-        this.lessonsService.findByProductId(productId),
-        this.stagesService.findByProductId(productId),
+        this.lessonsService.findByProductId(id),
+        this.stagesService.findByProductId(id),
       ]);
 
       if (stages.length > 0 || lessons.length > 0) {

@@ -1,7 +1,7 @@
-import { Types } from 'mongoose';
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
+import { Role } from 'src/common/enums/role.enum';
 import { CreateBrandDto } from 'src/modules/brands/dto/create-brand.dto';
 import { CreateCategoryDto } from 'src/modules/categories/dto/create-category.dto';
 import { CreateLessonDto } from 'src/modules/lessons/dto/create-lesson.dto';
@@ -31,27 +31,33 @@ export interface TestUser extends CreateUserDto {}
 export class TestDataFactory {
   static createAdminUser(overrides: Partial<TestUser> = {}): TestUser {
     return {
+      firstName: 'Admin',
+      lastName: 'User',
       username: 'admin',
       password: 'admin123',
-      role: 'admin',
+      role: Role.ADMIN,
       ...overrides,
     };
   }
 
   static createMuaUser(overrides: Partial<TestUser> = {}): TestUser {
     return {
+      firstName: 'MUA',
+      lastName: 'User',
       username: 'mua',
       password: 'mua123',
-      role: 'mua',
+      role: Role.MUA,
       ...overrides,
     };
   }
 
   static createClientUser(overrides: Partial<TestUser> = {}): TestUser {
     return {
+      firstName: 'Client',
+      lastName: 'User',
       username: 'client',
       password: 'client123',
-      role: 'client',
+      role: Role.CLIENT,
       ...overrides,
     };
   }
@@ -96,11 +102,13 @@ export class TestDataFactory {
   }
 
   static createLesson(
-    productIds: Types.ObjectId[] = [],
-    clientIds: Types.ObjectId[] = [],
+    authorId: string,
+    productIds: string[] = [],
+    clientIds: string[] = [],
     overrides: Partial<TestLesson> = {},
   ): TestLesson {
     return {
+      authorId,
       title: 'Advanced Makeup Techniques',
       shortDescription: 'Learn advanced makeup application methods',
       videoUrl: 'https://example.com/video.mp4',
@@ -113,24 +121,27 @@ export class TestDataFactory {
 
   static createMultipleLessons(
     count: number,
-    productIds: Types.ObjectId[] = [],
-    clientIds: Types.ObjectId[] = [],
+    authorId: string,
+    productIds: string[] = [],
+    clientIds: string[] = [],
   ): TestLesson[] {
     return Array.from({ length: count }, (_, index) =>
-      this.createLesson(productIds, clientIds, {
+      this.createLesson(authorId, productIds, clientIds, {
         title: `Lesson ${index + 1}`,
       }),
     );
   }
 
   static createMakeupBag(
-    categoryId: Types.ObjectId,
-    clientId: Types.ObjectId,
-    stageIds: Types.ObjectId[] = [],
-    toolIds: Types.ObjectId[] = [],
+    authorId: string,
+    categoryId: string,
+    clientId: string,
+    stageIds: string[] = [],
+    toolIds: string[] = [],
     overrides: Partial<TestMakeupBag> = {},
   ): TestMakeupBag {
     return {
+      authorId,
       categoryId,
       clientId,
       stageIds,
@@ -140,11 +151,13 @@ export class TestDataFactory {
   }
 
   static createProduct(
-    brandId: Types.ObjectId,
-    categoryId: Types.ObjectId,
+    authorId: string,
+    brandId: string,
+    categoryId: string,
     overrides: Partial<TestProduct> = {},
   ): TestProduct {
     return {
+      authorId,
       brandId,
       categoryId,
       name: 'Test Lipstick',
@@ -163,20 +176,23 @@ export class TestDataFactory {
 
   static createMultipleProducts(
     count: number,
-    brandId: Types.ObjectId,
-    categoryId: Types.ObjectId,
+    authorId: string,
+    brandId: string,
+    categoryId: string,
   ): TestProduct[] {
     return Array.from({ length: count }, (_, index) =>
-      this.createProduct(brandId, categoryId, {
+      this.createProduct(authorId, brandId, categoryId, {
         name: `Test Product ${index + 1}`,
       }),
     );
   }
 
   static createMakeupBagQuestionnaire(
+    muaId: string,
     overrides: Partial<TestMakeupBagQuestionnaire> = {},
   ): TestMakeupBagQuestionnaire {
     return {
+      muaId,
       name: 'Jane Doe',
       makeupBag: 'my-makeup-bag-description',
       age: 25,
@@ -219,9 +235,11 @@ export class TestDataFactory {
   }
 
   static createTrainingQuestionnaire(
+    muaId: string,
     overrides: Partial<TestTrainingQuestionnaire> = {},
   ): TestTrainingQuestionnaire {
     return {
+      muaId,
       name: 'Jane Doe',
       contact: 'janedoe',
       difficulties: 'Struggling with smokey eye looks',
@@ -232,10 +250,12 @@ export class TestDataFactory {
   }
 
   static createStage(
-    productIds: Types.ObjectId[] = [],
+    authorId: string,
+    productIds: string[] = [],
     overrides: Partial<TestStage> = {},
   ): TestStage {
     return {
+      authorId,
       title: 'Morning routine',
       subtitle: 'Soft and natural',
       imageUrl: 'http://example.com/image.jpg',
@@ -246,10 +266,11 @@ export class TestDataFactory {
 
   static createMultipleStages(
     count: number,
-    productIds: Types.ObjectId[],
+    authorId: string,
+    productIds: string[],
   ): TestStage[] {
     return Array.from({ length: count }, (_, index) =>
-      this.createStage(productIds, {
+      this.createStage(authorId, productIds, {
         title: `Test Stage ${index + 1}`,
       }),
     );
@@ -271,10 +292,12 @@ export class TestDataFactory {
   }
 
   static createTool(
-    brandId: Types.ObjectId,
+    authorId: string,
+    brandId: string,
     overrides: Partial<TestTool> = {},
   ): TestTool {
     return {
+      authorId,
       brandId,
       name: 'Brush',
       imageUrl: 'http://example.com/image.jpg',

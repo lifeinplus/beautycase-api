@@ -1,10 +1,11 @@
+import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
-import { NotFoundException } from '@nestjs/common';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { ImageService } from '../shared/image.service';
 import { UpdateStageProductsDto } from './dto/update-stage-products.dto';
 import { UpdateStageDto } from './dto/update-stage.dto';
@@ -20,9 +21,11 @@ describe('StagesService', () => {
   let mockStageModel: MockModel<StageDocument>;
   let mockImageService: jest.Mocked<ImageService>;
 
-  const mockStage = TestDataFactory.createStage();
-  const mockStageId = new Types.ObjectId();
-  const mockBadStageId = new Types.ObjectId();
+  const mockAuthorId = makeObjectId();
+  const mockStageId = makeObjectId();
+  const mockBadStageId = makeObjectId();
+
+  const mockStage = TestDataFactory.createStage(mockAuthorId);
 
   const mockStageResponse = {
     ...mockStage,

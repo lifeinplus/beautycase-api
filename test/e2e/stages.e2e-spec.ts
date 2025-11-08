@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection, Types } from 'mongoose';
+import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
@@ -18,6 +18,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import {
   BrandResources,
   CategoryResources,
@@ -34,7 +35,7 @@ describe('Stages (e2e)', () => {
   let brand: BrandResources;
   let category: CategoryResources;
   let product: ProductResources;
-  let stageId: Types.ObjectId;
+  let stageId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -64,7 +65,8 @@ describe('Stages (e2e)', () => {
     category = await ResourceHelper.createCategory(app, tokens.adminToken);
     product = await ResourceHelper.createProduct(
       app,
-      tokens.adminToken,
+      tokens.muaToken,
+      tokens.muaId,
       brand.id,
       category.id,
     );
@@ -80,12 +82,13 @@ describe('Stages (e2e)', () => {
   });
 
   describe('POST /stages', () => {
-    const createStageDto = () => TestDataFactory.createStage([product.id]);
+    const createStageDto = () =>
+      TestDataFactory.createStage(tokens.muaId, [product.id]);
 
     it('should create a stage as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(createStageDto())
         .expect(HttpStatus.CREATED);
 
@@ -109,7 +112,7 @@ describe('Stages (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(stageDto)
         .expect(HttpStatus.CREATED);
 
@@ -141,7 +144,7 @@ describe('Stages (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -166,7 +169,7 @@ describe('Stages (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidStageDto)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -183,7 +186,7 @@ describe('Stages (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidStage)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -200,7 +203,7 @@ describe('Stages (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidStage)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -212,7 +215,7 @@ describe('Stages (e2e)', () => {
 
   describe('POST /stages/duplicate/:id', () => {
     beforeEach(async () => {
-      const { id } = await ResourceHelper.createStage(app, tokens.adminToken, [
+      const { id } = await ResourceHelper.createStage(app, tokens, [
         product.id,
       ]);
 
@@ -222,7 +225,7 @@ describe('Stages (e2e)', () => {
     it('should duplicate an existing stage', async () => {
       const response = await request(app.getHttpServer())
         .post(`/stages/duplicate/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toEqual({ id: expect.any(String) });
@@ -247,11 +250,11 @@ describe('Stages (e2e)', () => {
     });
 
     it('should return 404 for non-existent stage', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .post(`/stages/duplicate/${nonExistentId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -260,7 +263,7 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .post(`/stages/duplicate/${invalidId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
   });
@@ -271,8 +274,9 @@ describe('Stages (e2e)', () => {
     beforeEach(async () => {
       stages = await ResourceHelper.createMultipleStages(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
         2,
+        tokens.muaId,
         [product.id],
       );
     });
@@ -306,7 +310,7 @@ describe('Stages (e2e)', () => {
     it('should get all stages as MUA', async () => {
       await request(app.getHttpServer())
         .get('/stages')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
+        .set('Authorization', `Bearer ${tokens.adminToken}`)
         .expect(HttpStatus.OK);
     });
 
@@ -354,35 +358,18 @@ describe('Stages (e2e)', () => {
     let stageData: TestStage;
 
     beforeEach(async () => {
-      const { id, data } = await ResourceHelper.createStage(
-        app,
-        tokens.adminToken,
-        [product.id],
-      );
+      const { id, data } = await ResourceHelper.createStage(app, tokens, [
+        product.id,
+      ]);
 
       stageId = id;
       stageData = data;
     });
 
-    it('should get stage by id for any authenticated user', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.clientToken}`)
-        .expect(HttpStatus.OK);
-
-      expect(response.body).toMatchObject({
-        _id: stageId,
-        title: stageData.title,
-        subtitle: stageData.subtitle,
-        imageUrl: stageData.imageUrl,
-        products: [{ _id: stageData.productIds[0] }],
-      });
-    });
-
     it('should populate productIds with imageUrl field', async () => {
       const response = await request(app.getHttpServer())
         .get(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body.products).toHaveLength(1);
@@ -393,11 +380,11 @@ describe('Stages (e2e)', () => {
     });
 
     it('should return 404 for non-existent stage', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/stages/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -406,7 +393,7 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .get(`/stages/${invalidId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -419,7 +406,7 @@ describe('Stages (e2e)', () => {
 
   describe('PUT /stages/:id', () => {
     beforeEach(async () => {
-      const { id } = await ResourceHelper.createStage(app, tokens.adminToken, [
+      const { id } = await ResourceHelper.createStage(app, tokens, [
         product.id,
       ]);
 
@@ -434,7 +421,7 @@ describe('Stages (e2e)', () => {
 
       const putResponse = await request(app.getHttpServer())
         .put(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
 
@@ -442,7 +429,8 @@ describe('Stages (e2e)', () => {
 
       const getResponse = await request(app.getHttpServer())
         .get(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`);
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
+        .expect(HttpStatus.OK);
 
       expect(getResponse.body.title).toBe(updateDto.title);
       expect(getResponse.body.subtitle).toBe(updateDto.subtitle);
@@ -475,7 +463,7 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
     });
@@ -488,7 +476,7 @@ describe('Stages (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidUpdate)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -501,12 +489,12 @@ describe('Stages (e2e)', () => {
     });
 
     it('should return 404 for non-existent stage', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
       const updateDto = { title: 'Updated Title' };
 
       await request(app.getHttpServer())
         .put(`/stages/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -519,17 +507,17 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
     });
   });
 
   describe('PATCH /stages/:id/products', () => {
-    let productIds: Types.ObjectId[];
+    let productIds: string[];
 
     beforeEach(async () => {
-      const { id } = await ResourceHelper.createStage(app, tokens.adminToken, [
+      const { id } = await ResourceHelper.createStage(app, tokens, [
         product.id,
       ]);
 
@@ -537,7 +525,7 @@ describe('Stages (e2e)', () => {
 
       const products = await ResourceHelper.createMultipleProducts(
         app,
-        tokens.adminToken,
+        tokens,
         2,
         brand.id,
         category.id,
@@ -549,7 +537,7 @@ describe('Stages (e2e)', () => {
     it('should update stage products as admin', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/stages/${stageId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ productIds })
         .expect(HttpStatus.OK);
 
@@ -579,7 +567,7 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/stages/${stageId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -587,7 +575,7 @@ describe('Stages (e2e)', () => {
     it('should require productIds array', async () => {
       await request(app.getHttpServer())
         .patch(`/stages/${stageId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -597,18 +585,18 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/stages/${stageId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
     });
 
     it('should return 404 for non-existent stage', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
       const updateDto = { productIds };
 
       await request(app.getHttpServer())
         .patch(`/stages/${fakeId}/products`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -616,7 +604,7 @@ describe('Stages (e2e)', () => {
 
   describe('DELETE /stages/:id', () => {
     beforeEach(async () => {
-      const { id } = await ResourceHelper.createStage(app, tokens.adminToken, [
+      const { id } = await ResourceHelper.createStage(app, tokens, [
         product.id,
       ]);
 
@@ -626,14 +614,14 @@ describe('Stages (e2e)', () => {
     it('should delete stage as admin', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toMatchObject({ id: stageId });
 
       await request(app.getHttpServer())
         .get(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -652,7 +640,7 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .get(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
     });
 
@@ -663,11 +651,11 @@ describe('Stages (e2e)', () => {
     });
 
     it('should return 404 for non-existent stage', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .delete(`/stages/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -676,7 +664,7 @@ describe('Stages (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/stages/${invalidId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
   });

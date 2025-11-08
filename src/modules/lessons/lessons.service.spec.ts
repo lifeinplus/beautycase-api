@@ -1,19 +1,21 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { LessonsService } from './lessons.service';
 import { Lesson } from './schemas/lesson.schema';
 
 describe('LessonsService', () => {
   let service: LessonsService;
 
-  const mockLesson = TestDataFactory.createLesson();
-  const mockClientId = new Types.ObjectId();
-  const mockLessonId = new Types.ObjectId();
-  const mockBadLessonId = new Types.ObjectId();
+  const mockAuthorId = makeObjectId();
+  const mockClientId = makeObjectId();
+  const mockLessonId = makeObjectId();
+  const mockBadLessonId = makeObjectId();
+
+  const mockLesson = TestDataFactory.createLesson(mockAuthorId);
 
   const mockLessonResponse = {
     ...mockLesson,

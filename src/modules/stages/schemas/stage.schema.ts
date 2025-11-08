@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type StageDocument = HydratedDocument<Stage>;
 
@@ -15,6 +15,14 @@ export type StageDocument = HydratedDocument<Stage>;
   versionKey: false,
 })
 export class Stage {
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
+  authorId: Types.ObjectId;
+
   @Prop({ required: true })
   title: string;
 
@@ -33,7 +41,10 @@ export class Stage {
   @Prop([String])
   steps?: string[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }], required: true })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Product' }],
+    required: true,
+  })
   productIds: Types.ObjectId[];
 }
 

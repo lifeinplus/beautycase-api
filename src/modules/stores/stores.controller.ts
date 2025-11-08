@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateStoreDto } from './dto/create-store.dto';
@@ -23,28 +24,28 @@ export class StoresController {
   constructor(private readonly storesService: StoresService) {}
 
   @Post()
-  @Roles('admin')
+  @Roles(Role.ADMIN)
   async create(@Body() dto: CreateStoreDto) {
     const store = await this.storesService.create(dto);
     return { id: store.id };
   }
 
   @Get()
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN, Role.MUA)
   findAll() {
     return this.storesService.findAll();
   }
 
   @Put(':id')
-  @Roles('admin')
-  async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateStoreDto) {
+  @Roles(Role.ADMIN)
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateStoreDto) {
     const store = await this.storesService.update(params.id, dto);
     return { id: store.id };
   }
 
   @Delete(':id')
-  @Roles('admin')
-  async remove(@Param() params: ObjectIdParamDto) {
+  @Roles(Role.ADMIN)
+  async remove(@Param() params: MongoIdParamDto) {
     const store = await this.storesService.remove(params.id);
     return { id: store.id };
   }

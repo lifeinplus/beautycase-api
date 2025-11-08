@@ -6,11 +6,14 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
@@ -19,36 +22,41 @@ import { MakeupBagAccessGuard } from './guards/makeup-bag-access.guard';
 import { MakeupBagsService } from './makeup-bags.service';
 
 @Controller('makeup-bags')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MakeupBagsController {
   constructor(private readonly makeupBagsService: MakeupBagsService) {}
 
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
-  async create(@Body() dto: CreateMakeupBagDto) {
-    const makeupBag = await this.makeupBagsService.create(dto);
+  @Roles(Role.MUA)
+  async create(@Req() req: Request, @Body() dto: CreateMakeupBagDto) {
+    const authorId = req.user!.id;
+    const makeupBag = await this.makeupBagsService.create({ ...dto, authorId });
     return { id: makeupBag.id };
   }
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.ADMIN)
   findAll() {
     return this.makeupBagsService.findAll();
   }
 
+  @Get('mine')
+  @Roles(Role.MUA)
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.makeupBagsService.findAllByAuthor(authorId);
+  }
+
   @Get(':id')
   @UseGuards(MakeupBagAccessGuard)
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.makeupBagsService.findOne(params.id);
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
+  @Roles(Role.MUA)
   async update(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateMakeupBagDto,
   ) {
     const makeupBag = await this.makeupBagsService.update(params.id, dto);
@@ -56,9 +64,8 @@ export class MakeupBagsController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'mua')
-  async remove(@Param() params: ObjectIdParamDto) {
+  @Roles(Role.MUA)
+  async remove(@Param() params: MongoIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);
     return { id: makeupBag.id };
   }

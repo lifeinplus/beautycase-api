@@ -7,12 +7,15 @@ import {
   Patch,
   Post,
   Put,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -23,41 +26,54 @@ import { ProductsService } from './products.service';
 
 @Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin', 'mua')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  async create(@Body() dto: CreateProductDto) {
-    const product = await this.productsService.create(dto);
+  @Roles(Role.MUA)
+  async create(@Req() req: Request, @Body() dto: CreateProductDto) {
+    const authorId = req.user!.id;
+    const product = await this.productsService.create({ ...dto, authorId });
     return { id: product.id };
   }
 
   @Post('duplicate/:id')
-  async duplicate(@Param() params: ObjectIdParamDto) {
+  @Roles(Role.MUA)
+  async duplicate(@Param() params: MongoIdParamDto) {
     const product = await this.productsService.duplicate(params.id);
     return { id: product.id };
   }
 
   @Get()
+  @Roles(Role.ADMIN)
   findAll() {
     return this.productsService.findAll();
   }
 
+  @Get('mine')
+  @Roles(Role.MUA)
+  findAllByAuthor(@Req() req: Request) {
+    const authorId = req.user!.id;
+    return this.productsService.findAllByAuthor(authorId);
+  }
+
+  @Get('mine/category/:name')
+  @Roles(Role.MUA)
+  findAllByAuthorAndCategory(@Req() req: Request, @Param('name') name: string) {
+    const authorId = req.user!.id;
+    return this.productsService.findAllByAuthorAndCategory(authorId, name);
+  }
+
   @Get(':id')
   @Roles()
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.productsService.findOne(params.id);
   }
 
-  @Get('category/:name')
-  findByCategory(@Param('name') name: string) {
-    return this.productsService.findByCategory(name);
-  }
-
   @Put(':id')
+  @Roles(Role.MUA)
   async update(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateProductDto,
   ) {
     const product = await this.productsService.update(params.id, dto);
@@ -65,8 +81,9 @@ export class ProductsController {
   }
 
   @Patch(':id/store-links')
+  @Roles(Role.MUA)
   async updateStoreLinks(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const product = await this.productsService.updateStoreLinks(params.id, dto);
@@ -74,8 +91,9 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @Roles(Role.MUA)
   @UseInterceptors(ProductDeletionInterceptor)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const product = await this.productsService.remove(params.id);
     return { id: product.id };
   }

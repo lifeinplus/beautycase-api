@@ -1,9 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { UpdateMakeupBagDto } from './dto/update-makeup-bag.dto';
 import { MakeupBagsService } from './makeup-bags.service';
 import { MakeupBag, MakeupBagDocument } from './schemas/makeup-bag.schema';
@@ -16,14 +17,16 @@ describe('MakeupBagsService', () => {
   let service: MakeupBagsService;
   let mockMakeupBagModel: MockModel<MakeupBagDocument>;
 
-  const mockCategoryId = new Types.ObjectId();
-  const mockClientId = new Types.ObjectId();
-  const mockMakeupBagId = new Types.ObjectId();
-  const mockBadMakeupBagId = new Types.ObjectId();
-  const mockStageId = new Types.ObjectId();
-  const mockToolId = new Types.ObjectId();
+  const mockAuthorId = makeObjectId();
+  const mockCategoryId = makeObjectId();
+  const mockClientId = makeObjectId();
+  const mockMakeupBagId = makeObjectId();
+  const mockBadMakeupBagId = makeObjectId();
+  const mockStageId = makeObjectId();
+  const mockToolId = makeObjectId();
 
   const mockMakeupBag = TestDataFactory.createMakeupBag(
+    mockAuthorId,
     mockCategoryId,
     mockClientId,
     [mockStageId],

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
@@ -40,7 +40,17 @@ export class ToolsService {
     return tools;
   }
 
-  async findOne(id: Types.ObjectId): Promise<ToolDocument> {
+  async findAllByAuthor(authorId: string): Promise<ToolDocument[]> {
+    const tools = await this.toolModel.find({ authorId }).select('imageUrl');
+
+    if (!tools.length) {
+      throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
+    }
+
+    return tools;
+  }
+
+  async findOne(id: string): Promise<ToolDocument> {
     const tool = await this.toolModel.findById(id).populate('brandId');
 
     if (!tool) {
@@ -50,7 +60,7 @@ export class ToolsService {
     return tool;
   }
 
-  async update(id: Types.ObjectId, dto: UpdateToolDto): Promise<ToolDocument> {
+  async update(id: string, dto: UpdateToolDto): Promise<ToolDocument> {
     const { imageUrl } = dto;
 
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
@@ -75,7 +85,7 @@ export class ToolsService {
   }
 
   async updateStoreLinks(
-    id: Types.ObjectId,
+    id: string,
     dto: UpdateStoreLinksDto,
   ): Promise<ToolDocument> {
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
@@ -90,7 +100,7 @@ export class ToolsService {
     return tool;
   }
 
-  async remove(id: Types.ObjectId): Promise<ToolDocument> {
+  async remove(id: string): Promise<ToolDocument> {
     const tool = await this.toolModel.findByIdAndDelete(id);
 
     if (!tool) {

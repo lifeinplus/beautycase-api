@@ -1,10 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { CategoriesService } from '../categories/categories.service';
 import { ImageService } from '../shared/image.service';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -20,12 +21,14 @@ describe('ProductsService', () => {
   let service: ProductsService;
   let mockProductModel: MockModel<ProductDocument>;
 
-  const mockBrandId = new Types.ObjectId();
-  const mockCategoryId = new Types.ObjectId();
-  const mockProductId = new Types.ObjectId();
-  const mockBadProductId = new Types.ObjectId();
+  const mockAuthorId = makeObjectId();
+  const mockBrandId = makeObjectId();
+  const mockCategoryId = makeObjectId();
+  const mockProductId = makeObjectId();
+  const mockBadProductId = makeObjectId();
 
   const mockProduct = TestDataFactory.createProduct(
+    mockAuthorId,
     mockBrandId,
     mockCategoryId,
   );
@@ -167,12 +170,16 @@ describe('ProductsService', () => {
         select: jest.fn().mockResolvedValue(mockProducts),
       });
 
-      const result = await service.findByCategory('makeup');
+      const result = await service.findAllByAuthorAndCategory(
+        mockAuthorId,
+        'makeup',
+      );
 
       expect(
         (service as any).categoriesService.findByName,
       ).toHaveBeenCalledWith('makeup');
       expect(mockProductModel.find).toHaveBeenCalledWith({
+        authorId: mockAuthorId,
         categoryId: mockCategory._id,
       });
       expect(result).toEqual(mockProducts);
@@ -189,9 +196,9 @@ describe('ProductsService', () => {
         select: jest.fn().mockResolvedValue([]),
       });
 
-      await expect(service.findByCategory('makeup')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findAllByAuthorAndCategory(mockAuthorId, 'makeup'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
