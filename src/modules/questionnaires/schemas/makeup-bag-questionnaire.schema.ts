@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
@@ -84,7 +84,7 @@ export class MakeupBagQuestionnaire {
   @Prop({ enum: MakeupTime })
   makeupTime?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   muaId: Types.ObjectId;
 
   @Prop({ required: true })

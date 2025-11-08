@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateBrandDto } from './dto/create-brand.dto';
@@ -27,10 +27,7 @@ export class BrandsService {
     return brands;
   }
 
-  async update(
-    id: Types.ObjectId,
-    dto: UpdateBrandDto,
-  ): Promise<BrandDocument> {
+  async update(id: string, dto: UpdateBrandDto): Promise<BrandDocument> {
     const brand = await this.brandModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
@@ -43,7 +40,7 @@ export class BrandsService {
     return brand;
   }
 
-  async remove(id: Types.ObjectId): Promise<BrandDocument> {
+  async remove(id: string): Promise<BrandDocument> {
     const brand = await this.brandModel.findByIdAndDelete(id);
 
     if (!brand) {

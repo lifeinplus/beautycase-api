@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { StoresController } from './stores.controller';
 import { StoresService } from './stores.service';
@@ -14,8 +14,8 @@ describe('StoresController', () => {
 
   const mockStore = TestDataFactory.createStore();
   const mockStores = TestDataFactory.createMultipleStores(2);
-  const mockStoreId = new Types.ObjectId();
-  const mockInvalidStoreId = new Types.ObjectId();
+  const mockStoreId = makeObjectId();
+  const mockBadStoreId = makeObjectId();
 
   const mockStoreResponse = {
     ...mockStore,
@@ -97,7 +97,7 @@ describe('StoresController', () => {
 
   describe('update', () => {
     it('should update a store successfully', async () => {
-      const params: ObjectIdParamDto = { id: mockStoreResponse.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
@@ -112,7 +112,7 @@ describe('StoresController', () => {
     });
 
     it('should handle service errors during update', async () => {
-      const params: ObjectIdParamDto = { id: mockStoreResponse.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const dto: UpdateStoreDto = {
         name: 'Updated Store',
       };
@@ -125,7 +125,7 @@ describe('StoresController', () => {
     });
 
     it('should handle partial updates', async () => {
-      const params: ObjectIdParamDto = { id: mockStoreResponse.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const dto: UpdateStoreDto = {
         name: 'Updated Store Only',
       };
@@ -142,7 +142,7 @@ describe('StoresController', () => {
 
   describe('remove', () => {
     it('should delete a store successfully', async () => {
-      const params: ObjectIdParamDto = { id: mockStoreResponse.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       mockStoresService.remove.mockResolvedValue(mockStoreResponse);
 
       const result = await controller.remove(params);
@@ -152,7 +152,7 @@ describe('StoresController', () => {
     });
 
     it('should handle service errors during deletion', async () => {
-      const params: ObjectIdParamDto = { id: mockStoreResponse.id };
+      const params: MongoIdParamDto = { id: mockStoreResponse.id };
       const error = new Error('Store not found');
       mockStoresService.remove.mockRejectedValue(error);
 
@@ -161,7 +161,7 @@ describe('StoresController', () => {
     });
 
     it('should handle invalid MongoDB ObjectId', async () => {
-      const params: ObjectIdParamDto = { id: mockInvalidStoreId };
+      const params: MongoIdParamDto = { id: mockBadStoreId };
       const error = new Error('Invalid ObjectId');
       mockStoresService.remove.mockRejectedValue(error);
 

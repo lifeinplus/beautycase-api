@@ -14,7 +14,7 @@ import {
 import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -39,7 +39,7 @@ export class ProductsController {
 
   @Post('duplicate/:id')
   @Roles(Role.MUA)
-  async duplicate(@Param() params: ObjectIdParamDto) {
+  async duplicate(@Param() params: MongoIdParamDto) {
     const product = await this.productsService.duplicate(params.id);
     return { id: product.id };
   }
@@ -66,14 +66,14 @@ export class ProductsController {
 
   @Get(':id')
   @Roles()
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.productsService.findOne(params.id);
   }
 
   @Put(':id')
   @Roles(Role.MUA)
   async update(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateProductDto,
   ) {
     const product = await this.productsService.update(params.id, dto);
@@ -83,7 +83,7 @@ export class ProductsController {
   @Patch(':id/store-links')
   @Roles(Role.MUA)
   async updateStoreLinks(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const product = await this.productsService.updateStoreLinks(params.id, dto);
@@ -93,7 +93,7 @@ export class ProductsController {
   @Delete(':id')
   @Roles(Role.MUA)
   @UseInterceptors(ProductDeletionInterceptor)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const product = await this.productsService.remove(params.id);
     return { id: product.id };
   }

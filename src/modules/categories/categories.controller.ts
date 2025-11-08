@@ -12,7 +12,7 @@ import {
 import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -66,7 +66,7 @@ export class CategoriesController {
   @Put(':id')
   @Roles(Role.ADMIN)
   async update(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateCategoryDto,
   ) {
     const brand = await this.categoriesService.update(params.id, dto);
@@ -75,7 +75,7 @@ export class CategoriesController {
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const category = await this.categoriesService.remove(params.id);
     return { id: category.id };
   }

@@ -112,7 +112,7 @@ export class CategoriesService {
   }
 
   async findProductsWithCountsByAuthor(
-    authorId: Types.ObjectId,
+    authorId: string,
   ): Promise<CategoryWithProductCount[]> {
     const pipeline = [
       { $match: { type: 'product' } },
@@ -160,10 +160,7 @@ export class CategoriesService {
     return categories;
   }
 
-  async update(
-    id: Types.ObjectId,
-    dto: UpdateCategoryDto,
-  ): Promise<CategoryDocument> {
+  async update(id: string, dto: UpdateCategoryDto): Promise<CategoryDocument> {
     const category = await this.categoryModel.findByIdAndUpdate(id, dto, {
       new: true,
       runValidators: true,
@@ -176,7 +173,7 @@ export class CategoriesService {
     return category;
   }
 
-  async remove(id: Types.ObjectId): Promise<CategoryDocument> {
+  async remove(id: string): Promise<CategoryDocument> {
     const category = await this.categoryModel.findByIdAndDelete(id);
 
     if (!category) {

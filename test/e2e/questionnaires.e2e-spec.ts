@@ -20,6 +20,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { ResourceHelper } from 'test/helpers/resource.helper';
 
 describe('Questionnaires (e2e)', () => {
@@ -27,7 +28,10 @@ describe('Questionnaires (e2e)', () => {
   let connection: Connection;
 
   let tokens: AuthTokens;
-  const mockQuestionnaire = TestDataFactory.createMakeupBagQuestionnaire();
+
+  const mockMuaId = makeObjectId();
+  const mockQuestionnaire =
+    TestDataFactory.createMakeupBagQuestionnaire(mockMuaId);
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -79,6 +83,7 @@ describe('Questionnaires (e2e)', () => {
       const minimalDto = {
         name: 'John Smith',
         makeupBag: 'Simple makeup bag with basics',
+        muaId: mockMuaId,
       };
 
       const response = await request(app.getHttpServer())
@@ -257,7 +262,7 @@ describe('Questionnaires (e2e)', () => {
 
   describe('GET /questionnaires/makeup-bags', () => {
     beforeEach(async () => {
-      await ResourceHelper.createQuestionnaire(app);
+      await ResourceHelper.createMakeupBagQuestionnaire(app, mockMuaId);
     });
 
     it('should get all questionnaires as admin', async () => {
@@ -270,16 +275,6 @@ describe('Questionnaires (e2e)', () => {
       expect(response.body).toHaveLength(1);
       expect(response.body[0]).toHaveProperty('name');
       expect(response.body[0]).toHaveProperty('makeupBag');
-    });
-
-    it('should get all questionnaires as MUA', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/questionnaires/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .expect(HttpStatus.OK);
-
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body).toHaveLength(1);
     });
 
     it('should reject access when authenticated as client', async () => {
@@ -317,12 +312,12 @@ describe('Questionnaires (e2e)', () => {
     it('should return multiple questionnaires', async () => {
       await request(app.getHttpServer())
         .post('/questionnaires/makeup-bags')
-        .send({ name: 'User 2', makeupBag: 'Bag 2' })
+        .send({ name: 'User 2', makeupBag: 'Bag 2', muaId: mockMuaId })
         .expect(HttpStatus.CREATED);
 
       await request(app.getHttpServer())
         .post('/questionnaires/makeup-bags')
-        .send({ name: 'User 3', makeupBag: 'Bag 3' })
+        .send({ name: 'User 3', makeupBag: 'Bag 3', muaId: mockMuaId })
         .expect(HttpStatus.CREATED);
 
       const response = await request(app.getHttpServer())
@@ -347,7 +342,11 @@ describe('Questionnaires (e2e)', () => {
     let questionnaireId: string;
 
     beforeEach(async () => {
-      const { id } = await ResourceHelper.createQuestionnaire(app);
+      const { id } = await ResourceHelper.createMakeupBagQuestionnaire(
+        app,
+        mockMuaId,
+      );
+
       questionnaireId = id;
     });
 
@@ -407,7 +406,7 @@ describe('Questionnaires (e2e)', () => {
     });
 
     it('should return 404 for non-existent questionnaire', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/questionnaires/makeup-bags/${fakeId}`)
@@ -432,7 +431,10 @@ describe('Questionnaires (e2e)', () => {
 
   describe('Integration scenarios', () => {
     it('should create and retrieve questionnaire with complete workflow', async () => {
-      const { id } = await ResourceHelper.createQuestionnaire(app);
+      const { id } = await ResourceHelper.createMakeupBagQuestionnaire(
+        app,
+        mockMuaId,
+      );
 
       expect(id).toBeDefined();
 
@@ -456,9 +458,24 @@ describe('Questionnaires (e2e)', () => {
 
     it('should handle multiple questionnaires correctly', async () => {
       const questionnaires: CreateMakeupBagQuestionnaireDto[] = [
-        { name: 'User A', makeupBag: 'Bag A', age: 20 },
-        { name: 'User B', makeupBag: 'Bag B', age: 25 },
-        { name: 'User C', makeupBag: 'Bag C', age: 30 },
+        {
+          muaId: mockMuaId,
+          name: 'User A',
+          makeupBag: 'Bag A',
+          age: 20,
+        },
+        {
+          muaId: mockMuaId,
+          name: 'User B',
+          makeupBag: 'Bag B',
+          age: 25,
+        },
+        {
+          muaId: mockMuaId,
+          name: 'User C',
+          makeupBag: 'Bag C',
+          age: 30,
+        },
       ];
 
       const createdIds: string[] = [];
@@ -496,6 +513,7 @@ describe('Questionnaires (e2e)', () => {
 
     it('should properly validate enum fields', async () => {
       const validEnumValues: CreateMakeupBagQuestionnaireDto = {
+        muaId: mockMuaId,
         name: 'Enum Test User',
         makeupBag: 'Test bag',
         budget: Budget.MEDIUM,

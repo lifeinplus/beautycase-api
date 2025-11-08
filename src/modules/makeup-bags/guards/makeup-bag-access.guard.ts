@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { Types } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { Role } from 'src/common/enums/role.enum';
@@ -24,7 +23,7 @@ export class MakeupBagAccessGuard implements CanActivate {
 
     if (req.user!.role === Role.CLIENT) {
       const makeupBag = await this.makeupBagsService.findOneWithClientId(
-        new Types.ObjectId(req.params.id),
+        req.params.id,
       );
 
       if (

@@ -101,6 +101,8 @@ describe('Auth (e2e)', () => {
 
     it('should reject registration with invalid data', async () => {
       const invalidDto: RegisterDto = {
+        firstName: '',
+        lastName: '',
         username: '',
         password: '123',
         confirmPassword: '123',

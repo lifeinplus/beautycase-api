@@ -13,7 +13,7 @@ import {
 import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -51,16 +51,13 @@ export class LessonsController {
 
   @Get(':id')
   @UseGuards(LessonAccessGuard)
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.lessonsService.findOne(params.id);
   }
 
   @Put(':id')
   @Roles(Role.MUA)
-  async update(
-    @Param() params: ObjectIdParamDto,
-    @Body() dto: UpdateLessonDto,
-  ) {
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateLessonDto) {
     const lesson = await this.lessonsService.update(params.id, dto);
     return { id: lesson.id };
   }
@@ -68,7 +65,7 @@ export class LessonsController {
   @Patch(':id/products')
   @Roles(Role.MUA)
   async updateProducts(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateLessonProductsDto,
   ) {
     const lesson = await this.lessonsService.updateProducts(params.id, dto);
@@ -77,7 +74,7 @@ export class LessonsController {
 
   @Delete(':id')
   @Roles(Role.MUA)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const lesson = await this.lessonsService.remove(params.id);
     return { id: lesson.id };
   }

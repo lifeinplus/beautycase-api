@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
@@ -33,7 +33,7 @@ export class ProductsService {
     return product;
   }
 
-  async duplicate(id: Types.ObjectId): Promise<ProductDocument> {
+  async duplicate(id: string): Promise<ProductDocument> {
     const product = await this.productModel.findById(id);
 
     if (!product) {
@@ -61,7 +61,7 @@ export class ProductsService {
     return products;
   }
 
-  async findAllByAuthor(authorId: Types.ObjectId): Promise<ProductDocument[]> {
+  async findAllByAuthor(authorId: string): Promise<ProductDocument[]> {
     const products = await this.productModel
       .find({ authorId })
       .select('imageUrl');
@@ -74,7 +74,7 @@ export class ProductsService {
   }
 
   async findAllByAuthorAndCategory(
-    authorId: Types.ObjectId,
+    authorId: string,
     categoryName: string,
   ): Promise<ProductDocument[]> {
     const category = await this.categoriesService.findByName(categoryName);
@@ -93,7 +93,7 @@ export class ProductsService {
     return products;
   }
 
-  async findOne(id: Types.ObjectId): Promise<ProductDocument> {
+  async findOne(id: string): Promise<ProductDocument> {
     const product = await this.productModel
       .findById(id)
       .populate(['brandId', 'categoryId']);
@@ -105,10 +105,7 @@ export class ProductsService {
     return product;
   }
 
-  async update(
-    id: Types.ObjectId,
-    dto: UpdateProductDto,
-  ): Promise<ProductDocument> {
+  async update(id: string, dto: UpdateProductDto): Promise<ProductDocument> {
     const { imageUrl } = dto;
 
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
@@ -134,7 +131,7 @@ export class ProductsService {
   }
 
   async updateStoreLinks(
-    id: Types.ObjectId,
+    id: string,
     dto: UpdateStoreLinksDto,
   ): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
@@ -148,7 +145,7 @@ export class ProductsService {
     return product;
   }
 
-  async remove(id: Types.ObjectId): Promise<ProductDocument> {
+  async remove(id: string): Promise<ProductDocument> {
     const product = await this.productModel.findByIdAndDelete(id);
 
     if (!product) {

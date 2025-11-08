@@ -1,10 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { ImageService } from '../shared/image.service';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
 import { UpdateToolDto } from './dto/update-tool.dto';
@@ -19,10 +20,12 @@ describe('ToolsService', () => {
   let service: ToolsService;
   let mockToolModel: MockModel<ToolDocument>;
 
-  const mockBrandId = new Types.ObjectId();
-  const mockTool = TestDataFactory.createTool(mockBrandId);
-  const mockToolId = new Types.ObjectId();
-  const mockBadToolId = new Types.ObjectId();
+  const mockAuthorId = makeObjectId();
+  const mockBrandId = makeObjectId();
+  const mockToolId = makeObjectId();
+  const mockBadToolId = makeObjectId();
+
+  const mockTool = TestDataFactory.createTool(mockAuthorId, mockBrandId);
 
   const mockToolResponse = {
     ...mockTool,

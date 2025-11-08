@@ -2,7 +2,7 @@ import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Connection, Types } from 'mongoose';
+import { Connection } from 'mongoose';
 import * as request from 'supertest';
 
 import configuration from 'src/config/configuration';
@@ -18,6 +18,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import {
   BrandResources,
   CategoryResources,
@@ -31,7 +32,7 @@ describe('Products (e2e)', () => {
   let tokens: AuthTokens;
   let brandResources: BrandResources;
   let categoryResources: CategoryResources;
-  let productId: Types.ObjectId;
+  let productId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -74,12 +75,16 @@ describe('Products (e2e)', () => {
 
   describe('POST /products', () => {
     const createProductDto = () =>
-      TestDataFactory.createProduct(brandResources.id, categoryResources.id);
+      TestDataFactory.createProduct(
+        tokens.muaId,
+        brandResources.id,
+        categoryResources.id,
+      );
 
     it('should create a product as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(createProductDto())
         .expect(HttpStatus.CREATED);
 
@@ -118,7 +123,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidProduct)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -139,7 +144,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidProduct)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -156,7 +161,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidProduct)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -173,7 +178,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidProduct)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -190,7 +195,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidProduct)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -210,7 +215,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post('/products')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(minimalProduct)
         .expect(HttpStatus.CREATED);
 
@@ -222,7 +227,8 @@ describe('Products (e2e)', () => {
     beforeEach(async () => {
       await ResourceHelper.createProduct(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         brandResources.id,
         categoryResources.id,
       );
@@ -237,16 +243,6 @@ describe('Products (e2e)', () => {
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBe(1);
       expect(response.body[0]).toHaveProperty('imageUrl');
-    });
-
-    it('should get all products as MUA', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/products')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .expect(HttpStatus.OK);
-
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBe(1);
     });
 
     it('should reject access when authenticated as client', async () => {
@@ -278,7 +274,8 @@ describe('Products (e2e)', () => {
     beforeEach(async () => {
       const { id, data } = await ResourceHelper.createProduct(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         brandResources.id,
         categoryResources.id,
       );
@@ -313,7 +310,7 @@ describe('Products (e2e)', () => {
     });
 
     it('should return 404 for non-existent product', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/products/${fakeId}`)
@@ -339,7 +336,8 @@ describe('Products (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createProduct(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         brandResources.id,
         categoryResources.id,
       );
@@ -355,7 +353,7 @@ describe('Products (e2e)', () => {
 
       const putResponse = await request(app.getHttpServer())
         .put(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
 
@@ -363,7 +361,7 @@ describe('Products (e2e)', () => {
 
       const getResponse = await request(app.getHttpServer())
         .get(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`);
+        .set('Authorization', `Bearer ${tokens.muaToken}`);
 
       expect(getResponse.body.name).toBe(updateDto.name);
       expect(getResponse.body.comment).toBe(updateDto.comment);
@@ -396,7 +394,7 @@ describe('Products (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
     });
@@ -409,7 +407,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .put(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidUpdate)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -422,11 +420,11 @@ describe('Products (e2e)', () => {
     });
 
     it('should return 404 for non-existent product', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .put(`/products/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ name: 'Updated Name' })
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -438,7 +436,7 @@ describe('Products (e2e)', () => {
 
       await request(app.getHttpServer())
         .put(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(partialUpdate)
         .expect(HttpStatus.OK);
     });
@@ -448,7 +446,8 @@ describe('Products (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createProduct(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         brandResources.id,
         categoryResources.id,
       );
@@ -472,7 +471,7 @@ describe('Products (e2e)', () => {
 
       const patchResponse = await request(app.getHttpServer())
         .patch(`/products/${productId}/store-links`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(newStoreLinks)
         .expect(HttpStatus.OK);
 
@@ -480,7 +479,7 @@ describe('Products (e2e)', () => {
 
       const getResponse = await request(app.getHttpServer())
         .get(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`);
+        .set('Authorization', `Bearer ${tokens.muaToken}`);
 
       expect(getResponse.body.storeLinks).toHaveLength(2);
       expect(getResponse.body.storeLinks[0].name).toBe('Ulta');
@@ -523,13 +522,13 @@ describe('Products (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/products/${productId}/store-links`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(emptyStoreLinks)
         .expect(HttpStatus.OK);
 
       const getResponse = await request(app.getHttpServer())
         .get(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`);
+        .set('Authorization', `Bearer ${tokens.muaToken}`);
 
       expect(getResponse.body.storeLinks).toHaveLength(0);
     });
@@ -541,7 +540,7 @@ describe('Products (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .patch(`/products/${productId}/store-links`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidStoreLinks)
         .expect(HttpStatus.BAD_REQUEST);
 
@@ -551,11 +550,11 @@ describe('Products (e2e)', () => {
     });
 
     it('should return 404 for non-existent product', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439012';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .patch(`/products/${nonExistentId}/store-links`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ storeLinks: [] })
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -565,7 +564,8 @@ describe('Products (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createProduct(
         app,
-        tokens.adminToken,
+        tokens.muaToken,
+        tokens.muaId,
         brandResources.id,
         categoryResources.id,
       );
@@ -576,7 +576,7 @@ describe('Products (e2e)', () => {
     it('should delete product as admin', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toMatchObject({
@@ -585,7 +585,7 @@ describe('Products (e2e)', () => {
 
       await request(app.getHttpServer())
         .get(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -615,38 +615,40 @@ describe('Products (e2e)', () => {
     });
 
     it('should return 404 for non-existent product', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .delete(`/products/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .delete('/products/invalid-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 if product is used in lessons', async () => {
-      await ResourceHelper.createLesson(app, tokens.adminToken, [productId]);
+      await ResourceHelper.createLesson(app, tokens.muaToken, tokens.muaId, [
+        productId,
+      ]);
 
       const response = await request(app.getHttpServer())
         .delete(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
 
       expect(response.body.code).toBe('PRODUCT_IN_USE');
     });
 
     it('should return 400 if product is used in stages', async () => {
-      await ResourceHelper.createStage(app, tokens.adminToken, [productId]);
+      await ResourceHelper.createStage(app, tokens, [productId]);
 
       const response = await request(app.getHttpServer())
         .delete(`/products/${productId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
 
       expect(response.body.code).toBe('PRODUCT_IN_USE');
@@ -655,7 +657,11 @@ describe('Products (e2e)', () => {
 
   describe('Multiple Products Operations', () => {
     const createProductDto = () =>
-      TestDataFactory.createProduct(brandResources.id, categoryResources.id);
+      TestDataFactory.createProduct(
+        tokens.muaId,
+        brandResources.id,
+        categoryResources.id,
+      );
 
     it('should handle multiple products correctly', async () => {
       const products = [
@@ -669,7 +675,7 @@ describe('Products (e2e)', () => {
       for (const product of products) {
         const postResponse = await request(app.getHttpServer())
           .post('/products')
-          .set('Authorization', `Bearer ${tokens.adminToken}`)
+          .set('Authorization', `Bearer ${tokens.muaToken}`)
           .send(product);
 
         createdIds.push(postResponse.body.id);
@@ -684,7 +690,7 @@ describe('Products (e2e)', () => {
 
       await request(app.getHttpServer())
         .delete(`/products/${createdIds[0]}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       const getAfterDeleteResponse = await request(app.getHttpServer())

@@ -14,7 +14,7 @@ import {
 import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -52,13 +52,13 @@ export class ToolsController {
 
   @Get(':id')
   @Roles()
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.toolsService.findOne(params.id);
   }
 
   @Put(':id')
   @Roles(Role.MUA)
-  async update(@Param() params: ObjectIdParamDto, @Body() dto: UpdateToolDto) {
+  async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateToolDto) {
     const tool = await this.toolsService.update(params.id, dto);
     return { id: tool.id };
   }
@@ -66,7 +66,7 @@ export class ToolsController {
   @Patch(':id/store-links')
   @Roles(Role.MUA)
   async updateStoreLinks(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateStoreLinksDto,
   ) {
     const tool = await this.toolsService.updateStoreLinks(params.id, dto);
@@ -76,7 +76,7 @@ export class ToolsController {
   @Delete(':id')
   @Roles(Role.MUA)
   @UseInterceptors(ToolDeletionInterceptor)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const tool = await this.toolsService.remove(params.id);
     return { id: tool.id };
   }

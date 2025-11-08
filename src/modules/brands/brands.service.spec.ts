@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { BrandsService } from './brands.service';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { Brand } from './schemas/brand.schema';
@@ -14,7 +14,7 @@ describe('BrandsService', () => {
 
   const mockBrand = TestDataFactory.createBrand();
   const mockBrands = TestDataFactory.createMultipleBrands(2);
-  const mockBrandId = new Types.ObjectId();
+  const mockBrandId = makeObjectId();
 
   const mockBrandResponse = {
     ...mockBrand,

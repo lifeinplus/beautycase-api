@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { CreateMakeupBagDto } from './dto/create-makeup-bag.dto';
@@ -35,11 +35,9 @@ export class MakeupBagsService {
     return makeupBags;
   }
 
-  async findAllByAuthor(
-    authorId: Types.ObjectId,
-  ): Promise<MakeupBagDocument[]> {
+  async findAllByAuthor(authorId: string): Promise<MakeupBagDocument[]> {
     const makeupBags = await this.makeupBagModel
-      .find({ authorId })
+      .find({ authorId: authorId })
       .select('categoryId clientId createdAt stageIds')
       .populate([
         { path: 'categoryId', select: 'name' },
@@ -55,7 +53,7 @@ export class MakeupBagsService {
     return makeupBags;
   }
 
-  async findOne(id: Types.ObjectId): Promise<MakeupBagDocument> {
+  async findOne(id: string): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).populate([
       { path: 'categoryId' },
       { path: 'clientId', select: 'username' },
@@ -81,7 +79,7 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  async findOneWithClientId(id: Types.ObjectId): Promise<MakeupBagDocument> {
+  async findOneWithClientId(id: string): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findById(id).select('clientId');
 
     if (!makeupBag) {
@@ -91,14 +89,14 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  findByClientId(clientId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+  findByClientId(clientId: string): Promise<MakeupBagDocument[]> {
     return this.makeupBagModel
       .find({ clientId })
       .select('categoryId')
       .populate('categoryId', 'name');
   }
 
-  async findByToolId(toolId: Types.ObjectId): Promise<MakeupBagDocument[]> {
+  async findByToolId(toolId: string): Promise<MakeupBagDocument[]> {
     return this.makeupBagModel
       .find({ toolIds: toolId })
       .select('categoryId')
@@ -106,7 +104,7 @@ export class MakeupBagsService {
   }
 
   async update(
-    id: Types.ObjectId,
+    id: string,
     dto: UpdateMakeupBagDto,
   ): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndUpdate(id, dto, {
@@ -121,7 +119,7 @@ export class MakeupBagsService {
     return makeupBag;
   }
 
-  async remove(id: Types.ObjectId): Promise<MakeupBagDocument> {
+  async remove(id: string): Promise<MakeupBagDocument> {
     const makeupBag = await this.makeupBagModel.findByIdAndDelete(id);
 
     if (!makeupBag) {

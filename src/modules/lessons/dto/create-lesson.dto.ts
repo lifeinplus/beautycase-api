@@ -8,11 +8,11 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Types } from 'mongoose';
 
 export class CreateLessonDto {
   @IsOptional()
-  authorId: Types.ObjectId;
+  @IsMongoId()
+  authorId: string;
 
   @IsString()
   @MinLength(3)
@@ -36,11 +36,11 @@ export class CreateLessonDto {
   @IsArray()
   @IsMongoId({ each: true })
   @Type(() => String)
-  productIds?: Types.ObjectId[];
+  productIds?: string[];
 
   @IsOptional()
   @IsArray()
   @IsMongoId({ each: true })
   @Type(() => String)
-  clientIds?: Types.ObjectId[];
+  clientIds?: string[];
 }

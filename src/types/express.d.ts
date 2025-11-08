@@ -1,11 +1,9 @@
-import { Types } from 'mongoose';
-
 import { Role } from 'src/common/enums/role.enum';
 
 declare global {
   namespace Express {
     interface User {
-      id: Types.ObjectId;
+      id: string;
       role: Role;
     }
 

@@ -12,7 +12,7 @@ import {
 import { Request } from 'express';
 
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -49,14 +49,14 @@ export class MakeupBagsController {
 
   @Get(':id')
   @UseGuards(MakeupBagAccessGuard)
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.makeupBagsService.findOne(params.id);
   }
 
   @Put(':id')
   @Roles(Role.MUA)
   async update(
-    @Param() params: ObjectIdParamDto,
+    @Param() params: MongoIdParamDto,
     @Body() dto: UpdateMakeupBagDto,
   ) {
     const makeupBag = await this.makeupBagsService.update(params.id, dto);
@@ -65,7 +65,7 @@ export class MakeupBagsController {
 
   @Delete(':id')
   @Roles(Role.MUA)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const makeupBag = await this.makeupBagsService.remove(params.id);
     return { id: makeupBag.id };
   }

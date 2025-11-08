@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 import { StoreLink, StoreLinkSchema } from './store-link.schema';
 
@@ -17,13 +17,22 @@ export type ProductDocument = HydratedDocument<Product>;
   versionKey: false,
 })
 export class Product {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
   authorId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Brand', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Brand', required: true })
   brandId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Category', required: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  })
   categoryId: Types.ObjectId;
 
   @Prop({ required: true })

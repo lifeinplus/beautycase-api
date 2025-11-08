@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,9 +11,7 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { Types } from 'mongoose';
 
-import { IsObjectId } from 'src/common/decorators/objectid.decorator';
 import { Budget } from 'src/common/enums/budget.enum';
 import { MakeupTime } from 'src/common/enums/makeup-time.enum';
 import { Referral } from 'src/common/enums/referral.enum';
@@ -89,8 +88,8 @@ export class CreateMakeupBagQuestionnaireDto {
   makeupTime?: MakeupTime;
 
   @IsNotEmpty()
-  @IsObjectId()
-  muaId: Types.ObjectId;
+  @IsMongoId()
+  muaId: string;
 
   @IsString()
   name: string;

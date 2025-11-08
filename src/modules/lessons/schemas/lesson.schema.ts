@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type LessonDocument = HydratedDocument<Lesson>;
 
@@ -15,7 +15,12 @@ export type LessonDocument = HydratedDocument<Lesson>;
   versionKey: false,
 })
 export class Lesson {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
   authorId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -30,10 +35,10 @@ export class Lesson {
   @Prop({ required: true })
   fullDescription: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product' }] })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Product' }] })
   productIds?: Types.ObjectId[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }] })
   clientIds?: Types.ObjectId[];
 }
 

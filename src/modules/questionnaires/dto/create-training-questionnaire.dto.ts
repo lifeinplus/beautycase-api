@@ -1,12 +1,9 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Types } from 'mongoose';
-
-import { IsObjectId } from 'src/common/decorators/objectid.decorator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateTrainingQuestionnaireDto {
   @IsNotEmpty()
-  @IsObjectId()
-  muaId: Types.ObjectId;
+  @IsMongoId()
+  muaId: string;
 
   @IsString()
   name: string;

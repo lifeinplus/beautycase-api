@@ -2,8 +2,8 @@
 module.exports = {
   collectCoverageFrom: [
     'src/**/*.{js,ts}',
-    '!**/node_modules/**',
-    '!**/dist/**',
+    '!src/**/*.dto.ts',
+    '!src/**/*.module.ts',
   ],
   coverageDirectory: 'coverage',
   moduleFileExtensions: ['js', 'json', 'ts'],

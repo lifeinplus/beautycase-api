@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
@@ -29,7 +29,7 @@ export class StagesService {
     return stage.save();
   }
 
-  async duplicate(id: Types.ObjectId): Promise<StageDocument> {
+  async duplicate(id: string): Promise<StageDocument> {
     const stage = await this.stageModel.findById(id);
 
     if (!stage) {
@@ -59,7 +59,7 @@ export class StagesService {
     return stages;
   }
 
-  async findAllByAuthor(authorId: Types.ObjectId): Promise<StageDocument[]> {
+  async findAllByAuthor(authorId: string): Promise<StageDocument[]> {
     const stages = await this.stageModel
       .find({ authorId })
       .select('createdAt imageUrl subtitle title');
@@ -71,7 +71,7 @@ export class StagesService {
     return stages;
   }
 
-  async findOne(id: Types.ObjectId): Promise<StageDocument> {
+  async findOne(id: string): Promise<StageDocument> {
     const stage = await this.stageModel
       .findById(id)
       .populate('productIds', 'imageUrl');
@@ -83,14 +83,11 @@ export class StagesService {
     return stage;
   }
 
-  async findByProductId(productId: Types.ObjectId): Promise<StageDocument[]> {
+  async findByProductId(productId: string): Promise<StageDocument[]> {
     return this.stageModel.find({ productIds: productId }).select('title');
   }
 
-  async update(
-    id: Types.ObjectId,
-    dto: UpdateStageDto,
-  ): Promise<StageDocument> {
+  async update(id: string, dto: UpdateStageDto): Promise<StageDocument> {
     const { imageUrl } = dto;
 
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
@@ -116,7 +113,7 @@ export class StagesService {
   }
 
   async updateProducts(
-    id: Types.ObjectId,
+    id: string,
     dto: UpdateStageProductsDto,
   ): Promise<StageDocument> {
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
@@ -131,7 +128,7 @@ export class StagesService {
     return stage;
   }
 
-  async remove(id: Types.ObjectId): Promise<StageDocument> {
+  async remove(id: string): Promise<StageDocument> {
     const stage = await this.stageModel.findByIdAndDelete(id);
 
     if (!stage) {

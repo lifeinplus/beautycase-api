@@ -2,7 +2,7 @@ import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 
 import { Public } from 'src/common/decorators/public.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { ObjectIdParamDto } from 'src/common/dto/object-id-param.dto';
+import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -33,13 +33,13 @@ export class UsersController {
 
   @Get(':id')
   @Roles()
-  findOne(@Param() params: ObjectIdParamDto) {
+  findOne(@Param() params: MongoIdParamDto) {
     return this.usersService.findOne(params.id);
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN)
-  async remove(@Param() params: ObjectIdParamDto) {
+  async remove(@Param() params: MongoIdParamDto) {
     const user = await this.usersService.remove(params.id);
     return { id: user.id };
   }

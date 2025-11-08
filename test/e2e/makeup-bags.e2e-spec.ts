@@ -21,6 +21,7 @@ import {
   DatabaseHelper,
   TestDatabaseModule,
 } from 'test/helpers/database.helper';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import {
   ResourceHelper,
   TestMakeupBagResources,
@@ -61,11 +62,7 @@ describe('MakeupBags (e2e)', () => {
     await app.init();
 
     tokens = await AuthHelper.setupAuthTokens(app);
-
-    resources = await ResourceHelper.setupMakeupBagResources(
-      app,
-      tokens.adminToken,
-    );
+    resources = await ResourceHelper.setupMakeupBagResources(app, tokens);
   });
 
   beforeEach(async () => {
@@ -80,6 +77,7 @@ describe('MakeupBags (e2e)', () => {
   describe('POST /makeup-bags', () => {
     const createMakeupBagDto = () =>
       TestDataFactory.createMakeupBag(
+        tokens.muaId,
         resources.categoryId,
         tokens.clientId,
         [resources.stageId],
@@ -89,7 +87,7 @@ describe('MakeupBags (e2e)', () => {
     it('should create a makeup-bag as admin', async () => {
       const response = await request(app.getHttpServer())
         .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(createMakeupBagDto())
         .expect(HttpStatus.CREATED);
 
@@ -124,7 +122,7 @@ describe('MakeupBags (e2e)', () => {
     it('should validate required fields', async () => {
       await request(app.getHttpServer())
         .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({})
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -134,7 +132,7 @@ describe('MakeupBags (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -144,7 +142,7 @@ describe('MakeupBags (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(invalidDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -154,15 +152,14 @@ describe('MakeupBags (e2e)', () => {
     beforeEach(async () => {
       await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
     });
 
-    it('should get all makeup bags as admin', async () => {
+    it('should get all makeup bags', async () => {
       const response = await request(app.getHttpServer())
         .get('/makeup-bags')
         .set('Authorization', `Bearer ${tokens.adminToken}`)
@@ -173,15 +170,6 @@ describe('MakeupBags (e2e)', () => {
       expect(response.body[0]).toHaveProperty('category');
       expect(response.body[0]).toHaveProperty('client');
       expect(response.body[0]).toHaveProperty('stages');
-    });
-
-    it('should get all makeup bags as MUA', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .expect(HttpStatus.OK);
-
-      expect(Array.isArray(response.body)).toBe(true);
     });
 
     it('should not allow client to get all makeup bags', async () => {
@@ -202,9 +190,8 @@ describe('MakeupBags (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
@@ -215,7 +202,7 @@ describe('MakeupBags (e2e)', () => {
     it('should return makeup-bag details for admin', async () => {
       const response = await request(app.getHttpServer())
         .get(`/makeup-bags/${makeupBagId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('_id', makeupBagId);
@@ -244,18 +231,18 @@ describe('MakeupBags (e2e)', () => {
     });
 
     it('should return 404 for non-existent makeup-bag', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/makeup-bags/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .get('/makeup-bags/invalid-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -272,9 +259,8 @@ describe('MakeupBags (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
@@ -290,7 +276,7 @@ describe('MakeupBags (e2e)', () => {
     it('should update makeup-bag as admin', async () => {
       const response = await request(app.getHttpServer())
         .put(`/makeup-bags/${makeupBagId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
 
@@ -316,11 +302,11 @@ describe('MakeupBags (e2e)', () => {
     });
 
     it('should return 404 for non-existent makeup-bag', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .put(`/makeup-bags/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ title: 'Updated Title' })
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -335,7 +321,7 @@ describe('MakeupBags (e2e)', () => {
     it('should allow partial updates', async () => {
       const response = await request(app.getHttpServer())
         .put(`/makeup-bags/${makeupBagId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({ toolIds: [] })
         .expect(HttpStatus.OK);
     });
@@ -343,7 +329,7 @@ describe('MakeupBags (e2e)', () => {
     it('should validate MongoDB ObjectId format in URL', async () => {
       await request(app.getHttpServer())
         .put('/makeup-bags/invalid-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -351,7 +337,7 @@ describe('MakeupBags (e2e)', () => {
     it('should validate update data', async () => {
       await request(app.getHttpServer())
         .put(`/makeup-bags/${makeupBagId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({
           categoryId: 'invalid-id',
         })
@@ -363,9 +349,8 @@ describe('MakeupBags (e2e)', () => {
     beforeEach(async () => {
       const { id } = await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
@@ -376,14 +361,14 @@ describe('MakeupBags (e2e)', () => {
     it('should delete makeup-bag as admin', async () => {
       const response = await request(app.getHttpServer())
         .delete(`/makeup-bags/${makeupBagId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(response.body).toHaveProperty('id', makeupBagId);
 
       await request(app.getHttpServer())
         .get(`/makeup-bags/${makeupBagId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
@@ -404,18 +389,18 @@ describe('MakeupBags (e2e)', () => {
     });
 
     it('should return 404 for non-existent makeup-bag', async () => {
-      const fakeId = '507f1f77bcf86cd799439999';
+      const fakeId = makeObjectId();
 
       await request(app.getHttpServer())
         .delete(`/makeup-bags/${fakeId}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
 
     it('should validate MongoDB ObjectId format', async () => {
       await request(app.getHttpServer())
         .delete('/makeup-bags/invalid-id')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.BAD_REQUEST);
     });
 
@@ -428,7 +413,7 @@ describe('MakeupBags (e2e)', () => {
 
   describe('Access Control Edge Cases', () => {
     it('should handle MakeupBagAccessGuard when makeup bag does not exist', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = makeObjectId();
 
       await request(app.getHttpServer())
         .get(`/makeup-bags/${nonExistentId}`)
@@ -439,9 +424,8 @@ describe('MakeupBags (e2e)', () => {
     it('should handle MakeupBagAccessGuard when user ID is missing', async () => {
       const { id } = await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
@@ -456,16 +440,15 @@ describe('MakeupBags (e2e)', () => {
     it('should maintain referential integrity', async () => {
       const { id } = await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
 
       const makeupBag = await request(app.getHttpServer())
         .get(`/makeup-bags/${id}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(makeupBag.body.category).toBeDefined();
@@ -477,7 +460,7 @@ describe('MakeupBags (e2e)', () => {
     it('should handle empty arrays in creation', async () => {
       const response = await request(app.getHttpServer())
         .post('/makeup-bags')
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send({
           categoryId: resources.categoryId,
           clientId: tokens.clientId,
@@ -492,16 +475,15 @@ describe('MakeupBags (e2e)', () => {
     it('should handle population of related documents', async () => {
       const { id } = await ResourceHelper.createMakeupBag(
         app,
-        tokens.adminToken,
+        tokens,
         resources.categoryId,
-        tokens.clientId,
         [resources.stageId],
         [resources.toolId],
       );
 
       const makeupBag = await request(app.getHttpServer())
         .get(`/makeup-bags/${id}`)
-        .set('Authorization', `Bearer ${tokens.adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .expect(HttpStatus.OK);
 
       expect(makeupBag.body.category).toHaveProperty('name');

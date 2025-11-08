@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Types } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
 import { TestDataFactory } from 'test/factories/test-data.factory';
+import { makeObjectId } from 'test/helpers/make-object-id.helper';
 import { CategoriesService } from './categories.service';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './schemas/category.schema';
@@ -14,7 +14,7 @@ describe('CategoriesService', () => {
 
   const mockCategory = TestDataFactory.createCategory();
   const mockCategories = TestDataFactory.createMultipleCategories(2);
-  const mockCategoryId = new Types.ObjectId();
+  const mockCategoryId = makeObjectId();
 
   const mockCategoryResponse = {
     ...mockCategory,

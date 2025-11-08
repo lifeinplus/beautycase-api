@@ -218,6 +218,8 @@ describe('AuthService', () => {
       await service.registerUser(dto);
 
       expect(mockUsersService.create).toHaveBeenCalledWith({
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
         username: mockUser.username,
         password: 'hashed',
         role: mockUser.role,
