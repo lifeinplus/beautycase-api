@@ -71,7 +71,7 @@ describe('StagesService', () => {
     it('should create a stage and upload image', async () => {
       const result = await service.create(mockStage);
 
-      expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
         expect.objectContaining({ _id: mockStageResponse._id }),
         { folder: UploadFolder.STAGES, secureUrl: mockStage.imageUrl },
       );
@@ -154,7 +154,7 @@ describe('StagesService', () => {
       const dto: UpdateStageDto = { imageUrl: 'http://example.com/new.jpg' };
       const result = await service.update(mockStageId, dto);
 
-      expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
+      expect(mockImageService.updateImage).toHaveBeenCalledWith(
         mockStageResponse,
         {
           folder: UploadFolder.STAGES,

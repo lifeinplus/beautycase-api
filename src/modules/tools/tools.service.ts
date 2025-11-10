@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
-import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateToolDto } from './dto/create-tool.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
@@ -21,13 +20,12 @@ export class ToolsService {
     const tool = new this.toolModel(dto);
     const { imageUrl } = dto;
 
-    await this.imageService.handleImageUpload(tool, {
-      folder: UploadFolder.TOOLS,
-      secureUrl: imageUrl,
-    });
+    // await this.imageService.handleImageUpload(tool, {
+    //   folder: UploadFolder.TOOLS,
+    //   publicId: imageUrl,
+    // });
 
-    await tool.save();
-    return tool;
+    return tool.save();
   }
 
   async findAll(): Promise<ToolDocument[]> {
@@ -73,10 +71,10 @@ export class ToolsService {
     }
 
     if (imageUrl) {
-      await this.imageService.handleImageUpdate(tool, {
-        folder: UploadFolder.TOOLS,
-        secureUrl: imageUrl,
-      });
+      // await this.imageService.handleImageUpdate(tool, {
+      //   folder: UploadFolder.TOOLS,
+      //   publicId: imageUrl,
+      // });
 
       await tool.save();
     }
@@ -108,7 +106,7 @@ export class ToolsService {
     }
 
     if (tool.imageId) {
-      await this.imageService.handleImageDeletion(tool.imageId);
+      await this.imageService.deleteImage(tool.imageId);
     }
 
     return tool;

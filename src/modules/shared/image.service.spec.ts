@@ -55,11 +55,11 @@ describe('ImageService', () => {
     it('should skip if publicId not found', async () => {
       tempUploadsService.get.mockReturnValue(undefined);
 
-      await service.handleImageUpload(
+      await service.uploadImage(
         { ...mockDoc },
         {
           folder: UploadFolder.PRODUCTS,
-          secureUrl: 'https://temp.com/image.png',
+          publicId: 'https://temp.com/image.png',
         },
       );
 
@@ -75,9 +75,9 @@ describe('ImageService', () => {
       });
 
       const doc = { ...mockDoc };
-      await service.handleImageUpload(doc, {
+      await service.uploadImage(doc, {
         folder: UploadFolder.PRODUCTS,
-        secureUrl: 'https://temp.com/image.png',
+        publicId: 'https://temp.com/image.png',
       });
 
       expect(cloudinary.uploader.explicit).toHaveBeenCalledWith(
@@ -103,11 +103,11 @@ describe('ImageService', () => {
       );
 
       await expect(
-        service.handleImageUpload(
+        service.uploadImage(
           { ...mockDoc },
           {
             folder: UploadFolder.PRODUCTS,
-            secureUrl: 'https://temp.com/image.png',
+            publicId: 'https://temp.com/image.png',
           },
         ),
       ).rejects.toThrow('fail');
@@ -129,9 +129,9 @@ describe('ImageService', () => {
 
       const doc = { ...mockDoc };
 
-      await service.handleImageUpdate(doc, {
+      await service.updateImage(doc, {
         folder: UploadFolder.STAGES,
-        secureUrl: 'https://cloudinary.com/image.png',
+        publicId: 'https://cloudinary.com/image.png',
       });
 
       expect(doc.imageId).toBe('moved-id');
@@ -148,9 +148,9 @@ describe('ImageService', () => {
       destroySpy.mockResolvedValue({});
 
       const doc = { ...mockDoc };
-      await service.handleImageUpdate(doc, {
+      await service.updateImage(doc, {
         folder: UploadFolder.STAGES,
-        secureUrl: 'https://example.com/new.png',
+        publicId: 'https://example.com/new.png',
         destroyOnReplace: true,
       });
 
@@ -164,9 +164,9 @@ describe('ImageService', () => {
       const destroySpy = cloudinary.uploader.destroy as jest.Mock;
 
       const doc = { ...mockDoc };
-      await service.handleImageUpdate(doc, {
+      await service.updateImage(doc, {
         folder: UploadFolder.STAGES,
-        secureUrl: 'https://cloudinary.com/new.png',
+        publicId: 'https://cloudinary.com/new.png',
         destroyOnReplace: false,
       });
 
@@ -182,9 +182,9 @@ describe('ImageService', () => {
       );
 
       const doc = { ...mockDoc };
-      await service.handleImageUpdate(doc, {
+      await service.updateImage(doc, {
         folder: UploadFolder.STAGES,
-        secureUrl: 'https://example.com/new.png',
+        publicId: 'https://example.com/new.png',
         destroyOnReplace: true,
       });
 
@@ -198,11 +198,11 @@ describe('ImageService', () => {
       );
 
       await expect(
-        service.handleImageUpdate(
+        service.updateImage(
           { ...mockDoc },
           {
             folder: UploadFolder.STAGES,
-            secureUrl: 'https://temp.com/image.png',
+            publicId: 'https://temp.com/image.png',
           },
         ),
       ).rejects.toThrow('rename-fail');
@@ -212,7 +212,7 @@ describe('ImageService', () => {
   describe('handleImageDeletion', () => {
     it('should call cloudinary destroy', async () => {
       (cloudinary.uploader.destroy as jest.Mock).mockResolvedValue({});
-      await service.handleImageDeletion('public-id');
+      await service.deleteImage('public-id');
       expect(cloudinary.uploader.destroy).toHaveBeenCalledWith('public-id');
     });
 
@@ -220,7 +220,7 @@ describe('ImageService', () => {
       (cloudinary.uploader.destroy as jest.Mock).mockRejectedValue(
         new Error('fail'),
       );
-      await service.handleImageDeletion('bad-id');
+      await service.deleteImage('bad-id');
       expect(Logger.prototype.error).toHaveBeenCalled();
     });
   });

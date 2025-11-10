@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
-import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateMakeupBagQuestionnaireDto } from './dto/create-makeup-bag-questionnaire.dto';
 import { CreateTrainingQuestionnaireDto } from './dto/create-training-questionnaire.dto';
@@ -43,11 +42,11 @@ export class QuestionnairesService {
     if (makeupBagPhotoUrl) {
       const adapter = this.createImageAdapter(questionnaire);
 
-      await this.imageService.handleImageUpload(adapter, {
-        filename: 'makeup-bag',
-        folder: `${UploadFolder.QUESTIONNAIRES}/${questionnaire._id}`,
-        secureUrl: makeupBagPhotoUrl,
-      });
+      // await this.imageService.handleImageUpload(adapter, {
+      //   filename: 'makeup-bag',
+      //   folder: `${UploadFolder.QUESTIONNAIRES}/${questionnaire._id}`,
+      //   publicId: makeupBagPhotoUrl,
+      // });
 
       questionnaire.makeupBagPhotoId = adapter.imageId;
       questionnaire.makeupBagPhotoUrl = adapter.imageUrl;
@@ -147,9 +146,7 @@ export class QuestionnairesService {
     }
 
     if (questionnaire.makeupBagPhotoId) {
-      await this.imageService.handleImageDeletion(
-        questionnaire.makeupBagPhotoId,
-      );
+      await this.imageService.deleteImage(questionnaire.makeupBagPhotoId);
     }
 
     return questionnaire;

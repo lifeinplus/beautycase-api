@@ -54,10 +54,10 @@ describe('UploadsService', () => {
     service = module.get<UploadsService>(UploadsService);
   });
 
-  describe('uploadTempImageByFile', () => {
+  describe('uploadTempImage', () => {
     it('should throw BadRequestException if no file is provided', async () => {
       await expect(
-        service.uploadTempImageByFile(UploadFolder.PRODUCTS, undefined),
+        service.uploadTempImage(UploadFolder.PRODUCTS, undefined),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -72,7 +72,7 @@ describe('UploadsService', () => {
         public_id: 'public-id',
       });
 
-      const result = await service.uploadTempImageByFile(
+      const result = await service.uploadTempImage(
         UploadFolder.PRODUCTS,
         mockFile,
       );
@@ -102,47 +102,7 @@ describe('UploadsService', () => {
       );
 
       await expect(
-        service.uploadTempImageByFile(UploadFolder.PRODUCTS, mockFile),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('uploadTempImageByUrl', () => {
-    it('should upload image from URL and store temp upload', async () => {
-      (cloudinary.uploader.upload as jest.Mock).mockResolvedValue({
-        secure_url: 'https://cloudinary.com/from-url.jpg',
-        public_id: 'public-id-url',
-      });
-
-      const result = await service.uploadTempImageByUrl(
-        UploadFolder.STAGES,
-        'https://example.com/image.jpg',
-      );
-
-      expect(cloudinary.uploader.upload).toHaveBeenCalledWith(
-        'https://example.com/image.jpg',
-        expect.objectContaining({
-          folder: 'stages/temp',
-          format: 'jpg',
-        }),
-      );
-      expect(mockTempUploadsService.store).toHaveBeenCalledWith(
-        'https://cloudinary.com/from-url.jpg',
-        'public-id-url',
-      );
-      expect(result).toBe('https://cloudinary.com/from-url.jpg');
-    });
-
-    it('should throw BadRequestException on Cloudinary error', async () => {
-      (cloudinary.uploader.upload as jest.Mock).mockRejectedValue(
-        new Error('Upload failed'),
-      );
-
-      await expect(
-        service.uploadTempImageByUrl(
-          UploadFolder.STAGES,
-          'https://example.com/image.jpg',
-        ),
+        service.uploadTempImage(UploadFolder.PRODUCTS, mockFile),
       ).rejects.toThrow(BadRequestException);
     });
   });

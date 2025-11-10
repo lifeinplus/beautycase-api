@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
-import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateStageDto } from './dto/create-stage.dto';
 import { UpdateStageProductsDto } from './dto/update-stage-products.dto';
@@ -21,10 +20,10 @@ export class StagesService {
     const stage = new this.stageModel(dto);
     const { imageUrl } = dto;
 
-    await this.imageService.handleImageUpload(stage, {
-      folder: UploadFolder.STAGES,
-      secureUrl: imageUrl,
-    });
+    // await this.imageService.handleImageUpload(stage, {
+    //   folder: UploadFolder.STAGES,
+    //   publicId: imageUrl,
+    // });
 
     return stage.save();
   }
@@ -100,11 +99,11 @@ export class StagesService {
     }
 
     if (imageUrl) {
-      await this.imageService.handleImageUpdate(stage, {
-        folder: UploadFolder.STAGES,
-        secureUrl: imageUrl,
-        destroyOnReplace: false,
-      });
+      // await this.imageService.handleImageUpdate(stage, {
+      //   folder: UploadFolder.STAGES,
+      //   publicId: imageUrl,
+      //   destroyOnReplace: false,
+      // });
 
       await stage.save();
     }

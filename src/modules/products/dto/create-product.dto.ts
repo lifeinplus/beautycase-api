@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -32,12 +31,12 @@ export class CreateProductDto {
   @MaxLength(100)
   name: string;
 
-  @IsUrl()
-  @IsNotEmpty()
-  imageUrl: string;
+  @IsArray()
+  @IsString({ each: true })
+  imageIds: string[];
 
-  @IsString()
   @IsOptional()
+  @IsString()
   shade?: string;
 
   @IsString()
@@ -45,8 +44,8 @@ export class CreateProductDto {
   @MaxLength(500)
   comment: string;
 
-  @IsArray()
   @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => StoreLinkDto)
   storeLinks: StoreLinkDto[];
