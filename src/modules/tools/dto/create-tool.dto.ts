@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
   MinLength,
   ValidateNested,
@@ -28,9 +27,9 @@ export class CreateToolDto {
   @MaxLength(100)
   name: string;
 
-  @IsUrl()
-  @IsNotEmpty()
-  imageUrl: string;
+  @IsArray()
+  @IsString({ each: true })
+  imageIds: string[];
 
   @IsString()
   @IsOptional()

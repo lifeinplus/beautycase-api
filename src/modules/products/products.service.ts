@@ -56,7 +56,7 @@ export class ProductsService {
   }
 
   async findAll(): Promise<ProductDocument[]> {
-    const products = await this.productModel.find().select('imageUrl');
+    const products = await this.productModel.find().select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
@@ -68,7 +68,7 @@ export class ProductsService {
   async findAllByAuthor(authorId: string): Promise<ProductDocument[]> {
     const products = await this.productModel
       .find({ authorId })
-      .select('imageUrl');
+      .select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
