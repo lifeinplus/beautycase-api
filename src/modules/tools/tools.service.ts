@@ -35,7 +35,7 @@ export class ToolsService {
   }
 
   async findAll(): Promise<ToolDocument[]> {
-    const tools = await this.toolModel.find().select('imageUrl');
+    const tools = await this.toolModel.find().select('imageIds');
 
     if (!tools.length) {
       throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
@@ -45,7 +45,7 @@ export class ToolsService {
   }
 
   async findAllByAuthor(authorId: string): Promise<ToolDocument[]> {
-    const tools = await this.toolModel.find({ authorId }).select('imageUrl');
+    const tools = await this.toolModel.find({ authorId }).select('imageIds');
 
     if (!tools.length) {
       throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
