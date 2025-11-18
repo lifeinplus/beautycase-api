@@ -3,7 +3,6 @@ import {
   IsMongoId,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -23,8 +22,8 @@ export class CreateStageDto {
   @MaxLength(300)
   subtitle: string;
 
-  @IsUrl()
-  imageUrl: string;
+  @IsString()
+  imageId: string;
 
   @IsOptional()
   @IsString()

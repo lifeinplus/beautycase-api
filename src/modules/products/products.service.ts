@@ -52,11 +52,26 @@ export class ProductsService {
       name: `${product.name} (Копия)`,
     });
 
-    return duplicated.save();
+    await duplicated.save();
+
+    if (product.imageIds.length) {
+      const folder = `${UploadFolder.PRODUCTS}/${duplicated.id}`;
+
+      duplicated.imageIds = await Promise.all(
+        product.imageIds.map(
+          async (imageId) =>
+            await this.imageService.cloneImage(imageId, folder),
+        ),
+      );
+
+      await duplicated.save();
+    }
+
+    return duplicated;
   }
 
   async findAll(): Promise<ProductDocument[]> {
-    const products = await this.productModel.find().select('imageUrl');
+    const products = await this.productModel.find().select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
@@ -68,7 +83,7 @@ export class ProductsService {
   async findAllByAuthor(authorId: string): Promise<ProductDocument[]> {
     const products = await this.productModel
       .find({ authorId })
-      .select('imageUrl');
+      .select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });

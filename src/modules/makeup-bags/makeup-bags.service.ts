@@ -62,12 +62,12 @@ export class MakeupBagsService {
         populate: {
           path: 'productIds',
           populate: { path: 'brandId' },
-          select: 'name imageUrl',
+          select: 'name imageIds',
         },
       },
       {
         path: 'toolIds',
-        select: 'brandId imageUrl name',
+        select: 'brandId imageIds name',
         populate: { path: 'brandId' },
       },
     ]);

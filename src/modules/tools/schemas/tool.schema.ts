@@ -33,11 +33,8 @@ export class Tool {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  imageId?: string;
-
-  @Prop({ required: true })
-  imageUrl: string;
+  @Prop({ type: [String], default: [], required: true })
+  imageIds: string[];
 
   @Prop()
   number?: string;

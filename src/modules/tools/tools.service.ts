@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
+import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateToolDto } from './dto/create-tool.dto';
 import { UpdateStoreLinksDto } from './dto/update-store-links.dto';
@@ -18,18 +19,23 @@ export class ToolsService {
 
   async create(dto: CreateToolDto): Promise<ToolDocument> {
     const tool = new this.toolModel(dto);
-    const { imageUrl } = dto;
+    const { imageIds } = dto;
 
-    // await this.imageService.handleImageUpload(tool, {
-    //   folder: UploadFolder.TOOLS,
-    //   publicId: imageUrl,
-    // });
+    tool.imageIds = await Promise.all(
+      imageIds.map(
+        async (imageId) =>
+          await this.imageService.uploadImage({
+            folder: `${UploadFolder.TOOLS}/${tool.id}`,
+            publicId: imageId,
+          }),
+      ),
+    );
 
     return tool.save();
   }
 
   async findAll(): Promise<ToolDocument[]> {
-    const tools = await this.toolModel.find().select('imageUrl');
+    const tools = await this.toolModel.find().select('imageIds');
 
     if (!tools.length) {
       throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
@@ -39,7 +45,7 @@ export class ToolsService {
   }
 
   async findAllByAuthor(authorId: string): Promise<ToolDocument[]> {
-    const tools = await this.toolModel.find({ authorId }).select('imageUrl');
+    const tools = await this.toolModel.find({ authorId }).select('imageIds');
 
     if (!tools.length) {
       throw new NotFoundException({ code: ErrorCode.TOOLS_NOT_FOUND });
@@ -59,7 +65,7 @@ export class ToolsService {
   }
 
   async update(id: string, dto: UpdateToolDto): Promise<ToolDocument> {
-    const { imageUrl } = dto;
+    const { imageIds } = dto;
 
     const tool = await this.toolModel.findByIdAndUpdate(id, dto, {
       new: true,
@@ -70,11 +76,16 @@ export class ToolsService {
       throw new NotFoundException({ code: ErrorCode.TOOL_NOT_FOUND });
     }
 
-    if (imageUrl) {
-      // await this.imageService.handleImageUpdate(tool, {
-      //   folder: UploadFolder.TOOLS,
-      //   publicId: imageUrl,
-      // });
+    if (imageIds?.length) {
+      tool.imageIds = await Promise.all(
+        imageIds.map(
+          async (imageId) =>
+            await this.imageService.uploadImage({
+              folder: `${UploadFolder.TOOLS}/${tool.id}`,
+              publicId: imageId,
+            }),
+        ),
+      );
 
       await tool.save();
     }
@@ -105,9 +116,13 @@ export class ToolsService {
       throw new NotFoundException({ code: ErrorCode.TOOL_NOT_FOUND });
     }
 
-    if (tool.imageId) {
-      await this.imageService.deleteImage(tool.imageId);
+    const folder = `${UploadFolder.TOOLS}/${tool.id}`;
+
+    for (const imageId of tool.imageIds) {
+      await this.imageService.deleteImage(imageId);
     }
+
+    await this.imageService.deleteFolder(folder);
 
     return tool;
   }

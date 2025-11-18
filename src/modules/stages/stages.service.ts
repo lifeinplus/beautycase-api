@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
 import { ErrorCode } from 'src/common/enums/error-code.enum';
+import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import { ImageService } from '../shared/image.service';
 import { CreateStageDto } from './dto/create-stage.dto';
 import { UpdateStageProductsDto } from './dto/update-stage-products.dto';
@@ -18,12 +19,12 @@ export class StagesService {
 
   async create(dto: CreateStageDto): Promise<StageDocument> {
     const stage = new this.stageModel(dto);
-    const { imageUrl } = dto;
+    const { imageId } = dto;
 
-    // await this.imageService.handleImageUpload(stage, {
-    //   folder: UploadFolder.STAGES,
-    //   publicId: imageUrl,
-    // });
+    stage.imageId = await this.imageService.uploadImage({
+      folder: `${UploadFolder.STAGES}/${stage.id}`,
+      publicId: imageId,
+    });
 
     return stage.save();
   }
@@ -43,7 +44,20 @@ export class StagesService {
       title: `${stage.title} (Копия)`,
     });
 
-    return duplicated.save();
+    await duplicated.save();
+
+    if (stage.imageId) {
+      const folder = `${UploadFolder.STAGES}/${duplicated.id}`;
+
+      duplicated.imageId = await this.imageService.cloneImage(
+        stage.imageId,
+        folder,
+      );
+
+      await duplicated.save();
+    }
+
+    return duplicated;
   }
 
   async findAll(): Promise<StageDocument[]> {
@@ -61,7 +75,7 @@ export class StagesService {
   async findAllByAuthor(authorId: string): Promise<StageDocument[]> {
     const stages = await this.stageModel
       .find({ authorId })
-      .select('createdAt imageUrl subtitle title');
+      .select('createdAt imageId subtitle title');
 
     if (!stages.length) {
       throw new NotFoundException({ code: ErrorCode.STAGES_NOT_FOUND });
@@ -73,7 +87,7 @@ export class StagesService {
   async findOne(id: string): Promise<StageDocument> {
     const stage = await this.stageModel
       .findById(id)
-      .populate('productIds', 'imageUrl');
+      .populate('productIds', 'imageIds');
 
     if (!stage) {
       throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
@@ -87,7 +101,7 @@ export class StagesService {
   }
 
   async update(id: string, dto: UpdateStageDto): Promise<StageDocument> {
-    const { imageUrl } = dto;
+    const { imageId } = dto;
 
     const stage = await this.stageModel.findByIdAndUpdate(id, dto, {
       new: true,
@@ -98,12 +112,11 @@ export class StagesService {
       throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
 
-    if (imageUrl) {
-      // await this.imageService.handleImageUpdate(stage, {
-      //   folder: UploadFolder.STAGES,
-      //   publicId: imageUrl,
-      //   destroyOnReplace: false,
-      // });
+    if (imageId) {
+      stage.imageId = await this.imageService.uploadImage({
+        folder: `${UploadFolder.STAGES}/${stage.id}`,
+        publicId: imageId,
+      });
 
       await stage.save();
     }
@@ -133,6 +146,11 @@ export class StagesService {
     if (!stage) {
       throw new NotFoundException({ code: ErrorCode.STAGE_NOT_FOUND });
     }
+
+    const folder = `${UploadFolder.STAGES}/${stage.id}`;
+
+    await this.imageService.deleteImage(stage.imageId);
+    await this.imageService.deleteFolder(folder);
 
     return stage;
   }

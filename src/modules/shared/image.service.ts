@@ -42,6 +42,19 @@ export class ImageService {
     }
   }
 
+  async cloneImage(publicId: string, folder: string): Promise<string> {
+    const url = cloudinary.url(publicId, {
+      fetch_format: 'auto',
+      quality: 'auto',
+    });
+
+    const uploaded = await cloudinary.uploader.upload(url, {
+      folder,
+    });
+
+    return uploaded.public_id;
+  }
+
   async deleteImage(publicId: string): Promise<void> {
     try {
       await cloudinary.uploader.destroy(publicId, {
