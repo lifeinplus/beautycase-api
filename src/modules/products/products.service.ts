@@ -27,10 +27,10 @@ export class ProductsService {
     product.imageIds = await Promise.all(
       imageIds.map(
         async (imageId) =>
-          await this.imageService.uploadImage({
-            folder: `${UploadFolder.PRODUCTS}/${product.id}`,
-            publicId: imageId,
-          }),
+          await this.imageService.uploadImage(
+            imageId,
+            `${UploadFolder.PRODUCTS}/${product.id}`,
+          ),
       ),
     );
 
@@ -140,10 +140,10 @@ export class ProductsService {
       product.imageIds = await Promise.all(
         imageIds.map(
           async (imageId) =>
-            await this.imageService.uploadImage({
-              folder: `${UploadFolder.PRODUCTS}/${product.id}`,
-              publicId: imageId,
-            }),
+            await this.imageService.uploadImage(
+              imageId,
+              `${UploadFolder.PRODUCTS}/${product.id}`,
+            ),
         ),
       );
 

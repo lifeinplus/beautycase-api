@@ -38,7 +38,7 @@ export class Product {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: [String], default: [], required: true })
+  @Prop({ type: [String], required: true })
   imageIds: string[];
 
   @Prop()

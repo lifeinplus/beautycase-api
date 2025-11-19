@@ -24,10 +24,10 @@ export class ToolsService {
     tool.imageIds = await Promise.all(
       imageIds.map(
         async (imageId) =>
-          await this.imageService.uploadImage({
-            folder: `${UploadFolder.TOOLS}/${tool.id}`,
-            publicId: imageId,
-          }),
+          await this.imageService.uploadImage(
+            imageId,
+            `${UploadFolder.TOOLS}/${tool.id}`,
+          ),
       ),
     );
 
@@ -80,10 +80,10 @@ export class ToolsService {
       tool.imageIds = await Promise.all(
         imageIds.map(
           async (imageId) =>
-            await this.imageService.uploadImage({
-              folder: `${UploadFolder.TOOLS}/${tool.id}`,
-              publicId: imageId,
-            }),
+            await this.imageService.uploadImage(
+              imageId,
+              `${UploadFolder.TOOLS}/${tool.id}`,
+            ),
         ),
       );
 

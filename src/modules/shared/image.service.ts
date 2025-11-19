@@ -3,16 +3,14 @@ import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 
-export interface ImageOptions {
-  folder: UploadFolder | string;
-  publicId: string;
-}
-
 @Injectable()
 export class ImageService {
   private readonly logger = new Logger(ImageService.name);
 
-  async uploadImage({ folder, publicId }: ImageOptions): Promise<string> {
+  async uploadImage(
+    publicId: string,
+    folder: UploadFolder | string,
+  ): Promise<string> {
     if (!publicId.includes(`/${UploadFolder.TEMP}/`)) {
       return publicId;
     }

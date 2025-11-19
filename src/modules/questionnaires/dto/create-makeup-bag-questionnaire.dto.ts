@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
@@ -8,7 +9,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUrl,
   ValidateNested,
 } from 'class-validator';
 
@@ -80,8 +80,9 @@ export class CreateMakeupBagQuestionnaireDto {
   makeupBag: string;
 
   @IsOptional()
-  @IsUrl()
-  makeupBagPhotoUrl?: string;
+  @IsArray()
+  @IsString({ each: true })
+  makeupBagPhotoIds?: string[];
 
   @IsOptional()
   @IsEnum(MakeupTime)

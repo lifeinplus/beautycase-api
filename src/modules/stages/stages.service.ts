@@ -21,10 +21,10 @@ export class StagesService {
     const stage = new this.stageModel(dto);
     const { imageId } = dto;
 
-    stage.imageId = await this.imageService.uploadImage({
-      folder: `${UploadFolder.STAGES}/${stage.id}`,
-      publicId: imageId,
-    });
+    stage.imageId = await this.imageService.uploadImage(
+      imageId,
+      `${UploadFolder.STAGES}/${stage.id}`,
+    );
 
     return stage.save();
   }
@@ -113,10 +113,10 @@ export class StagesService {
     }
 
     if (imageId) {
-      stage.imageId = await this.imageService.uploadImage({
-        folder: `${UploadFolder.STAGES}/${stage.id}`,
-        publicId: imageId,
-      });
+      stage.imageId = await this.imageService.uploadImage(
+        imageId,
+        `${UploadFolder.STAGES}/${stage.id}`,
+      );
 
       await stage.save();
     }
