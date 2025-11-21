@@ -97,7 +97,7 @@ describe('Questionnaires (e2e)', () => {
     it('should create a questionnaire without photo URL', async () => {
       const dtoWithoutPhoto = {
         ...mockQuestionnaire,
-        makeupBagPhotoUrl: undefined,
+        makeupBagPhotoIds: undefined,
       };
 
       const response = await request(app.getHttpServer())
@@ -202,10 +202,10 @@ describe('Questionnaires (e2e)', () => {
         .expect(HttpStatus.BAD_REQUEST);
     });
 
-    it('should fail with invalid makeupBagPhotoUrl', async () => {
+    it('should fail with invalid makeupBagPhotoIds', async () => {
       const invalidDto = {
         ...mockQuestionnaire,
-        makeupBagPhotoUrl: 'not-a-url',
+        makeupBagPhotoIds: 'not-a-url',
       };
 
       await request(app.getHttpServer())

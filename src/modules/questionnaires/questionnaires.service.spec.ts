@@ -96,14 +96,14 @@ describe('QuestionnairesService', () => {
       it('should create a questionnaire without image upload', async () => {
         const result = await service.createMakeupBag({
           ...mockMakeupBagQuestionnaire,
-          makeupBagPhotoUrl: undefined,
+          makeupBagPhotoIds: undefined,
         });
 
         expect(mockImageService.handleImageUpload).not.toHaveBeenCalled();
         expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
       });
 
-      it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
+      it('should create a questionnaire and upload image if makeupBagPhotoIds provided', async () => {
         await service.createMakeupBag(mockMakeupBagQuestionnaire as any);
 
         expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
