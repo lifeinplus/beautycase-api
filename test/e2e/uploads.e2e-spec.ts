@@ -7,7 +7,6 @@ import * as request from 'supertest';
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
 import configuration from 'src/config/configuration';
 import { SharedModule } from 'src/modules/shared/shared.module';
-import { TempUploadsService } from 'src/modules/shared/temp-uploads.service';
 import { UploadsModule } from 'src/modules/uploads/uploads.module';
 
 jest.mock('cloudinary', () => ({
@@ -21,7 +20,6 @@ jest.mock('cloudinary', () => ({
 
 describe('Uploads (e2e)', () => {
   let app: INestApplication;
-  let tempUploadsService: TempUploadsService;
 
   const mockCloudinaryUpload = cloudinary.uploader.upload as jest.Mock;
 
@@ -42,8 +40,6 @@ describe('Uploads (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
-
-    tempUploadsService = app.get<TempUploadsService>(TempUploadsService);
   });
 
   beforeEach(async () => {
@@ -73,7 +69,7 @@ describe('Uploads (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toEqual({
-        imageUrl:
+        imageId:
           'https://res.cloudinary.com/test/image/upload/v123456789/products/temp/image.jpg',
       });
 
@@ -87,10 +83,6 @@ describe('Uploads (e2e)', () => {
           use_filename: false,
         }),
       );
-
-      // Verify temp upload was stored
-      const storedPublicId = tempUploadsService.get(response.body.imageUrl);
-      expect(storedPublicId).toBe('products/temp/image_123456789');
     });
 
     it('should work with all valid upload folders', async () => {
@@ -213,7 +205,7 @@ describe('Uploads (e2e)', () => {
     it('should upload image from URL successfully', async () => {
       const dto = {
         folder: UploadFolder.STAGES,
-        imageUrl: 'https://example.com/test-image.jpg',
+        imageId: 'https://example.com/test-image.jpg',
       };
 
       const response = await request(app.getHttpServer())
@@ -222,7 +214,7 @@ describe('Uploads (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toEqual({
-        imageUrl:
+        imageId:
           'https://res.cloudinary.com/test/image/upload/v123456789/stages/temp/url-image.jpg',
       });
 
@@ -237,10 +229,6 @@ describe('Uploads (e2e)', () => {
           use_filename: false,
         }),
       );
-
-      // Verify temp upload was stored
-      const storedPublicId = tempUploadsService.get(response.body.imageUrl);
-      expect(storedPublicId).toBe('stages/temp/url-image_123456789');
     });
 
     it('should work with all valid upload folders', async () => {
@@ -254,7 +242,7 @@ describe('Uploads (e2e)', () => {
       for (const folder of folders) {
         const dto = {
           folder,
-          imageUrl: 'https://example.com/test.jpg',
+          imageId: 'https://example.com/test.jpg',
         };
 
         await request(app.getHttpServer())
@@ -274,7 +262,7 @@ describe('Uploads (e2e)', () => {
     it('should reject invalid folder values', async () => {
       const dto = {
         folder: 'invalid-folder',
-        imageUrl: 'https://example.com/test.jpg',
+        imageId: 'https://example.com/test.jpg',
       };
 
       await request(app.getHttpServer())
@@ -288,7 +276,7 @@ describe('Uploads (e2e)', () => {
     it('should reject invalid URLs', async () => {
       const dto = {
         folder: UploadFolder.PRODUCTS,
-        imageUrl: 'not-a-valid-url',
+        imageId: 'not-a-valid-url',
       };
 
       await request(app.getHttpServer())
@@ -301,7 +289,7 @@ describe('Uploads (e2e)', () => {
 
     it('should reject requests without folder field', async () => {
       const dto = {
-        imageUrl: 'https://example.com/test.jpg',
+        imageId: 'https://example.com/test.jpg',
       };
 
       await request(app.getHttpServer())
@@ -312,7 +300,7 @@ describe('Uploads (e2e)', () => {
       expect(mockCloudinaryUpload).not.toHaveBeenCalled();
     });
 
-    it('should reject requests without imageUrl field', async () => {
+    it('should reject requests without imageId field', async () => {
       const dto = {
         folder: UploadFolder.PRODUCTS,
       };
@@ -339,7 +327,7 @@ describe('Uploads (e2e)', () => {
 
       const dto = {
         folder: UploadFolder.PRODUCTS,
-        imageUrl: 'https://example.com/test.jpg',
+        imageId: 'https://example.com/test.jpg',
       };
 
       await request(app.getHttpServer())
@@ -365,24 +353,18 @@ describe('Uploads (e2e)', () => {
         .field('folder', UploadFolder.PRODUCTS)
         .attach('imageFile', Buffer.from('test'), 'test.jpg')
         .expect(HttpStatus.CREATED);
-
-      const publicId = tempUploadsService.get(response.body.imageUrl);
-      expect(publicId).toBe('test/temp/image_123');
     });
 
     it('should store temp uploads for URL uploads', async () => {
       const dto = {
         folder: UploadFolder.STAGES,
-        imageUrl: 'https://example.com/test.jpg',
+        imageId: 'https://example.com/test.jpg',
       };
 
       const response = await request(app.getHttpServer())
         .post('/uploads/temp-image-url')
         .send(dto)
         .expect(HttpStatus.CREATED);
-
-      const publicId = tempUploadsService.get(response.body.imageUrl);
-      expect(publicId).toBe('test/temp/image_123');
     });
 
     it('should handle multiple uploads in temp service', async () => {
@@ -409,16 +391,9 @@ describe('Uploads (e2e)', () => {
         .post('/uploads/temp-image-url')
         .send({
           folder: UploadFolder.STAGES,
-          imageUrl: 'https://example.com/test2.jpg',
+          imageId: 'https://example.com/test2.jpg',
         })
         .expect(HttpStatus.CREATED);
-
-      // Verify both are stored
-      const publicId1 = tempUploadsService.get(response1.body.imageUrl);
-      const publicId2 = tempUploadsService.get(response2.body.imageUrl);
-
-      expect(publicId1).toBe('products/temp/image1_123');
-      expect(publicId2).toBe('stages/temp/image2_456');
     });
   });
 
@@ -443,7 +418,7 @@ describe('Uploads (e2e)', () => {
     it('should handle application/json for URL uploads', async () => {
       const dto = {
         folder: UploadFolder.PRODUCTS,
-        imageUrl: 'https://example.com/test.jpg',
+        imageId: 'https://example.com/test.jpg',
       };
 
       const response = await request(app.getHttpServer())

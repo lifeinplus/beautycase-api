@@ -63,7 +63,7 @@ export class StagesService {
   async findAll(): Promise<StageDocument[]> {
     const stages = await this.stageModel
       .find()
-      .select('createdAt imageUrl subtitle title');
+      .select('createdAt imageId subtitle title');
 
     if (!stages.length) {
       throw new NotFoundException({ code: ErrorCode.STAGES_NOT_FOUND });

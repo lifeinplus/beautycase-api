@@ -30,7 +30,7 @@ describe('UploadsController', () => {
   });
 
   describe('uploadTempImage', () => {
-    it('should upload image from file and return imageUrl', async () => {
+    it('should upload image from file and return imageId', async () => {
       const dto: UploadFileDto = { folder: UploadFolder.PRODUCTS };
       const mockFile = {
         buffer: Buffer.from('file-data'),

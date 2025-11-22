@@ -73,7 +73,7 @@ describe('StagesService', () => {
 
       expect(mockImageService.uploadImage).toHaveBeenCalledWith(
         expect.objectContaining({ _id: mockStageResponse._id }),
-        { folder: UploadFolder.STAGES, secureUrl: mockStage.imageUrl },
+        { folder: UploadFolder.STAGES, secureUrl: mockStage.imageId },
       );
 
       expect(result).toEqual(mockStageResponse);
@@ -151,14 +151,14 @@ describe('StagesService', () => {
         mockStageResponse,
       );
 
-      const dto: UpdateStageDto = { imageUrl: 'http://example.com/new.jpg' };
+      const dto: UpdateStageDto = { imageId: 'http://example.com/new.jpg' };
       const result = await service.update(mockStageId, dto);
 
-      expect(mockImageService.updateImage).toHaveBeenCalledWith(
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
         mockStageResponse,
         {
           folder: UploadFolder.STAGES,
-          secureUrl: dto.imageUrl,
+          secureUrl: dto.imageId,
           destroyOnReplace: false,
         },
       );

@@ -402,22 +402,21 @@ export class ResourceHelper {
 
   static async createMultipleStages(
     app: INestApplication,
-    adminToken: string,
+    tokens: AuthTokens,
     count: number,
-    authorId: string,
     productIds: string[],
   ): Promise<StageResources[]> {
     const stages: StageResources[] = [];
     const stagesData = TestDataFactory.createMultipleStages(
       count,
-      authorId,
+      tokens.muaId,
       productIds,
     );
 
     for (const data of stagesData) {
       const { body } = await request(app.getHttpServer())
         .post('/stages')
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(data)
         .expect(HttpStatus.CREATED);
 

@@ -258,7 +258,7 @@ export class TestDataFactory {
       authorId,
       title: 'Morning routine',
       subtitle: 'Soft and natural',
-      imageId: 'stages/image1.jpg',
+      imageId: 'stages/image',
       productIds,
       ...overrides,
     };

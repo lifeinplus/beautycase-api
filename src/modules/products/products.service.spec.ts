@@ -84,11 +84,11 @@ describe('ProductsService', () => {
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
         expect.objectContaining({ _id: mockProductId }),
-        { folder: UploadFolder.PRODUCTS, secureUrl: mockProduct.imageUrl },
+        { folder: UploadFolder.PRODUCTS, secureUrl: mockProduct.imageIds },
       );
       expect(result._id).toBe(mockProductResponse._id);
       expect(result.name).toBe(mockProductResponse.name);
-      expect(result.imageUrl).toBe(mockProductResponse.imageUrl);
+      expect(result.imageIds).toBe(mockProductResponse.imageIds);
     });
   });
 
@@ -208,14 +208,14 @@ describe('ProductsService', () => {
         mockProductResponse,
       );
 
-      const dto: UpdateProductDto = { imageUrl: 'http://example.com/new.jpg' };
+      const dto: UpdateProductDto = { imageIds: 'http://example.com/new.jpg' };
       const result = await service.update(mockProductId, dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
         mockProductResponse,
         {
           folder: UploadFolder.PRODUCTS,
-          secureUrl: dto.imageUrl,
+          secureUrl: dto.imageIds,
           destroyOnReplace: false,
         },
       );

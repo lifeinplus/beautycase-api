@@ -124,7 +124,7 @@ describe('Tools (e2e)', () => {
       expect(response.body.message).toEqual(
         expect.arrayContaining([
           expect.stringContaining('brandId'),
-          expect.stringContaining('imageUrl'),
+          expect.stringContaining('imageIds'),
           expect.stringContaining('comment'),
         ]),
       );
@@ -147,10 +147,10 @@ describe('Tools (e2e)', () => {
       );
     });
 
-    it('should validate imageUrl format', async () => {
+    it('should validate imageIds format', async () => {
       const invalidTool = {
         ...createToolDto(),
-        imageUrl: 'not-a-valid-url',
+        imageIds: 'not-a-valid-url',
       };
 
       const response = await request(app.getHttpServer())
@@ -160,7 +160,7 @@ describe('Tools (e2e)', () => {
         .expect(HttpStatus.BAD_REQUEST);
 
       expect(response.body.message).toEqual(
-        expect.arrayContaining([expect.stringContaining('imageUrl')]),
+        expect.arrayContaining([expect.stringContaining('imageIds')]),
       );
     });
 
@@ -202,7 +202,7 @@ describe('Tools (e2e)', () => {
       const minimalTool = {
         brandId: '507f1f77bcf86cd799439011',
         name: 'Minimal Tool',
-        imageUrl: 'https://example.com/image.jpg',
+        imageIds: 'https://example.com/image.jpg',
         comment: 'Basic tool',
       };
 
@@ -234,7 +234,7 @@ describe('Tools (e2e)', () => {
 
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBe(1);
-      expect(response.body[0]).toHaveProperty('imageUrl');
+      expect(response.body[0]).toHaveProperty('imageIds');
     });
 
     it('should reject access when authenticated as client', async () => {
@@ -284,7 +284,7 @@ describe('Tools (e2e)', () => {
       expect(response.body).toMatchObject({
         _id: toolId,
         name: toolData.name,
-        imageUrl: toolData.imageUrl,
+        imageIds: toolData.imageIds,
         comment: toolData.comment,
         storeLinks: toolData.storeLinks,
       });
@@ -378,7 +378,7 @@ describe('Tools (e2e)', () => {
 
     it('should update tool with new image', async () => {
       const updateDto: UpdateToolDto = {
-        imageUrl: 'https://example.com/new-image.jpg',
+        imageIds: 'https://example.com/new-image.jpg',
       };
 
       await request(app.getHttpServer())
@@ -391,7 +391,7 @@ describe('Tools (e2e)', () => {
     it('should validate update data', async () => {
       const invalidUpdate: UpdateToolDto = {
         name: 'a'.repeat(101),
-        imageUrl: 'invalid-url',
+        imageIds: 'invalid-url',
       };
 
       const response = await request(app.getHttpServer())
@@ -403,7 +403,7 @@ describe('Tools (e2e)', () => {
       expect(response.body.message).toEqual(
         expect.arrayContaining([
           expect.stringContaining('name'),
-          expect.stringContaining('imageUrl'),
+          expect.stringContaining('imageIds'),
         ]),
       );
     });

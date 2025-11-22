@@ -74,11 +74,11 @@ describe('ToolsService', () => {
 
       expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
         expect.objectContaining({ _id: mockToolId }),
-        { folder: UploadFolder.TOOLS, secureUrl: mockTool.imageUrl },
+        { folder: UploadFolder.TOOLS, secureUrl: mockTool.imageIds },
       );
       expect(result._id).toBe(mockToolResponse._id);
       expect(result.name).toBe(mockToolResponse.name);
-      expect(result.imageUrl).toBe(mockToolResponse.imageUrl);
+      expect(result.imageIds).toBe(mockToolResponse.imageIds);
     });
   });
 
@@ -128,14 +128,14 @@ describe('ToolsService', () => {
         mockToolResponse,
       );
 
-      const dto: UpdateToolDto = { imageUrl: 'http://example.com/new.jpg' };
+      const dto: UpdateToolDto = { imageIds: ['tools/image'] };
       const result = await service.update(mockToolId, dto);
 
       expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
         mockToolResponse,
         {
           folder: UploadFolder.TOOLS,
-          secureUrl: dto.imageUrl,
+          secureUrl: dto.imageIds,
         },
       );
       expect(result).toEqual(mockToolResponse);
