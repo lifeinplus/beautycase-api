@@ -209,7 +209,7 @@ export class TestDataFactory {
         filming: false,
       },
       instagram: '@janedoe',
-      makeupBagPhotoIds: ['questionnaire/photo1.jpg'],
+      makeupBagPhotoIds: ['questionnaires/photo1'],
       makeupTime: MakeupTime.LONG,
       oilyShine: 'T-zone only',
       peeling: 'No',
