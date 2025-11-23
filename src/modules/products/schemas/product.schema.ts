@@ -38,11 +38,8 @@ export class Product {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  imageId?: string;
-
-  @Prop({ required: true })
-  imageUrl: string;
+  @Prop({ type: [String], required: true })
+  imageIds: string[];
 
   @Prop()
   shade?: string;

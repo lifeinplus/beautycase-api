@@ -23,12 +23,11 @@ import { UpdateStageDto } from './dto/update-stage.dto';
 import { StagesService } from './stages.service';
 
 @Controller('stages')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class StagesController {
   constructor(private readonly stagesService: StagesService) {}
 
   @Post()
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async create(@Req() req: Request, @Body() dto: CreateStageDto) {
     const authorId = req.user!.id;
@@ -37,7 +36,6 @@ export class StagesController {
   }
 
   @Post('duplicate/:id')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async duplicate(@Param() params: MongoIdParamDto) {
     const stage = await this.stagesService.duplicate(params.id);
@@ -45,14 +43,12 @@ export class StagesController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   findAll() {
     return this.stagesService.findAll();
   }
 
   @Get('mine')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   findAllByAuthor(@Req() req: Request) {
     const authorId = req.user!.id;
@@ -61,14 +57,12 @@ export class StagesController {
 
   // TODO: @UseGuards(StageAccessGuard)
   @Get(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   findOne(@Param() params: MongoIdParamDto) {
     return this.stagesService.findOne(params.id);
   }
 
   @Put(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async update(@Param() params: MongoIdParamDto, @Body() dto: UpdateStageDto) {
     const stage = await this.stagesService.update(params.id, dto);
@@ -76,7 +70,6 @@ export class StagesController {
   }
 
   @Patch(':id/products')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
   async updateProducts(
     @Param() params: MongoIdParamDto,
@@ -87,8 +80,8 @@ export class StagesController {
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
   @Roles(Role.MUA)
+  // TODO: @UseInterceptors(StageDeletionInterceptor)
   async remove(@Param() params: MongoIdParamDto) {
     const stage = await this.stagesService.remove(params.id);
     return { id: stage.id };

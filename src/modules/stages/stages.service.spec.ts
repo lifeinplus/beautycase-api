@@ -19,7 +19,6 @@ type MockModel<T = any> = Partial<Record<keyof Model<T>, jest.Mock>> & {
 describe('StagesService', () => {
   let service: StagesService;
   let mockStageModel: MockModel<StageDocument>;
-  let mockImageService: jest.Mocked<ImageService>;
 
   const mockAuthorId = makeObjectId();
   const mockStageId = makeObjectId();
@@ -29,27 +28,28 @@ describe('StagesService', () => {
 
   const mockStageResponse = {
     ...mockStage,
-    _id: mockStageId,
+    id: mockStageId,
     save: jest.fn(),
   };
 
+  mockStageModel = jest.fn(() => ({
+    ...mockStageResponse,
+    save: jest.fn().mockResolvedValue(mockStageResponse),
+  })) as any;
+
+  mockStageModel.find = jest.fn();
+  mockStageModel.findById = jest.fn();
+  mockStageModel.findByIdAndUpdate = jest.fn();
+  mockStageModel.findByIdAndDelete = jest.fn();
+
+  const mockImageService = {
+    cloneImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    uploadImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    deleteImage: jest.fn().mockResolvedValue(undefined),
+    deleteFolder: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
-    mockStageModel = jest.fn(() => ({
-      ...mockStageResponse,
-      save: jest.fn().mockResolvedValue(mockStageResponse),
-    })) as any;
-
-    mockStageModel.find = jest.fn();
-    mockStageModel.findById = jest.fn();
-    mockStageModel.findByIdAndUpdate = jest.fn();
-    mockStageModel.findByIdAndDelete = jest.fn();
-
-    mockImageService = {
-      handleImageUpload: jest.fn(),
-      handleImageUpdate: jest.fn(),
-      handleImageDeletion: jest.fn(),
-    } as any;
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StagesService,
@@ -71,9 +71,9 @@ describe('StagesService', () => {
     it('should create a stage and upload image', async () => {
       const result = await service.create(mockStage);
 
-      expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: mockStageResponse._id }),
-        { folder: UploadFolder.STAGES, secureUrl: mockStage.imageUrl },
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+        mockStage.imageId,
+        `${UploadFolder.STAGES}/${mockStageResponse.id}`,
       );
 
       expect(result).toEqual(mockStageResponse);
@@ -82,18 +82,23 @@ describe('StagesService', () => {
 
   describe('duplicate', () => {
     it('should duplicate a stage', async () => {
-      (mockStageModel.findById as jest.Mock).mockResolvedValue({
+      jest.mocked(mockStageModel.findById as jest.Mock).mockResolvedValue({
         toObject: () => mockStageResponse,
         title: mockStageResponse.title,
       });
 
       const saveMock = jest.fn().mockResolvedValue(mockStageResponse);
-      (mockStageModel as any).mockImplementation(() => ({ save: saveMock }));
+
+      jest
+        .mocked(mockStageModel)
+        .mockImplementation((doc) => ({ ...doc, save: saveMock }));
 
       const result = await service.duplicate(mockStageId);
 
       expect(mockStageModel.findById).toHaveBeenCalledWith(mockStageId);
-      expect(result).toEqual(mockStageResponse);
+      expect(result.imageId).toEqual('stages/image');
+      expect(result.title).toBe(`${mockStageResponse.title} (Копия)`);
+      expect(saveMock).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -151,17 +156,14 @@ describe('StagesService', () => {
         mockStageResponse,
       );
 
-      const dto: UpdateStageDto = { imageUrl: 'http://example.com/new.jpg' };
+      const dto: UpdateStageDto = { imageId: 'http://example.com/new.jpg' };
       const result = await service.update(mockStageId, dto);
 
-      expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
-        mockStageResponse,
-        {
-          folder: UploadFolder.STAGES,
-          secureUrl: dto.imageUrl,
-          destroyOnReplace: false,
-        },
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+        dto.imageId,
+        `${UploadFolder.STAGES}/${mockStageId}`,
       );
+
       expect(result).toEqual(mockStageResponse);
     });
 

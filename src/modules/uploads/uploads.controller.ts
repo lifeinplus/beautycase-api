@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Post,
   UploadedFile,
   UseFilters,
@@ -9,8 +10,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { multerConfig } from './config/multer.config';
+import { DeleteImageDto } from './dto/delete-image.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
-import { UploadUrlDto } from './dto/upload-url.dto';
 import { MulterExceptionFilter } from './filters/multer-exception.filter';
 import { UploadsService } from './uploads.service';
 
@@ -20,26 +21,18 @@ export class UploadsController {
 
   @UseFilters(MulterExceptionFilter)
   @UseInterceptors(FileInterceptor('imageFile', multerConfig))
-  @Post('temp-image-file')
-  async uploadTempImageByFile(
+  @Post('temp-image')
+  async uploadTempImage(
     @Body() dto: UploadFileDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const secureUrl = await this.uploadService.uploadTempImageByFile(
-      dto.folder,
-      file,
-    );
+    const publicId = await this.uploadService.uploadTempImage(dto.folder, file);
 
-    return { imageUrl: secureUrl };
+    return { imageId: publicId };
   }
 
-  @Post('temp-image-url')
-  async uploadTempImageByUrl(@Body() dto: UploadUrlDto) {
-    const secureUrl = await this.uploadService.uploadTempImageByUrl(
-      dto.folder,
-      dto.imageUrl,
-    );
-
-    return { imageUrl: secureUrl };
+  @Delete('image')
+  async remove(@Body() dto: DeleteImageDto) {
+    await this.uploadService.remove(dto.imageId);
   }
 }

@@ -26,31 +26,22 @@ export class QuestionnairesService {
     private readonly imageService: ImageService,
   ) {}
 
-  private createImageAdapter = (
-    questionnaire: MakeupBagQuestionnaireDocument,
-  ) => ({
-    ...questionnaire,
-    imageId: questionnaire.makeupBagPhotoId,
-    imageUrl: questionnaire.makeupBagPhotoUrl || '',
-  });
-
   async createMakeupBag(
     dto: CreateMakeupBagQuestionnaireDto,
   ): Promise<MakeupBagQuestionnaireDocument> {
     const questionnaire = new this.makeupBagQuestionnaireModel(dto);
-    const { makeupBagPhotoUrl } = dto;
+    const { makeupBagPhotoIds } = dto;
 
-    if (makeupBagPhotoUrl) {
-      const adapter = this.createImageAdapter(questionnaire);
-
-      await this.imageService.handleImageUpload(adapter, {
-        filename: 'makeup-bag',
-        folder: `${UploadFolder.QUESTIONNAIRES}/${questionnaire._id}`,
-        secureUrl: makeupBagPhotoUrl,
-      });
-
-      questionnaire.makeupBagPhotoId = adapter.imageId;
-      questionnaire.makeupBagPhotoUrl = adapter.imageUrl;
+    if (makeupBagPhotoIds?.length) {
+      questionnaire.makeupBagPhotoIds = await Promise.all(
+        makeupBagPhotoIds.map(
+          async (photoId) =>
+            await this.imageService.uploadImage(
+              photoId,
+              `${UploadFolder.QUESTIONNAIRES}/${questionnaire._id}`,
+            ),
+        ),
+      );
     }
 
     return questionnaire.save();
@@ -146,11 +137,15 @@ export class QuestionnairesService {
       throw new NotFoundException({ code: ErrorCode.QUESTIONNAIRE_NOT_FOUND });
     }
 
-    if (questionnaire.makeupBagPhotoId) {
-      await this.imageService.handleImageDeletion(
-        questionnaire.makeupBagPhotoId,
-      );
+    const folder = `${UploadFolder.QUESTIONNAIRES}/${questionnaire.id}`;
+
+    if (questionnaire.makeupBagPhotoIds?.length) {
+      for (const photoId of questionnaire.makeupBagPhotoIds) {
+        await this.imageService.deleteImage(photoId);
+      }
     }
+
+    await this.imageService.deleteFolder(folder);
 
     return questionnaire;
   }

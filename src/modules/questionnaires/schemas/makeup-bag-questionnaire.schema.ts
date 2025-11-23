@@ -75,11 +75,8 @@ export class MakeupBagQuestionnaire {
   @Prop({ required: true })
   makeupBag: string;
 
-  @Prop()
-  makeupBagPhotoId?: string;
-
-  @Prop()
-  makeupBagPhotoUrl?: string;
+  @Prop({ type: [String] })
+  makeupBagPhotoIds?: string[];
 
   @Prop({ enum: MakeupTime })
   makeupTime?: string;

@@ -22,15 +22,19 @@ export class ProductsService {
 
   async create(dto: CreateProductDto): Promise<ProductDocument> {
     const product = new this.productModel(dto);
-    const { imageUrl } = dto;
+    const { imageIds } = dto;
 
-    await this.imageService.handleImageUpload(product, {
-      folder: UploadFolder.PRODUCTS,
-      secureUrl: imageUrl,
-    });
+    product.imageIds = await Promise.all(
+      imageIds.map(
+        async (imageId) =>
+          await this.imageService.uploadImage(
+            imageId,
+            `${UploadFolder.PRODUCTS}/${product.id}`,
+          ),
+      ),
+    );
 
-    await product.save();
-    return product;
+    return product.save();
   }
 
   async duplicate(id: string): Promise<ProductDocument> {
@@ -48,11 +52,26 @@ export class ProductsService {
       name: `${product.name} (Копия)`,
     });
 
-    return duplicated.save();
+    await duplicated.save();
+
+    if (product.imageIds.length) {
+      const folder = `${UploadFolder.PRODUCTS}/${duplicated.id}`;
+
+      duplicated.imageIds = await Promise.all(
+        product.imageIds.map(
+          async (imageId) =>
+            await this.imageService.cloneImage(imageId, folder),
+        ),
+      );
+
+      await duplicated.save();
+    }
+
+    return duplicated;
   }
 
   async findAll(): Promise<ProductDocument[]> {
-    const products = await this.productModel.find().select('imageUrl');
+    const products = await this.productModel.find().select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
@@ -64,7 +83,7 @@ export class ProductsService {
   async findAllByAuthor(authorId: string): Promise<ProductDocument[]> {
     const products = await this.productModel
       .find({ authorId })
-      .select('imageUrl');
+      .select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({ code: ErrorCode.PRODUCTS_NOT_FOUND });
@@ -81,7 +100,7 @@ export class ProductsService {
 
     const products = await this.productModel
       .find({ authorId, categoryId: category._id })
-      .select('imageUrl');
+      .select('imageIds');
 
     if (!products.length) {
       throw new NotFoundException({
@@ -106,7 +125,7 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto): Promise<ProductDocument> {
-    const { imageUrl } = dto;
+    const { imageIds } = dto;
 
     const product = await this.productModel.findByIdAndUpdate(id, dto, {
       new: true,
@@ -117,12 +136,16 @@ export class ProductsService {
       throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
     }
 
-    if (imageUrl) {
-      await this.imageService.handleImageUpdate(product, {
-        folder: UploadFolder.PRODUCTS,
-        secureUrl: imageUrl,
-        destroyOnReplace: false,
-      });
+    if (imageIds?.length) {
+      product.imageIds = await Promise.all(
+        imageIds.map(
+          async (imageId) =>
+            await this.imageService.uploadImage(
+              imageId,
+              `${UploadFolder.PRODUCTS}/${product.id}`,
+            ),
+        ),
+      );
 
       await product.save();
     }
@@ -151,6 +174,14 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException({ code: ErrorCode.PRODUCT_NOT_FOUND });
     }
+
+    const folder = `${UploadFolder.PRODUCTS}/${product.id}`;
+
+    for (const imageId of product.imageIds) {
+      await this.imageService.deleteImage(imageId);
+    }
+
+    await this.imageService.deleteFolder(folder);
 
     return product;
   }

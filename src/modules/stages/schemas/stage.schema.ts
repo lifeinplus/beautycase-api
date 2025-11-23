@@ -29,11 +29,8 @@ export class Stage {
   @Prop({ required: true })
   subtitle: string;
 
-  @Prop()
-  imageId?: string;
-
-  @Prop({ required: true })
-  imageUrl: string;
+  @Prop({ type: String, required: true })
+  imageId: string;
 
   @Prop()
   comment?: string;

@@ -35,8 +35,8 @@ describe('ProductsService', () => {
 
   const mockProductResponse = {
     ...mockProduct,
-    _id: mockProductId,
-    imageId: 'image-id',
+    id: mockProductId,
+    imageIds: ['products/image1', 'products/image2'],
     save: jest.fn(),
   };
 
@@ -51,9 +51,10 @@ describe('ProductsService', () => {
   mockProductModel.findByIdAndDelete = jest.fn();
 
   const mockImageService = {
-    handleImageUpload: jest.fn(),
-    handleImageUpdate: jest.fn(),
-    handleImageDeletion: jest.fn(),
+    cloneImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    uploadImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    deleteImage: jest.fn().mockResolvedValue(undefined),
+    deleteFolder: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -82,30 +83,39 @@ describe('ProductsService', () => {
     it('should create a product and upload image', async () => {
       const result = await service.create(mockProduct);
 
-      expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: mockProductId }),
-        { folder: UploadFolder.PRODUCTS, secureUrl: mockProduct.imageUrl },
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+        mockProduct.imageIds[0],
+        `${UploadFolder.PRODUCTS}/${mockProductResponse.id}`,
       );
-      expect(result._id).toBe(mockProductResponse._id);
+
+      expect(result.id).toBe(mockProductResponse.id);
       expect(result.name).toBe(mockProductResponse.name);
-      expect(result.imageUrl).toBe(mockProductResponse.imageUrl);
+      expect(result.imageIds).toBe(mockProductResponse.imageIds);
     });
   });
 
   describe('duplicate', () => {
-    it('should duplicate a stage', async () => {
-      (mockProductModel.findById as jest.Mock).mockResolvedValue({
+    it('should duplicate a product', async () => {
+      jest.mocked(mockProductModel.findById as jest.Mock).mockResolvedValue({
         toObject: () => mockProductResponse,
         name: mockProductResponse.name,
+        imageIds: mockProductResponse.imageIds,
       });
 
       const saveMock = jest.fn().mockResolvedValue(mockProductResponse);
-      (mockProductModel as any).mockImplementation(() => ({ save: saveMock }));
+
+      jest.mocked(mockProductModel).mockImplementation((doc) => ({
+        ...doc,
+        id: mockProductId,
+        save: saveMock,
+      }));
 
       const result = await service.duplicate(mockProductId);
 
       expect(mockProductModel.findById).toHaveBeenCalledWith(mockProductId);
-      expect(result).toEqual(mockProductResponse);
+      expect(result.imageIds).toEqual(['mocked-image-id', 'mocked-image-id']);
+      expect(result.name).toBe(`${mockProductResponse.name} (Копия)`);
+      expect(saveMock).toHaveBeenCalledTimes(2);
     });
 
     it('should throw NotFoundException if not found', async () => {
@@ -204,21 +214,18 @@ describe('ProductsService', () => {
 
   describe('update', () => {
     it('should update product and handle image if provided', async () => {
-      (mockProductModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(
-        mockProductResponse,
-      );
+      jest
+        .mocked(mockProductModel.findByIdAndUpdate as jest.Mock)
+        .mockResolvedValue(mockProductResponse);
 
-      const dto: UpdateProductDto = { imageUrl: 'http://example.com/new.jpg' };
+      const dto: UpdateProductDto = { imageIds: ['products/image'] };
       const result = await service.update(mockProductId, dto);
 
-      expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
-        mockProductResponse,
-        {
-          folder: UploadFolder.PRODUCTS,
-          secureUrl: dto.imageUrl,
-          destroyOnReplace: false,
-        },
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+        'products/image',
+        `${UploadFolder.PRODUCTS}/${mockProductResponse.id}`,
       );
+
       expect(result).toEqual(mockProductResponse);
     });
 

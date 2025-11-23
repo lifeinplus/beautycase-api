@@ -1,30 +1,30 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { v2 as cloudinary } from 'cloudinary';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
-import { TempUploadsService } from '../shared/temp-uploads.service';
+import { getCloudinaryMocks } from 'test/mocks/cloudinary.mock';
+import { ImageService } from '../shared/image.service';
 import { UploadsService } from './uploads.service';
 
-jest.mock('cloudinary', () => ({
-  v2: {
-    uploader: {
-      upload: jest.fn(),
-    },
-    config: jest.fn(),
-  },
-}));
+jest.mock('cloudinary', () =>
+  require('test/mocks/cloudinary.mock').mockCloudinary(),
+);
 
 describe('UploadsService', () => {
   let service: UploadsService;
-  let mockTempUploadsService: jest.Mocked<TempUploadsService>;
   let mockConfigService: jest.Mocked<ConfigService>;
+  let cloudinaryMocks: ReturnType<typeof getCloudinaryMocks>;
+
+  const mockImageService = {
+    cloneImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    uploadImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    deleteImage: jest.fn().mockResolvedValue(undefined),
+    deleteFolder: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
-    mockTempUploadsService = {
-      store: jest.fn(),
-    } as any;
+    cloudinaryMocks = getCloudinaryMocks();
 
     mockConfigService = {
       get: jest.fn((key: string) => {
@@ -41,12 +41,12 @@ describe('UploadsService', () => {
       providers: [
         UploadsService,
         {
-          provide: TempUploadsService,
-          useValue: mockTempUploadsService,
-        },
-        {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: ImageService,
+          useValue: mockImageService,
         },
       ],
     }).compile();
@@ -54,10 +54,10 @@ describe('UploadsService', () => {
     service = module.get<UploadsService>(UploadsService);
   });
 
-  describe('uploadTempImageByFile', () => {
+  describe('uploadTempImage', () => {
     it('should throw BadRequestException if no file is provided', async () => {
       await expect(
-        service.uploadTempImageByFile(UploadFolder.PRODUCTS, undefined),
+        service.uploadTempImage(UploadFolder.PRODUCTS, undefined),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -67,28 +67,25 @@ describe('UploadsService', () => {
         mimetype: 'image/png',
       } as Express.Multer.File;
 
-      (cloudinary.uploader.upload as jest.Mock).mockResolvedValue({
+      cloudinaryMocks.upload.mockResolvedValue({
         secure_url: 'https://cloudinary.com/test.png',
         public_id: 'public-id',
       });
 
-      const result = await service.uploadTempImageByFile(
+      const result = await service.uploadTempImage(
         UploadFolder.PRODUCTS,
         mockFile,
       );
 
-      expect(cloudinary.uploader.upload).toHaveBeenCalledWith(
+      expect(cloudinaryMocks.upload).toHaveBeenCalledWith(
         expect.stringMatching(/^data:image\/png;base64,/),
         expect.objectContaining({
           folder: 'products/temp',
           resource_type: 'auto',
         }),
       );
-      expect(mockTempUploadsService.store).toHaveBeenCalledWith(
-        'https://cloudinary.com/test.png',
-        'public-id',
-      );
-      expect(result).toBe('https://cloudinary.com/test.png');
+
+      expect(result).toBe('public-id');
     });
 
     it('should throw BadRequestException on Cloudinary error', async () => {
@@ -97,52 +94,10 @@ describe('UploadsService', () => {
         mimetype: 'image/png',
       } as Express.Multer.File;
 
-      (cloudinary.uploader.upload as jest.Mock).mockRejectedValue(
-        new Error('Cloudinary failed'),
-      );
+      cloudinaryMocks.upload.mockRejectedValue(new Error('Cloudinary failed'));
 
       await expect(
-        service.uploadTempImageByFile(UploadFolder.PRODUCTS, mockFile),
-      ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('uploadTempImageByUrl', () => {
-    it('should upload image from URL and store temp upload', async () => {
-      (cloudinary.uploader.upload as jest.Mock).mockResolvedValue({
-        secure_url: 'https://cloudinary.com/from-url.jpg',
-        public_id: 'public-id-url',
-      });
-
-      const result = await service.uploadTempImageByUrl(
-        UploadFolder.STAGES,
-        'https://example.com/image.jpg',
-      );
-
-      expect(cloudinary.uploader.upload).toHaveBeenCalledWith(
-        'https://example.com/image.jpg',
-        expect.objectContaining({
-          folder: 'stages/temp',
-          format: 'jpg',
-        }),
-      );
-      expect(mockTempUploadsService.store).toHaveBeenCalledWith(
-        'https://cloudinary.com/from-url.jpg',
-        'public-id-url',
-      );
-      expect(result).toBe('https://cloudinary.com/from-url.jpg');
-    });
-
-    it('should throw BadRequestException on Cloudinary error', async () => {
-      (cloudinary.uploader.upload as jest.Mock).mockRejectedValue(
-        new Error('Upload failed'),
-      );
-
-      await expect(
-        service.uploadTempImageByUrl(
-          UploadFolder.STAGES,
-          'https://example.com/image.jpg',
-        ),
+        service.uploadTempImage(UploadFolder.PRODUCTS, mockFile),
       ).rejects.toThrow(BadRequestException);
     });
   });

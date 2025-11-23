@@ -1,47 +1,29 @@
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { v2 as cloudinary } from 'cloudinary';
 
 import { UploadFolder } from 'src/common/enums/upload-folder.enum';
-import { ImageDocument, ImageService } from './image.service';
-import { TempUploadsService } from './temp-uploads.service';
+import { getCloudinaryMocks } from 'test/mocks/cloudinary.mock';
+import { ImageService } from './image.service';
 
-jest.mock('cloudinary', () => ({
-  v2: {
-    uploader: {
-      explicit: jest.fn(),
-      rename: jest.fn(),
-      destroy: jest.fn(),
-    },
-  },
-}));
+jest.mock('cloudinary', () =>
+  require('test/mocks/cloudinary.mock').mockCloudinary(),
+);
 
 describe('ImageService', () => {
   let service: ImageService;
-  let tempUploadsService: jest.Mocked<TempUploadsService>;
+  let cloudinaryMocks: ReturnType<typeof getCloudinaryMocks>;
 
-  const mockDoc: ImageDocument = {
-    _id: 'doc-id',
-    imageUrl: 'https://old.com/img.jpg',
-    imageId: 'old-id',
-  };
+  const mockFolder = UploadFolder.PRODUCTS;
+  const mockDisplayName = 'product-id/image';
+  const mockTempPublicId = 'products/temp/image';
+  const mockPublicId = `products/product-id/image`;
 
   beforeEach(async () => {
-    tempUploadsService = {
-      get: jest.fn(),
-      remove: jest.fn(),
-    } as any;
-
+    cloudinaryMocks = getCloudinaryMocks();
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ImageService,
-        {
-          provide: TempUploadsService,
-          useValue: tempUploadsService,
-        },
-      ],
+      providers: [ImageService],
     }).compile();
 
     service = module.get<ImageService>(ImageService);
@@ -51,177 +33,118 @@ describe('ImageService', () => {
     jest.clearAllMocks();
   });
 
-  describe('handleImageUpload', () => {
-    it('should skip if publicId not found', async () => {
-      tempUploadsService.get.mockReturnValue(undefined);
-
-      await service.handleImageUpload(
-        { ...mockDoc },
-        {
-          folder: UploadFolder.PRODUCTS,
-          secureUrl: 'https://temp.com/image.png',
-        },
-      );
-
-      expect(cloudinary.uploader.explicit).not.toHaveBeenCalled();
+  describe('uploadImage', () => {
+    it('should skip if publicId does not include /temp/ text', async () => {
+      await service.uploadImage('products/image', mockFolder);
+      expect(cloudinaryMocks.explicit).not.toHaveBeenCalled();
     });
 
-    it('should rename and update doc image', async () => {
-      tempUploadsService.get.mockReturnValue('temp-id');
-      (cloudinary.uploader.explicit as jest.Mock).mockResolvedValue({});
-      (cloudinary.uploader.rename as jest.Mock).mockResolvedValue({
-        public_id: 'new-id',
-        secure_url: 'https://cdn.com/new.png',
+    it('should move and rename an image', async () => {
+      cloudinaryMocks.explicit.mockResolvedValue({
+        display_name: mockDisplayName,
       });
 
-      const doc = { ...mockDoc };
-      await service.handleImageUpload(doc, {
-        folder: UploadFolder.PRODUCTS,
-        secureUrl: 'https://temp.com/image.png',
+      cloudinaryMocks.rename.mockResolvedValue({
+        public_id: mockPublicId,
       });
 
-      expect(cloudinary.uploader.explicit).toHaveBeenCalledWith(
-        'temp-id',
+      await service.uploadImage(mockTempPublicId, mockFolder);
+
+      expect(cloudinaryMocks.explicit).toHaveBeenCalledWith(
+        mockTempPublicId,
         expect.any(Object),
       );
-      expect(cloudinary.uploader.rename).toHaveBeenCalledWith(
-        'temp-id',
-        expect.stringMatching(/^products\/doc-id$/),
+
+      expect(cloudinaryMocks.rename).toHaveBeenCalledWith(
+        mockTempPublicId,
+        mockPublicId,
         { invalidate: true },
-      );
-      expect(doc.imageId).toBe('new-id');
-      expect(doc.imageUrl).toBe('https://cdn.com/new.png');
-      expect(tempUploadsService.remove).toHaveBeenCalledWith(
-        'https://temp.com/image.png',
       );
     });
 
     it('should log error and rethrow on failure', async () => {
-      tempUploadsService.get.mockReturnValue('temp-id');
-      (cloudinary.uploader.explicit as jest.Mock).mockRejectedValue(
-        new Error('fail'),
-      );
+      cloudinaryMocks.explicit.mockRejectedValue(new Error('fail'));
 
       await expect(
-        service.handleImageUpload(
-          { ...mockDoc },
-          {
-            folder: UploadFolder.PRODUCTS,
-            secureUrl: 'https://temp.com/image.png',
-          },
-        ),
+        service.uploadImage(mockTempPublicId, UploadFolder.PRODUCTS),
       ).rejects.toThrow('fail');
     });
   });
 
-  describe('handleImageUpdate', () => {
-    it('should rename, move, and update doc image if publicId exists', async () => {
-      tempUploadsService.get.mockReturnValue('temp-id');
-
-      (cloudinary.uploader.rename as jest.Mock).mockResolvedValue({
-        public_id: 'renamed',
+  describe('cloneImage', () => {
+    it('should clone image into given folder', async () => {
+      cloudinaryMocks.url.mockReturnValue('https://generated-url');
+      cloudinaryMocks.upload.mockResolvedValue({
+        public_id: mockPublicId,
       });
 
-      (cloudinary.uploader.explicit as jest.Mock).mockResolvedValue({
-        public_id: 'moved-id',
-        secure_url: 'https://cloudinary.com/moved.png',
+      const result = await service.cloneImage('old/public/id', mockFolder);
+
+      expect(cloudinaryMocks.url).toHaveBeenCalledWith('old/public/id', {
+        fetch_format: 'auto',
+        quality: 'auto',
       });
 
-      const doc = { ...mockDoc };
-
-      await service.handleImageUpdate(doc, {
-        folder: UploadFolder.STAGES,
-        secureUrl: 'https://cloudinary.com/image.png',
-      });
-
-      expect(doc.imageId).toBe('moved-id');
-      expect(doc.imageUrl).toBe('https://cloudinary.com/moved.png');
-      expect(tempUploadsService.remove).toHaveBeenCalledWith(
-        'https://cloudinary.com/image.png',
-      );
-    });
-
-    it('should destroy old image if replacing with non-cloudinary URL', async () => {
-      tempUploadsService.get.mockReturnValue(undefined);
-
-      const destroySpy = cloudinary.uploader.destroy as jest.Mock;
-      destroySpy.mockResolvedValue({});
-
-      const doc = { ...mockDoc };
-      await service.handleImageUpdate(doc, {
-        folder: UploadFolder.STAGES,
-        secureUrl: 'https://example.com/new.png',
-        destroyOnReplace: true,
-      });
-
-      expect(destroySpy).toHaveBeenCalledWith('old-id');
-      expect(doc.imageId).toBeUndefined();
-    });
-
-    it('should not destroy if destroyOnReplace=false', async () => {
-      tempUploadsService.get.mockReturnValue(undefined);
-
-      const destroySpy = cloudinary.uploader.destroy as jest.Mock;
-
-      const doc = { ...mockDoc };
-      await service.handleImageUpdate(doc, {
-        folder: UploadFolder.STAGES,
-        secureUrl: 'https://cloudinary.com/new.png',
-        destroyOnReplace: false,
-      });
-
-      expect(destroySpy).not.toHaveBeenCalled();
-      expect(doc.imageId).toBe('old-id');
-    });
-
-    it('should log error if destroy fails', async () => {
-      tempUploadsService.get.mockReturnValue(undefined);
-
-      (cloudinary.uploader.destroy as jest.Mock).mockRejectedValue(
-        new Error('destroy-fail'),
+      expect(cloudinaryMocks.upload).toHaveBeenCalledWith(
+        'https://generated-url',
+        { folder: mockFolder },
       );
 
-      const doc = { ...mockDoc };
-      await service.handleImageUpdate(doc, {
-        folder: UploadFolder.STAGES,
-        secureUrl: 'https://example.com/new.png',
-        destroyOnReplace: true,
-      });
-
-      expect(doc.imageId).toBeUndefined();
-    });
-
-    it('should log and rethrow error if rename fails', async () => {
-      tempUploadsService.get.mockReturnValue('temp-id');
-      (cloudinary.uploader.rename as jest.Mock).mockRejectedValue(
-        new Error('rename-fail'),
-      );
-
-      await expect(
-        service.handleImageUpdate(
-          { ...mockDoc },
-          {
-            folder: UploadFolder.STAGES,
-            secureUrl: 'https://temp.com/image.png',
-          },
-        ),
-      ).rejects.toThrow('rename-fail');
+      expect(result).toBe(mockPublicId);
     });
   });
 
-  describe('handleImageDeletion', () => {
+  describe('deleteImage', () => {
     it('should call cloudinary destroy', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockResolvedValue({});
-      await service.handleImageDeletion('public-id');
-      expect(cloudinary.uploader.destroy).toHaveBeenCalledWith('public-id');
+      cloudinaryMocks.destroy.mockResolvedValue({});
+
+      await service.deleteImage(mockPublicId);
+
+      expect(cloudinaryMocks.destroy).toHaveBeenCalledWith(mockPublicId, {
+        invalidate: true,
+      });
     });
 
     it('should log error if destroy fails', async () => {
-      (cloudinary.uploader.destroy as jest.Mock).mockRejectedValue(
-        new Error('fail'),
-      );
-      await service.handleImageDeletion('bad-id');
+      cloudinaryMocks.destroy.mockRejectedValue(new Error('fail'));
+      await service.deleteImage('bad-id');
       expect(Logger.prototype.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteFolder', () => {
+    it('should delete folder when empty', async () => {
+      cloudinaryMocks.resources.mockResolvedValue({
+        resources: [],
+      });
+
+      cloudinaryMocks.deleteFolder.mockResolvedValue({});
+
+      await service.deleteFolder('products/123');
+
+      expect(cloudinaryMocks.resources).toHaveBeenCalledWith({
+        type: 'upload',
+        prefix: 'products/123/',
+        max_results: 1,
+      });
+
+      expect(cloudinaryMocks.deleteFolder).toHaveBeenCalledWith('products/123');
+    });
+
+    it('should log error if delete folder fails', async () => {
+      cloudinaryMocks.deleteFolder.mockRejectedValue(new Error('fail'));
+      await service.deleteFolder('bad-folder');
+      expect(Logger.prototype.error).toHaveBeenCalled();
+    });
+
+    it('should not delete folder when not empty', async () => {
+      cloudinaryMocks.resources.mockResolvedValue({
+        resources: [{ public_id: 'some-image' }],
+      });
+
+      await service.deleteFolder('products/123');
+
+      expect(cloudinaryMocks.deleteFolder).not.toHaveBeenCalled();
     });
   });
 });

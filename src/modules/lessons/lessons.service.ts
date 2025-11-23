@@ -45,7 +45,7 @@ export class LessonsService {
   async findOne(id: string): Promise<LessonDocument> {
     const lesson = await this.lessonModel
       .findById(id)
-      .populate('productIds', 'imageUrl');
+      .populate('productIds', 'imageIds');
 
     if (!lesson) {
       throw new NotFoundException({ code: ErrorCode.LESSON_NOT_FOUND });
