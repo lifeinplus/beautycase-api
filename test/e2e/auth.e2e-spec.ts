@@ -99,6 +99,21 @@ describe('Auth (e2e)', () => {
       expect(response.body.code).toBe('REGISTER_ERROR');
     });
 
+    it('should return default error message when passwords do not match', async () => {
+      await AuthHelper.createClientUser(app);
+
+      const testDto: RegisterDto = {
+        ...mockUser,
+        password: 'secret123',
+        confirmPassword: 'wrong',
+      };
+
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send(testDto)
+        .expect(HttpStatus.BAD_REQUEST);
+    });
+
     it('should reject registration with invalid data', async () => {
       const invalidDto: RegisterDto = {
         firstName: '',

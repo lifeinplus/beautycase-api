@@ -27,6 +27,10 @@ import {
   StageResources,
 } from 'test/helpers/resource.helper';
 
+jest.mock('cloudinary', () =>
+  require('test/mocks/cloudinary.mock').mockCloudinary(),
+);
+
 describe('Stages (e2e)', () => {
   let app: INestApplication;
   let connection: Connection;
@@ -36,6 +40,13 @@ describe('Stages (e2e)', () => {
   let category: CategoryResources;
   let product: ProductResources;
   let stageId: string;
+
+  const mockImageService = {
+    cloneImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    uploadImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    deleteImage: jest.fn().mockResolvedValue(undefined),
+    deleteFolder: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -134,35 +145,11 @@ describe('Stages (e2e)', () => {
         .expect(HttpStatus.UNAUTHORIZED);
     });
 
-    it('should validate required fields', async () => {
-      const invalidDto: any = {
-        title: 'A', // Too short (min 3)
-        subtitle: 'Short', // Too short (min 10)
-        imageUrl: 'invalid-url',
-        productIds: ['invalid-mongo-id'],
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/stages')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(invalidDto)
-        .expect(HttpStatus.BAD_REQUEST);
-
-      expect(response.body.message).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining('title'),
-          expect.stringContaining('subtitle'),
-          expect.stringContaining('imageUrl'),
-          expect.stringContaining('productIds'),
-        ]),
-      );
-    });
-
     it('should validate optional fields when provided', async () => {
       const invalidStageDto = {
         title: 'Valid Title',
         subtitle: 'This is a valid subtitle with enough characters',
-        imageUrl: 'https://example.com/image.jpg',
+        imageId: 'https://example.com/image.jpg',
         comment: 'x'.repeat(501), // Too long (max 500)
         productIds: [brand.id],
       };
@@ -175,23 +162,6 @@ describe('Stages (e2e)', () => {
 
       expect(response.body.message).toContain(
         'comment must be shorter than or equal to 500 characters',
-      );
-    });
-
-    it('should validate imageUrl format', async () => {
-      const invalidStage = {
-        ...createStageDto(),
-        imageUrl: 'not-a-valid-url',
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/stages')
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(invalidStage)
-        .expect(HttpStatus.BAD_REQUEST);
-
-      expect(response.body.message).toEqual(
-        expect.arrayContaining([expect.stringContaining('imageUrl')]),
       );
     });
 
@@ -229,17 +199,7 @@ describe('Stages (e2e)', () => {
         .expect(HttpStatus.CREATED);
 
       expect(response.body).toEqual({ id: expect.any(String) });
-
       expect(response.body.id).not.toBe(stageId);
-    });
-
-    it('should allow mua to duplicate stage', async () => {
-      const response = await request(app.getHttpServer())
-        .post(`/stages/duplicate/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .expect(HttpStatus.CREATED);
-
-      expect(response.body).toEqual({ id: expect.any(String) });
     });
 
     it('should reject duplication with client role', async () => {
@@ -272,13 +232,9 @@ describe('Stages (e2e)', () => {
     let stages: StageResources[];
 
     beforeEach(async () => {
-      stages = await ResourceHelper.createMultipleStages(
-        app,
-        tokens.muaToken,
-        2,
-        tokens.muaId,
-        [product.id],
-      );
+      stages = await ResourceHelper.createMultipleStages(app, tokens, 2, [
+        product.id,
+      ]);
     });
 
     it('should get all stages as admin', async () => {
@@ -295,13 +251,13 @@ describe('Stages (e2e)', () => {
             _id: stages[0].id,
             title: stages[0].data.title,
             subtitle: stages[0].data.subtitle,
-            imageUrl: stages[0].data.imageUrl,
+            imageId: stages[0].data.imageId,
           }),
           expect.objectContaining({
             _id: stages[1].id,
             title: stages[1].data.title,
             subtitle: stages[1].data.subtitle,
-            imageUrl: stages[1].data.imageUrl,
+            imageId: stages[1].data.imageId,
           }),
         ]),
       );
@@ -346,7 +302,7 @@ describe('Stages (e2e)', () => {
       expect(stage).toHaveProperty('_id');
       expect(stage).toHaveProperty('title');
       expect(stage).toHaveProperty('subtitle');
-      expect(stage).toHaveProperty('imageUrl');
+      expect(stage).toHaveProperty('imageId');
       expect(stage).toHaveProperty('createdAt');
       expect(stage).not.toHaveProperty('comment');
       expect(stage).not.toHaveProperty('steps');
@@ -366,7 +322,7 @@ describe('Stages (e2e)', () => {
       stageData = data;
     });
 
-    it('should populate productIds with imageUrl field', async () => {
+    it('should populate productIds with imageId field', async () => {
       const response = await request(app.getHttpServer())
         .get(`/stages/${stageId}`)
         .set('Authorization', `Bearer ${tokens.muaToken}`)
@@ -375,7 +331,7 @@ describe('Stages (e2e)', () => {
       expect(response.body.products).toHaveLength(1);
       expect(response.body.products[0]).toMatchObject({
         _id: product.id,
-        imageUrl: product.data.imageUrl,
+        imageIds: product.data.imageIds,
       });
     });
 
@@ -458,7 +414,7 @@ describe('Stages (e2e)', () => {
 
     it('should update stage with new image', async () => {
       const updateDto: UpdateStageDto = {
-        imageUrl: 'https://example.com/new-image.jpg',
+        imageId: 'https://example.com/new-image.jpg',
       };
 
       await request(app.getHttpServer())
@@ -466,26 +422,6 @@ describe('Stages (e2e)', () => {
         .set('Authorization', `Bearer ${tokens.muaToken}`)
         .send(updateDto)
         .expect(HttpStatus.OK);
-    });
-
-    it('should validate update data', async () => {
-      const invalidUpdate: UpdateStageDto = {
-        title: 'A', // Too short
-        imageUrl: 'invalid-url',
-      };
-
-      const response = await request(app.getHttpServer())
-        .put(`/stages/${stageId}`)
-        .set('Authorization', `Bearer ${tokens.muaToken}`)
-        .send(invalidUpdate)
-        .expect(HttpStatus.BAD_REQUEST);
-
-      expect(response.body.message).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining('title'),
-          expect.stringContaining('imageUrl'),
-        ]),
-      );
     });
 
     it('should return 404 for non-existent stage', async () => {

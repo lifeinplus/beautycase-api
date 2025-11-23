@@ -30,12 +30,14 @@ describe('ToolsService', () => {
   const mockToolResponse = {
     ...mockTool,
     _id: mockToolId,
-    imageId: 'img-id',
+    id: mockToolId,
+    imageIds: ['tools/image1', 'tools/image2'],
     save: jest.fn(),
   };
 
   mockToolModel = jest.fn(() => ({
     ...mockToolResponse,
+    id: mockToolId,
     save: jest.fn().mockResolvedValue(mockToolResponse),
   }));
 
@@ -45,10 +47,11 @@ describe('ToolsService', () => {
   mockToolModel.findByIdAndDelete = jest.fn();
 
   const mockImageService = {
-    handleImageUpload: jest.fn(),
-    handleImageUpdate: jest.fn(),
-    handleImageDeletion: jest.fn(),
-  } as any;
+    cloneImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    uploadImage: jest.fn().mockResolvedValue('mocked-image-id'),
+    deleteImage: jest.fn().mockResolvedValue(undefined),
+    deleteFolder: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -72,13 +75,14 @@ describe('ToolsService', () => {
     it('should create a tool and upload image', async () => {
       const result = await service.create(mockTool);
 
-      expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: mockToolId }),
-        { folder: UploadFolder.TOOLS, secureUrl: mockTool.imageUrl },
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+        mockTool.imageIds?.[0],
+        `${UploadFolder.TOOLS}/${mockToolId}`,
       );
+
       expect(result._id).toBe(mockToolResponse._id);
       expect(result.name).toBe(mockToolResponse.name);
-      expect(result.imageUrl).toBe(mockToolResponse.imageUrl);
+      expect(result.imageIds).toBe(mockToolResponse.imageIds);
     });
   });
 
@@ -128,16 +132,14 @@ describe('ToolsService', () => {
         mockToolResponse,
       );
 
-      const dto: UpdateToolDto = { imageUrl: 'http://example.com/new.jpg' };
+      const dto: UpdateToolDto = { imageIds: ['tools/image'] };
       const result = await service.update(mockToolId, dto);
 
-      expect(mockImageService.handleImageUpdate).toHaveBeenCalledWith(
-        mockToolResponse,
-        {
-          folder: UploadFolder.TOOLS,
-          secureUrl: dto.imageUrl,
-        },
+      expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+        dto.imageIds?.[0],
+        `${UploadFolder.TOOLS}/${mockToolId}`,
       );
+
       expect(result).toEqual(mockToolResponse);
     });
 
@@ -179,9 +181,10 @@ describe('ToolsService', () => {
 
       const result = await service.remove(mockToolId);
 
-      expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
-        mockToolResponse.imageId,
+      expect(mockImageService.deleteImage).toHaveBeenCalledWith(
+        mockToolResponse.imageIds?.[0],
       );
+
       expect(result).toEqual(mockToolResponse);
     });
 

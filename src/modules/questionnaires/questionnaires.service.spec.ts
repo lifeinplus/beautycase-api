@@ -31,7 +31,7 @@ describe('QuestionnairesService', () => {
   const mockMakeupBagQuestionnaireResponse = {
     ...mockMakeupBagQuestionnaire,
     _id: mockMakeupBagQuestionnaireId,
-    makeupBagPhotoId: 'img-id',
+    makeupBagPhotoIds: ['img-id'],
     save: jest.fn(),
   };
 
@@ -44,10 +44,11 @@ describe('QuestionnairesService', () => {
   };
 
   const mockImageService = {
-    handleImageUpload: jest.fn(),
-    handleImageUpdate: jest.fn(),
-    handleImageDeletion: jest.fn(),
-  } as any;
+    uploadImage: jest.fn(),
+    cloneImage: jest.fn(),
+    deleteImage: jest.fn(),
+    deleteFolder: jest.fn(),
+  };
 
   beforeEach(async () => {
     mockMakeupBagQuestionnaireModel = jest.fn(() => ({
@@ -69,6 +70,7 @@ describe('QuestionnairesService', () => {
       .mockResolvedValue(mockTrainingQuestionnaireResponse);
     mockTrainingQuestionnaireModel.find = jest.fn();
     mockTrainingQuestionnaireModel.findById = jest.fn();
+    mockTrainingQuestionnaireModel.findByIdAndDelete = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -96,26 +98,19 @@ describe('QuestionnairesService', () => {
       it('should create a questionnaire without image upload', async () => {
         const result = await service.createMakeupBag({
           ...mockMakeupBagQuestionnaire,
-          makeupBagPhotoUrl: undefined,
+          makeupBagPhotoIds: undefined,
         });
 
-        expect(mockImageService.handleImageUpload).not.toHaveBeenCalled();
+        expect(mockImageService.uploadImage).not.toHaveBeenCalled();
         expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
       });
 
-      it('should create a questionnaire and upload image if makeupBagPhotoUrl provided', async () => {
+      it('should create a questionnaire and upload image if makeupBagPhotoIds provided', async () => {
         await service.createMakeupBag(mockMakeupBagQuestionnaire as any);
 
-        expect(mockImageService.handleImageUpload).toHaveBeenCalledWith(
-          expect.objectContaining({
-            imageId: 'img-id',
-            imageUrl: 'https://example.com/photo.jpg',
-          }),
-          {
-            filename: 'makeup-bag',
-            folder: `${UploadFolder.QUESTIONNAIRES}/${mockMakeupBagQuestionnaireResponse._id}`,
-            secureUrl: 'https://example.com/photo.jpg',
-          },
+        expect(mockImageService.uploadImage).toHaveBeenCalledWith(
+          mockMakeupBagQuestionnaire.makeupBagPhotoIds?.[0],
+          `${UploadFolder.QUESTIONNAIRES}/${mockMakeupBagQuestionnaireResponse._id}`,
         );
       });
     });
@@ -218,7 +213,7 @@ describe('QuestionnairesService', () => {
     });
 
     describe('removeMakeupBag', () => {
-      it('should delete tool and remove image if exists', async () => {
+      it('should delete questionnaire and remove image if exists', async () => {
         (
           mockMakeupBagQuestionnaireModel.findByIdAndDelete as jest.Mock
         ).mockResolvedValue(mockMakeupBagQuestionnaireResponse);
@@ -227,13 +222,13 @@ describe('QuestionnairesService', () => {
           mockMakeupBagQuestionnaireId,
         );
 
-        expect(mockImageService.handleImageDeletion).toHaveBeenCalledWith(
-          mockMakeupBagQuestionnaireResponse.makeupBagPhotoId,
+        expect(mockImageService.deleteImage).toHaveBeenCalledWith(
+          mockMakeupBagQuestionnaireResponse.makeupBagPhotoIds[0],
         );
         expect(result).toEqual(mockMakeupBagQuestionnaireResponse);
       });
 
-      it('should throw NotFoundException if tool not found', async () => {
+      it('should throw NotFoundException if questionnaire not found', async () => {
         (
           mockMakeupBagQuestionnaireModel.findByIdAndDelete as jest.Mock
         ).mockResolvedValue(null);
@@ -346,6 +341,30 @@ describe('QuestionnairesService', () => {
 
         await expect(
           service.findOneTraining(mockBadTrainingQuestionnaireId),
+        ).rejects.toThrow(NotFoundException);
+      });
+    });
+
+    describe('removeTraining', () => {
+      it('should delete questionnaire and remove image if exists', async () => {
+        (
+          mockTrainingQuestionnaireModel.findByIdAndDelete as jest.Mock
+        ).mockResolvedValue(mockTrainingQuestionnaireResponse);
+
+        const result = await service.removeTraining(
+          mockTrainingQuestionnaireId,
+        );
+
+        expect(result).toEqual(mockTrainingQuestionnaireResponse);
+      });
+
+      it('should throw NotFoundException if questionnaire not found', async () => {
+        (
+          mockTrainingQuestionnaireModel.findByIdAndDelete as jest.Mock
+        ).mockResolvedValue(null);
+
+        await expect(
+          service.removeTraining(mockBadTrainingQuestionnaireId),
         ).rejects.toThrow(NotFoundException);
       });
     });

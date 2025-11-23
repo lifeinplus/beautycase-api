@@ -30,15 +30,13 @@ describe('UploadsController', () => {
   });
 
   describe('uploadTempImage', () => {
-    it('should upload image from file and return imageUrl', async () => {
+    it('should upload image from file and return imageId', async () => {
       const dto: UploadFileDto = { folder: UploadFolder.PRODUCTS };
       const mockFile = {
         buffer: Buffer.from('file-data'),
       } as Express.Multer.File;
 
-      service.uploadTempImage.mockResolvedValue(
-        'https://cloudinary.com/image.png',
-      );
+      service.uploadTempImage.mockResolvedValue('products/image');
 
       const result = await controller.uploadTempImage(dto, mockFile);
 
@@ -46,7 +44,7 @@ describe('UploadsController', () => {
         dto.folder,
         mockFile,
       );
-      expect(result).toEqual({ imageUrl: 'https://cloudinary.com/image.png' });
+      expect(result).toEqual({ imageId: 'products/image' });
     });
 
     it('should propagate service errors', async () => {
