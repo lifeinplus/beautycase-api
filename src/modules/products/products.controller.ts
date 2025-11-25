@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 
+import { Public } from 'src/common/decorators/public.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { MongoIdParamDto } from 'src/common/dto/mongo-id-param.dto';
 import { Role } from 'src/common/enums/role.enum';
@@ -65,7 +66,7 @@ export class ProductsController {
   }
 
   @Get(':id')
-  @Roles()
+  @Public()
   findOne(@Param() params: MongoIdParamDto) {
     return this.productsService.findOne(params.id);
   }
